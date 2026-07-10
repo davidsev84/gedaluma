@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { FileText, Eye, AlertCircle, CheckCircle, X, Download } from 'lucide-react';
+import { Eye, AlertCircle, CheckCircle, X, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatePDF } from '../lib/pdfGenerator';
 
