@@ -162,3 +162,60 @@ export const ghostCategories: Category[] = [
     ]
   }
 ];
+
+export const penaltyPolicies = {
+  'Leve': {
+    name: 'Leve',
+    impact: 'Estética y Disciplina',
+    options: [
+      '2. Atrasos', 
+      '5. Orden de Isla', 
+      '6. Implementos', 
+      '7. Atención', 
+      '19. Uniforme'
+    ],
+    amounts: [0, 1.50]
+  },
+  'Moderada': {
+    name: 'Moderada',
+    impact: 'Trazabilidad Operativa',
+    options: [
+      '3. Notificaciones', 
+      '10. Cierres', 
+      '11. Abastecimiento', 
+      '12. Soporte', 
+      '17. Entrega de Cierres',
+      '20. Depósitos',
+      '21. Ingreso al Sistema'
+    ],
+    amounts: [3.00, 5.00]
+  },
+  'Grave': {
+    name: 'Grave',
+    impact: 'Rentabilidad y Seguridad',
+    options: [
+      '4. Facturación',
+      '8. Internet',
+      '9. Abandono',
+      '13. Inventario Físico',
+      '14. Secuencia',
+      '15. Novedades',
+      '18. Verificación',
+      '25. Mala Manipulación de Producto',
+      '26. Registro Recurrente e Incorrecto de Información en el Sistema de Punto de Venta (PDV)'
+    ],
+    amounts: [10.00, 14.00]
+  },
+  'Crítica': {
+    name: 'Crítica',
+    impact: 'Integridad Ética (Despido)',
+    options: [
+      '1. Respeto',
+      '16. Engaño',
+      '22. Sustracción',
+      '23. Sistemas',
+      '24. Calidad/Caducidad'
+    ],
+    amounts: [0]
+  }
+};

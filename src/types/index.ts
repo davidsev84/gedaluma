@@ -1,5 +1,28 @@
 export type Role = 'admin' | 'evaluator' | 'ghost';
 
+export interface Option {
+  id: string;
+  label: string;
+}
+
+export interface Employee {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface Penalty {
+  id: string;
+  employee_id: string;
+  severity: string;
+  reason: string;
+  amount: number;
+  observation?: string;
+  reported_by: string;
+  created_at: string;
+  employees?: Employee;
+}
+
 export interface User {
   id: string;
   name: string;

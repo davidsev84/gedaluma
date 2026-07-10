@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories } from '../data/mock';
 import { LogOut, Camera, ChevronRight, Check, Loader2 } from 'lucide-react';
@@ -22,6 +22,21 @@ export function NewEvaluation() {
     observation?: string;
   }>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [employees, setEmployees] = useState<any[]>(mockEmployees);
+  
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const { data, error } = await supabase.from('employees').select('*');
+        if (!error && data && data.length > 0) {
+          setEmployees(data);
+        }
+      } catch (err) {
+        console.warn('V3 tables might not exist yet', err);
+      }
+    };
+    fetchEmployees();
+  }, []);
   
   const evalSigRef = useRef<SignatureCanvas>(null);
 
@@ -130,7 +145,7 @@ export function NewEvaluation() {
       const finalScore = calculateScore();
       const interpretation = getInterpretation(finalScore);
       const isla = mockIslas.find(i => i.id === selectedIsla);
-      const employee = mockEmployees.find(e => e.id === selectedEmployee);
+      const employee = employees.find(e => e.id === selectedEmployee);
 
       const auditorName = auditorType === 'supervisor' ? 'Supervisor Richard' : 
                           auditorType === 'fernando' ? 'Fernando Brito' : 
@@ -291,7 +306,7 @@ export function NewEvaluation() {
                     required
                   >
                     <option value="" disabled>Seleccione el empleado...</option>
-                    {mockEmployees.map(emp => (
+                    {employees.map(emp => (
                       <option key={emp.id} value={emp.id}>{emp.name}</option>
                     ))}
                   </select>
