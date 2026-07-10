@@ -35,7 +35,7 @@ export const mockEmployees = [
 export const categories: Category[] = [
   {
     id: 'A',
-    name: 'ORDEN, LIMPIEZA Y PRESENTACIÓN',
+    name: 'A. ORDEN, LIMPIEZA Y PRESENTACIÓN',
     weight: 20,
     questions: [
       { id: 'a1', text: 'Exteriores de isla inferiores limpios.' },
@@ -55,13 +55,13 @@ export const categories: Category[] = [
   },
   {
     id: 'B',
-    name: 'BPM – MANEJO DE ALIMENTOS',
+    name: 'B. BPM – MANEJO DE ALIMENTOS',
     weight: 20,
     questions: [
       { id: 'b1', text: 'Conos protegidos con capucha.' },
       { id: 'b2', text: 'Productos sin caducar.' },
       { id: 'b3', text: 'Uso correcto de guantes (jugo – base - conos).' },
-      { id: 'b4', text: 'Manos limpias.' },
+      { id: 'b4', text: 'Manos Limpias - uñas cortas - sin esmalte.' },
       { id: 'b5', text: 'Bandeja y/o gaveta de conos limpios y en buen estado.' },
       { id: 'b6', text: 'Tachos limpios y completos (jugo – base).' },
       { id: 'b7', text: 'Productos reportados como devolución identificados.' },
@@ -71,10 +71,10 @@ export const categories: Category[] = [
   },
   {
     id: 'C',
-    name: 'EQUIPOS DE FRÍO',
+    name: 'C. EQUIPOS DE FRÍO',
     weight: 10,
     questions: [
-      { id: 'c1', text: 'Neveras con nivel de temperatura correcta.' },
+      { id: 'c1', text: 'Neveras con nivel de temperatura correcta. (verificado por supervisor)' },
       { id: 'c2', text: 'Neveras con botellas correctamente perchadas y flujo de aire libre.' },
       { id: 'c3', text: 'Congeladoras sin acumulación de hielo.' },
       { id: 'c4', text: 'Cauchos de neveras en buen estado.' },
@@ -87,7 +87,7 @@ export const categories: Category[] = [
   },
   {
     id: 'D',
-    name: 'INVENTARIOS',
+    name: 'D. INVENTARIOS',
     weight: 15,
     questions: [
       { id: 'd1', text: 'Caja chica completa y variada por denominación de moneda.' },
@@ -97,7 +97,7 @@ export const categories: Category[] = [
   },
   {
     id: 'E',
-    name: 'IMAGEN DE MARCA',
+    name: 'E. IMAGEN DE MARCA',
     weight: 5,
     questions: [
       { id: 'e1', text: 'Material gráfico actualizado y en buen estado.' },
@@ -109,13 +109,13 @@ export const categories: Category[] = [
   },
   {
     id: 'F',
-    name: 'SEGURIDAD – TECNOLOGÍA Y CONTROL',
+    name: 'F. SEGURIDAD – TECNOLOGÍA Y CONTROL',
     weight: 10,
     questions: [
       { id: 'f1', text: 'Tomacorrientes en buen estado.' },
       { id: 'f2', text: 'Cables en buen estado.' },
       { id: 'f3', text: 'Ubicación adecuada de Extintor (si aplica).' },
-      { id: 'f4', text: 'Equipos tecnológicos protegidos.' },
+      { id: 'f4', text: 'Equipos tecnológicos protegidos ( con UPS).' },
       { id: 'f5', text: 'Cobertores en buen estado.' },
       { id: 'f6', text: 'Candados y llaves en buen estado.' },
       { id: 'f7', text: 'Conexiones eléctricas en buen estado.' }
@@ -123,14 +123,14 @@ export const categories: Category[] = [
   },
   {
     id: 'G',
-    name: 'CICLO DE VENTA Y GENERACIÓN DE INGRESOS',
+    name: 'G. CICLO DE VENTA Y GENERACIÓN DE INGRESOS',
     weight: 20,
     questions: [
-      { id: 'g1', text: 'Saludo activo al cliente.' },
+      { id: 'g1', text: 'Saludo cordial y amable al cliente.' },
       { id: 'g2', text: 'Contacto visual y sonrisa.' },
       { id: 'g3', text: 'Explica opciones y tamaños.' },
       { id: 'g4', text: 'Ofrece producto adicional.' },
-      { id: 'g5', text: 'Recomienda producto más vendido.' },
+      { id: 'g5', text: 'Recomienda producto más vendido y/o promociones.' },
       { id: 'g6', text: 'Despacho ágil.' },
       { id: 'g7', text: 'Entrega producto correctamente.' },
       { id: 'g8', text: 'Solicita datos para factura.' },
@@ -151,10 +151,10 @@ export const ghostCategories: Category[] = [
       { id: 'gh3', text: '¿La actitud fue amable y respetuosa durante toda la atención?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
       { id: 'gh4', text: '¿Saludó al cliente al llegar?', type: 'choice', options: ['Sí', 'No'] },
       { id: 'gh5', text: '¿Mantuvo contacto visual y trato cordial?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh6', text: '¿Interactuó contigo durante la compra (preguntó, explicó, sugirió)?', type: 'choice', options: ['Sí', 'No', 'Poco'] },
+      { id: 'gh6', text: '¿Interactuó durante la compra (preguntó, explicó, sugirió)?', type: 'choice', options: ['Sí', 'No', 'Poco'] },
       { id: 'gh7', text: '¿Ofreció algún producto adicional o complemento?', type: 'choice', options: ['Sí', 'No', 'Lo pensó pero no lo hizo'] },
       { id: 'gh8', text: '¿Transmitió seguridad al momento de atender y vender?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh9', text: 'En general, ¿cómo calificas el trato recibido?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
+      { id: 'gh9', text: 'En general, ¿cómo calificas el trato recibido?', type: 'choice', options: ['Malo', 'Regular', 'Bueno', 'Muy Bueno'] },
       { id: 'gh10', text: '¿Te sentiste cómodo y bien atendido durante toda la compra?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
       { id: 'gh11', text: '¿La vendedora te ofreció factura y solicitó tus datos para emitirla?', type: 'choice', options: ['No ofreció factura', 'Ofreció factura, pero no pidió los datos', 'Sí, ofreció factura y pidió los datos'] },
       { id: 'gh12', text: '¿Qué fue lo mejor de la atención?', type: 'text' },

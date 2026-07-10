@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { History } from './pages/History';
 import { NewEvaluation } from './pages/NewEvaluation';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -47,6 +48,12 @@ function App() {
           <Route path="/dashboard" element={
             <PrivateRoute roles={['admin']}>
               <Dashboard />
+            </PrivateRoute>
+          } />
+
+          <Route path="/history" element={
+            <PrivateRoute roles={['admin']}>
+              <History />
             </PrivateRoute>
           } />
           

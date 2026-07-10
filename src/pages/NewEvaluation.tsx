@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories } from '../data/mock';
-import { LogOut, Camera, ChevronRight, Check } from 'lucide-react';
+import { LogOut, Camera, ChevronRight, Check, Loader2 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
-import { jsPDF } from 'jspdf';
+import { supabase } from '../lib/supabase';
+import { generatePDF } from '../lib/pdfGenerator';
 
 export function NewEvaluation() {
   const { user, logout } = useAuth();
@@ -13,10 +14,16 @@ export function NewEvaluation() {
   const [customAuditorName, setCustomAuditorName] = useState('');
   const [timeSlot, setTimeSlot] = useState('');
   const [step, setStep] = useState(0); 
-  const [responses, setResponses] = useState<Record<string, { value?: string | number; score?: number; photo?: string }>>({});
+  const [responses, setResponses] = useState<Record<string, { 
+    value?: string | number; 
+    score?: number; 
+    photo?: string;
+    photoData?: string;
+    observation?: string;
+  }>>({});
+  const [isSaving, setIsSaving] = useState(false);
   
   const evalSigRef = useRef<SignatureCanvas>(null);
-  const respSigRef = useRef<SignatureCanvas>(null);
 
   const activeCategories = user?.role === 'ghost' ? ghostCategories : categories;
 
@@ -39,17 +46,61 @@ export function NewEvaluation() {
     }));
   };
 
-  const handlePhoto = (qId: string, file: File) => {
-    // Mock photo upload, using object URL for preview
-    const url = URL.createObjectURL(file);
+  const handleObservation = (qId: string, observation: string) => {
     setResponses(prev => ({
       ...prev,
-      [qId]: { ...prev[qId], photo: url }
+      [qId]: { ...prev[qId], observation }
     }));
   };
 
+  const handlePhoto = (qId: string, file: File) => {
+    const url = URL.createObjectURL(file);
+    
+    // Compress and convert to base64 for DB
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let scaleSize = 1;
+        if (img.width > MAX_WIDTH) {
+          scaleSize = MAX_WIDTH / img.width;
+        }
+        canvas.width = img.width * scaleSize;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const base64 = canvas.toDataURL('image/jpeg', 0.6);
+        
+        setResponses(prev => ({
+          ...prev,
+          [qId]: { ...prev[qId], photo: url, photoData: base64 }
+        }));
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const calculateScore = () => {
-    if (user?.role === 'ghost') return 0; // Ghost doesn't calculate numerical score for now
+    if (user?.role === 'ghost') {
+      let ghostScore = 0;
+      const scoredQuestionsCount = 11; // 11 choice questions
+      activeCategories.forEach(cat => {
+        cat.questions.forEach(q => {
+          if (q.type === 'choice') {
+            const val = responses[q.id]?.value as string;
+            if (['Sí', 'Bueno', 'Muy Bueno', 'Sí, ofreció factura y pidió los datos'].includes(val)) {
+              ghostScore += 1;
+            } else if (['Más o menos', 'Regular', 'Poco', 'Ofreció factura, pero no pidió los datos'].includes(val)) {
+              ghostScore += 0.5;
+            }
+          }
+        });
+      });
+      return Number(((ghostScore / scoredQuestionsCount) * 100).toFixed(2));
+    }
     
     let totalScore = 0;
     activeCategories.forEach(cat => {
@@ -73,9 +124,9 @@ export function NewEvaluation() {
     return { text: 'Isla crítica', color: 'var(--danger)' };
   };
 
-  const generatePDF = () => {
+  const handleFinish = async () => {
+    setIsSaving(true);
     try {
-      const doc = new jsPDF();
       const finalScore = calculateScore();
       const interpretation = getInterpretation(finalScore);
       const isla = mockIslas.find(i => i.id === selectedIsla);
@@ -84,85 +135,86 @@ export function NewEvaluation() {
       const auditorName = auditorType === 'supervisor' ? 'Supervisor Richard' : 
                           auditorType === 'fernando' ? 'Fernando Brito' : 
                           customAuditorName;
+                          
+      // 1. Guardar en Supabase
+      const { data: evalData, error: evalError } = await supabase
+        .from('evaluations')
+        .insert({
+          isla_id: selectedIsla,
+          isla_name: isla?.name || 'Desconocida',
+          evaluator_name: user?.role === 'ghost' ? user?.name : auditorName,
+          evaluator_role: user?.role,
+          evaluated_employee: user?.role === 'ghost' ? null : employee?.name,
+          auditor_type: auditorType,
+          time_slot: timeSlot,
+          total_score: finalScore,
+          status: interpretation.text
+        })
+        .select()
+        .single();
 
-      doc.setFontSize(18);
-      doc.text('Reporte de Auditoria - Gestion de Gedaluma', 20, 20);
-      
-      doc.setFontSize(12);
-      doc.text(`Isla: ${isla?.name} (${isla?.location})`, 20, 35);
-      if (user?.role !== 'ghost') {
-        doc.text(`Empleado Evaluado: ${employee?.name}`, 20, 42);
-        doc.text(`Evaluador: ${auditorName}`, 20, 49);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 56);
-        doc.text(`Puntaje Final: ${finalScore} / 100`, 20, 63);
-        doc.text(`Estado: ${interpretation.text}`, 20, 70);
-      } else {
-        doc.text(`Horario: ${timeSlot}`, 20, 42);
-        doc.text(`Evaluador: ${user?.name}`, 20, 49);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 56);
-        doc.text(`Puntaje Final: ${finalScore} / 100`, 20, 63);
-        doc.text(`Estado: ${interpretation.text}`, 20, 70);
-      }
+      if (evalError) throw evalError;
 
-      doc.text('Firmas:', 20, 85);
+      // 2. Guardar respuestas
+      const responsesToInsert = activeCategories.flatMap(cat => 
+        cat.questions.map(q => ({
+          evaluation_id: evalData.id,
+          question_id: q.id,
+          question_text: q.text,
+          value: String(responses[q.id]?.value || ''),
+          observation: responses[q.id]?.observation || null,
+          photo_data: responses[q.id]?.photoData || null
+        }))
+      );
+
+      const { error: respError } = await supabase
+        .from('responses')
+        .insert(responsesToInsert);
+
+      if (respError) throw respError;
+
+      alert('Auditoría guardada en la base de datos exitosamente.');
+
+      const wantsPDF = window.confirm('¿Desea generar y descargar el documento PDF en este momento? (También podrá descargarlo después desde el Historial)');
       
-      let currentY = 130;
-      if (user?.role === 'ghost') {
-        doc.setFontSize(14);
-        doc.text('Respuestas de Auditoría Fantasma:', 20, currentY);
-        currentY += 10;
-        doc.setFontSize(10);
+      if (wantsPDF) {
+        // 3. Generar PDF
+        let evalDataSig = undefined;
         
-        activeCategories.forEach(cat => {
-          cat.questions.forEach((q, idx) => {
-            const answer = responses[q.id]?.value || 'Sin respuesta';
-            const splitTitle = doc.splitTextToSize(`${idx + 1}. ${q.text}`, 170);
-            doc.text(splitTitle, 20, currentY);
-            currentY += splitTitle.length * 5;
-            
-            doc.setTextColor(0, 100, 200);
-            const splitAnswer = doc.splitTextToSize(`R: ${answer}`, 160);
-            doc.text(splitAnswer, 30, currentY);
-            doc.setTextColor(0, 0, 0);
-            currentY += (splitAnswer.length * 5) + 5;
-            
-            if (currentY > 270) {
-              doc.addPage();
-              currentY = 20;
-            }
-          });
-        });
-        currentY += 10;
+        if (evalSigRef.current && !evalSigRef.current.isEmpty()) {
+          evalDataSig = evalSigRef.current.getCanvas().toDataURL('image/png');
+        }
+        
+        // Convert state responses back to array format expected by generatePDF
+        const formResponsesArr = activeCategories.flatMap(cat => 
+          cat.questions.map(q => ({
+            question_id: q.id,
+            question_text: q.text,
+            value: String(responses[q.id]?.value || ''),
+            observation: responses[q.id]?.observation || null
+          }))
+        );
+
+        generatePDF(evalData, formResponsesArr, evalDataSig);
       }
       
-      if (evalSigRef.current && !evalSigRef.current.isEmpty()) {
-        const evalData = evalSigRef.current.getCanvas().toDataURL('image/png');
-        doc.text('Evaluador:', 20, 95);
-        doc.addImage(evalData, 'PNG', 20, 100, 60, 20);
-      }
-
-      if (respSigRef.current && !respSigRef.current.isEmpty()) {
-        const respData = respSigRef.current.getCanvas().toDataURL('image/png');
-        doc.text('Encargado/Evaluado:', 100, 95);
-        doc.addImage(respData, 'PNG', 100, 100, 60, 20);
-      }
-
-      const islaName = isla?.name || 'Isla';
-      doc.save(`auditoria_${islaName.replace(/ /g, '_')}_${new Date().getTime()}.pdf`);
-      alert('PDF Generado exitosamente.');
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error("Error generando el PDF:", error);
-      alert('Ocurrió un error al generar el PDF. Revisa la consola para más detalles.');
+      console.error("Error guardando la auditoría:", error);
+      alert('Ocurrió un error al guardar o generar el PDF. Revisa la consola.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // Validate that all questions have an answer, and 1 or 2 have photos (for internal)
+  // Validate that all questions have an answer, and 1 or 2 have photos and observations (for internal)
   const isValid = activeCategories.every(cat => 
     cat.questions.every(q => {
       const resp = responses[q.id];
       if (!resp || resp.value === undefined || resp.value === '') return false;
-      if (user?.role !== 'ghost' && typeof resp.value === 'number' && resp.value <= 2 && !resp.photo) return false;
+      if (user?.role !== 'ghost' && typeof resp.value === 'number' && resp.value <= 2) {
+        if (!resp.photo || !resp.observation || resp.observation.trim() === '') return false;
+      }
       return true;
     })
   );
@@ -352,30 +404,54 @@ export function NewEvaluation() {
                       )}
                     </div>
                     
-                    {/* Require Photo if score is 1 or 2 (Only for rating/internal) */}
+                    {/* Ghost Client observation per question */}
+                    {user?.role === 'ghost' && q.type !== 'text' && (
+                      <textarea
+                        className="form-control"
+                        rows={2}
+                        placeholder="Comentario o justificación adicional..."
+                        value={responses[q.id]?.observation || ''}
+                        onChange={(e) => handleObservation(q.id, e.target.value)}
+                        style={{ marginTop: '8px', width: '100%' }}
+                      />
+                    )}
+                    
+                    {/* Require Photo and Observation if score is 1 or 2 (Only for rating/internal) */}
                     {user?.role !== 'ghost' && typeof responses[q.id]?.value === 'number' && (responses[q.id].value as number) <= 2 && (
                       <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
                         <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 500 }}>
-                          * Puntuación baja. Se requiere fotografía obligatoria.
+                          * Puntuación baja. Se requiere fotografía y comentario justificativo obligatorio.
                         </p>
-                        <div className="flex items-center gap-4">
-                          <label className="btn btn-ghost" style={{ border: '1px dashed var(--danger)', color: 'var(--danger)', cursor: 'pointer' }}>
-                            <Camera size={18} /> Subir Evidencia
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              capture="environment" 
-                              style={{ display: 'none' }}
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  handlePhoto(q.id, e.target.files[0]);
-                                }
-                              }}
-                            />
-                          </label>
-                          {responses[q.id]?.photo && (
-                            <img src={responses[q.id]?.photo} alt="Evidencia" style={{ height: '40px', borderRadius: '4px' }} />
-                          )}
+                        
+                        <div className="flex flex-col gap-3">
+                          <textarea
+                            className="form-control"
+                            rows={2}
+                            placeholder="Escribe el motivo de esta calificación..."
+                            value={responses[q.id]?.observation || ''}
+                            onChange={(e) => handleObservation(q.id, e.target.value)}
+                            required
+                          />
+                          
+                          <div className="flex items-center gap-4">
+                            <label className="btn btn-ghost" style={{ border: '1px dashed var(--danger)', color: 'var(--danger)', cursor: 'pointer' }}>
+                              <Camera size={18} /> Subir Evidencia
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                capture="environment" 
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handlePhoto(q.id, e.target.files[0]);
+                                  }
+                                }}
+                              />
+                            </label>
+                            {responses[q.id]?.photo && (
+                              <img src={responses[q.id]?.photo} alt="Evidencia" style={{ height: '40px', borderRadius: '4px' }} />
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -434,20 +510,15 @@ export function NewEvaluation() {
               <button type="button" onClick={() => evalSigRef.current?.clear()} className="btn btn-ghost" style={{ alignSelf: 'flex-start', marginTop: '8px', padding: '4px 8px', fontSize: '0.8rem' }}>Limpiar Firma</button>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Firma Evaluada (Encargado de Isla)</label>
-              <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)' }}>
-                <SignatureCanvas ref={respSigRef} penColor="black" canvasProps={{width: 500, height: 150, className: 'sigCanvas'}} />
-              </div>
-              <button type="button" onClick={() => respSigRef.current?.clear()} className="btn btn-ghost" style={{ alignSelf: 'flex-start', marginTop: '8px', padding: '4px 8px', fontSize: '0.8rem' }}>Limpiar Firma</button>
-            </div>
+
 
             <div className="flex gap-4 mt-4">
               <button onClick={() => setStep(1)} className="btn btn-ghost" style={{ flex: 1 }}>
                 Volver
               </button>
-              <button className="btn btn-success" style={{ flex: 2 }} onClick={generatePDF}>
-                <Check size={20} /> Finalizar y Descargar PDF
+              <button className="btn btn-success" style={{ flex: 2 }} onClick={handleFinish} disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                {isSaving ? 'Guardando...' : 'Finalizar y Guardar'}
               </button>
             </div>
           </div>
