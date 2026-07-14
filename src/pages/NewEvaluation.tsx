@@ -171,16 +171,29 @@ export function NewEvaluation() {
       if (evalError) throw evalError;
 
       // 2. Guardar respuestas
-      const responsesToInsert = activeCategories.flatMap(cat => 
-        cat.questions.map(q => ({
+      const responsesToInsert = activeCategories.flatMap(cat => {
+        const qResponses = cat.questions.map(q => ({
           evaluation_id: evalData.id,
           question_id: q.id,
           question_text: q.text,
           value: String(responses[q.id]?.value || ''),
           observation: responses[q.id]?.observation || null,
           photo_data: responses[q.id]?.photoData || null
-        }))
-      );
+        }));
+        
+        if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
+           qResponses.push({
+             evaluation_id: evalData.id,
+             question_id: cat.id,
+             question_text: `[Evidencia General] ${cat.name}`,
+             value: 'Evidencia adjunta',
+             observation: responses[cat.id]?.observation || null,
+             photo_data: responses[cat.id]?.photoData || null
+           });
+        }
+        
+        return qResponses;
+      });
 
       const { error: respError } = await supabase
         .from('responses')
@@ -201,14 +214,23 @@ export function NewEvaluation() {
         }
         
         // Convert state responses back to array format expected by generatePDF
-        const formResponsesArr = activeCategories.flatMap(cat => 
-          cat.questions.map(q => ({
+        const formResponsesArr = activeCategories.flatMap(cat => {
+          const qArr = cat.questions.map(q => ({
             question_id: q.id,
             question_text: q.text,
             value: String(responses[q.id]?.value || ''),
             observation: responses[q.id]?.observation || null
-          }))
-        );
+          }));
+          if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
+            qArr.push({
+              question_id: cat.id,
+              question_text: `[Evidencia General] ${cat.name}`,
+              value: 'Evidencia adjunta',
+              observation: responses[cat.id]?.observation || null
+            });
+          }
+          return qArr;
+        });
 
         generatePDF(evalData, formResponsesArr, evalDataSig);
       }
@@ -223,16 +245,24 @@ export function NewEvaluation() {
   };
 
   // Validate that all questions have an answer, and 1 or 2 have photos and observations (for internal)
-  const isValid = activeCategories.every(cat => 
-    cat.questions.every(q => {
-      const resp = responses[q.id];
-      if (!resp || resp.value === undefined || resp.value === '') return false;
-      if (user?.role !== 'ghost' && typeof resp.value === 'number' && resp.value <= 2) {
-        if (!resp.photo || !resp.observation || resp.observation.trim() === '') return false;
+  const handleNextStep = () => {
+    for (const cat of activeCategories) {
+      for (const q of cat.questions) {
+        const resp = responses[q.id];
+        if (!resp || resp.value === undefined || resp.value === '') {
+          alert(`Falta responder: "${q.text}" en la categoría "${cat.name}".`);
+          return;
+        }
+        if (user?.role !== 'ghost' && typeof resp.value === 'number' && resp.value <= 2) {
+          if (!resp.observation || resp.observation.trim() === '') {
+            alert(`Para puntajes de 2 o menos, debes adjuntar un comentario justificativo.\nFalta en: "${q.text}" (${cat.name}).`);
+            return;
+          }
+        }
       }
-      return true;
-    })
-  );
+    }
+    setStep(2);
+  };
 
   return (
     <div className="container">
@@ -375,13 +405,15 @@ export function NewEvaluation() {
           </div>
           
           <div className="flex flex-col gap-8">
-            {activeCategories.map(cat => (
+            {activeCategories.map((cat, catIdx) => {
+              const catLetter = String.fromCharCode(65 + catIdx); // A, B, C...
+              return (
               <div key={cat.id} style={{ padding: '24px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)' }}>
                 <h3 className="text-xl" style={{ marginBottom: '20px', color: 'var(--primary)' }}>{cat.name} <span className="text-muted" style={{fontSize: '1rem'}}>({cat.weight}%)</span></h3>
                 
                 {cat.questions.map((q, idx) => (
                   <div key={q.id} className="flex flex-col gap-3" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px dashed var(--border-color)' }}>
-                    <p style={{ fontWeight: 500 }}>{idx + 1}. {q.text}</p>
+                    <p style={{ fontWeight: 500 }}>{catLetter}{idx + 1}. {q.text}</p>
                     <div className="flex gap-2 flex-wrap">
                       {(!q.type || q.type === 'rating') && [1, 2, 3, 4, 5].map(score => (
                         <button 
@@ -431,11 +463,11 @@ export function NewEvaluation() {
                       />
                     )}
                     
-                    {/* Require Photo and Observation if score is 1 or 2 (Only for rating/internal) */}
+                    {/* Require Observation if score is 1 or 2 (Only for rating/internal) */}
                     {user?.role !== 'ghost' && typeof responses[q.id]?.value === 'number' && (responses[q.id].value as number) <= 2 && (
                       <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
                         <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 500 }}>
-                          * Puntuación baja. Se requiere fotografía y comentario justificativo obligatorio.
+                          * Puntuación baja. Se requiere comentario justificativo obligatorio.
                         </p>
                         
                         <div className="flex flex-col gap-3">
@@ -450,7 +482,7 @@ export function NewEvaluation() {
                           
                           <div className="flex items-center gap-4">
                             <label className="btn btn-ghost" style={{ border: '1px dashed var(--danger)', color: 'var(--danger)', cursor: 'pointer' }}>
-                              <Camera size={18} /> Subir Evidencia
+                              <Camera size={18} /> Subir Evidencia (Opcional)
                               <input 
                                 type="file" 
                                 accept="image/*" 
@@ -473,25 +505,53 @@ export function NewEvaluation() {
                   </div>
                 ))}
                 
-                <div className="form-group" style={{ marginTop: '16px' }}>
-                  <label className="form-label">Observaciones generales de {cat.name}</label>
-                  <textarea className="form-control" rows={2} placeholder="Opcional..."></textarea>
+                <div className="form-group" style={{ marginTop: '16px', padding: '16px', background: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <label className="form-label" style={{ fontWeight: 600 }}>Observaciones generales y Evidencia (Opcional)</label>
+                  <div className="flex flex-col gap-3">
+                    <textarea 
+                      className="form-control" 
+                      rows={2} 
+                      placeholder="Escribe un comentario general sobre esta categoría..."
+                      value={responses[cat.id]?.observation || ''}
+                      onChange={(e) => handleObservation(cat.id, e.target.value)}
+                    />
+                    <div className="flex items-center gap-4">
+                      <label className="btn btn-outline" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Camera size={18} /> Adjuntar Foto
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment" 
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handlePhoto(cat.id, e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </label>
+                      {responses[cat.id]?.photo && (
+                        <img src={responses[cat.id]?.photo} alt="Evidencia de Categoría" style={{ height: '50px', borderRadius: '4px' }} />
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
           
           <div className="flex justify-between items-center mt-8">
             <div>
               {user?.role !== 'ghost' && (
-                <p className="text-xl">Puntaje Parcial: <span style={{fontWeight: 'bold', color: 'var(--primary)'}}>{calculateScore()} / 100</span></p>
+                <p className="text-xl" style={{ marginBottom: '8px' }}>Puntaje Parcial: <span style={{fontWeight: 'bold', color: 'var(--primary)'}}>{calculateScore()} / 100</span></p>
               )}
+              <p className="text-muted" style={{ fontSize: '0.9rem' }}>
+                Progreso actual: {Object.keys(responses).length} / {activeCategories.reduce((acc, cat) => acc + cat.questions.length, 0)} preguntas
+              </p>
             </div>
             <button 
-              onClick={() => setStep(2)} 
+              onClick={handleNextStep} 
               className="btn btn-primary"
-              disabled={!isValid}
-              title={!isValid ? "Responde todas las preguntas y adjunta las fotos necesarias" : ""}
             >
               Siguiente: Firmas <ChevronRight size={20} />
             </button>
