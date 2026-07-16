@@ -17,19 +17,19 @@ export const mockIslas: Isla[] = [
 ];
 
 export const mockEmployees = [
-  { id: 'e1', name: 'Virginia' },
-  { id: 'e2', name: 'Susana' },
-  { id: 'e3', name: 'Yamile' },
-  { id: 'e4', name: 'Teresa' },
-  { id: 'e5', name: 'Johana' },
-  { id: 'e6', name: 'Daysy' },
-  { id: 'e7', name: 'Liliana' },
-  { id: 'e8', name: 'Carmen' },
-  { id: 'e9', name: 'Jackie' },
-  { id: 'e10', name: 'Andrea' },
-  { id: 'e11', name: 'Maritza' },
-  { id: 'e12', name: 'Gabriel' },
-  { id: 'e13', name: 'Shirley' }
+  { id: 'e1', name: 'Gabriel Perero' },
+  { id: 'e2', name: 'Shirley Reyes' },
+  { id: 'e3', name: 'Yamilet Delgado' },
+  { id: 'e4', name: 'Virginia Miño' },
+  { id: 'e5', name: 'Johanna Mendoza' },
+  { id: 'e6', name: 'Dayse Rodriguez' },
+  { id: 'e7', name: 'Teresa Vargas' },
+  { id: 'e8', name: 'Carmen Larenas' },
+  { id: 'e9', name: 'Liliana Estrada' },
+  { id: 'e10', name: 'Jackeline Mera Collazo' },
+  { id: 'e11', name: 'Andrea Meza Saltos' },
+  { id: 'e12', name: 'Maritza Cedeño' },
+  { id: 'e13', name: 'Jackie Rodriguez' }
 ];
 
 export const categories: Category[] = [
