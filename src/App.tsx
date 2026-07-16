@@ -5,6 +5,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { NewEvaluation } from './pages/NewEvaluation';
+import { Landing } from './pages/Landing';
 import { ThemeToggle } from './components/ThemeToggle';
 
 function PrivateRoute({ children, roles }: { children: React.ReactNode, roles?: string[] }) {
@@ -15,7 +16,7 @@ function PrivateRoute({ children, roles }: { children: React.ReactNode, roles?: 
   }
 
   if (roles && !roles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return <>{children}</>;
@@ -43,7 +44,13 @@ function App() {
           <ThemeToggle />
         </div>
         <Routes>
+          {/* Public Landing Page */}
+          <Route path="/" element={<Landing />} />
+          
           <Route path="/login" element={<Login />} />
+          
+          {/* App routing decider */}
+          <Route path="/app" element={<DefaultRoute />} />
           
           <Route path="/dashboard" element={
             <PrivateRoute roles={['admin']}>
@@ -63,7 +70,8 @@ function App() {
             </PrivateRoute>
           } />
           
-          <Route path="/" element={<DefaultRoute />} />
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

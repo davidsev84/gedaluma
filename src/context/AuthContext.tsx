@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '../types';
-import { mockUsers } from '../data/mock';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
-  login: (pin: string) => boolean;
+  login: (username: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -21,14 +21,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (pin: string) => {
-    const foundUser = mockUsers.find(u => u.pin === pin);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('gedaluma_user', JSON.stringify(foundUser));
-      return true;
+  const login = async (username: string, pass: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('system_users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', pass)
+        .single();
+        
+      if (error || !data) {
+        return { success: false, error: 'Usuario o contraseña incorrectos.' };
+      }
+      
+      const loggedUser: User = {
+        id: data.id,
+        name: data.name,
+        role: data.role as 'admin' | 'evaluator' | 'ghost',
+        pin: data.password // keeping the interface happy, or we can update User type
+      };
+      
+      setUser(loggedUser);
+      localStorage.setItem('gedaluma_user', JSON.stringify(loggedUser));
+      return { success: true };
+      
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: 'Error de conexión con el servidor.' };
     }
-    return false;
   };
 
   const logout = () => {
