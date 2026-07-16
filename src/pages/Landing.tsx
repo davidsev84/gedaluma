@@ -1,6 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp } from 'lucide-react';
 
 export function Landing() {
   const navigate = useNavigate();
