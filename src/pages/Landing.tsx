@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp, Menu, X } from 'lucide-react';
 
 export function Landing() {
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -25,13 +27,31 @@ export function Landing() {
           </button>
         </div>
         
-        {/* Mobile quick access */}
-        <div className="show-mobile" style={{ display: 'none' }}>
-          <button onClick={() => navigate('/login')} className="btn btn-primary">
-            Acceso
+        {/* Mobile menu toggle */}
+        <div className="show-mobile">
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="btn btn-ghost" 
+            style={{ padding: '8px' }}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu-overlay show-mobile">
+          <a href="#proposito" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Visión</a>
+          <a href="#adn" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Valores</a>
+          <a href="#compromiso" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Compromiso</a>
+          <div style={{ marginTop: 'auto', marginBottom: '32px' }}>
+            <button onClick={() => navigate('/login')} className="btn btn-primary w-full" style={{ fontSize: '1.2rem', padding: '16px' }}>
+              Acceso al Sistema
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section id="proposito" className="landing-section container fade-in-up" style={{ paddingTop: '120px' }}>
