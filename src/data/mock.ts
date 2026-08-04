@@ -140,28 +140,216 @@ export const categories: Category[] = [
   }
 ];
 
-export const ghostCategories: Category[] = [
+export interface GhostOption {
+  label: string;
+  points: number | null; // null means excluded (NE or N/A)
+}
+
+export interface GhostQuestion {
+  id: string;
+  code: string;
+  text: string;
+  type: 'ghost_choice' | 'text';
+  ghostOptions?: GhostOption[];
+}
+
+export const ghostCategories = [
   {
     id: 'GHOST_1',
-    name: 'Experiencia del Cliente Fantasma',
-    weight: 0, // No percentage calculation for ghost client for now
+    name: 'Módulo Cliente Fantasma GEDALUMA (P1 - P12)',
+    weight: 100,
     questions: [
-      { id: 'gh1', text: '¿La vendedora usa el uniforme completo y limpio?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh2', text: '¿La presentación personal es adecuada (orden, aseo)?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh3', text: '¿La actitud fue amable y respetuosa durante toda la atención?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh4', text: '¿Saludó al cliente al llegar?', type: 'choice', options: ['Sí', 'No'] },
-      { id: 'gh5', text: '¿Mantuvo contacto visual y trato cordial?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh6', text: '¿Interactuó durante la compra (preguntó, explicó, sugirió)?', type: 'choice', options: ['Sí', 'No', 'Poco'] },
-      { id: 'gh7', text: '¿Ofreció algún producto adicional o complemento?', type: 'choice', options: ['Sí', 'No', 'Lo pensó pero no lo hizo'] },
-      { id: 'gh8', text: '¿Transmitió seguridad al momento de atender y vender?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh9', text: 'En general, ¿cómo calificas el trato recibido?', type: 'choice', options: ['Malo', 'Regular', 'Bueno', 'Muy Bueno'] },
-      { id: 'gh10', text: '¿Te sentiste cómodo y bien atendido durante toda la compra?', type: 'choice', options: ['Sí', 'Más o menos', 'No'] },
-      { id: 'gh11', text: '¿La vendedora te ofreció factura y solicitó tus datos para emitirla?', type: 'choice', options: ['No ofreció factura', 'Ofreció factura, pero no pidió los datos', 'Sí, ofreció factura y pidió los datos'] },
-      { id: 'gh12', text: '¿Qué fue lo mejor de la atención?', type: 'text' },
-      { id: 'gh13', text: '¿Qué podría mejorar?', type: 'text' }
+      {
+        id: 'p1',
+        code: 'P1',
+        text: 'P1. ¿La vendedora se comunicó de forma respetuosa durante toda la interacción?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
+          { label: 'No', points: 0 },
+          { label: 'NE: Interacción demasiado breve', points: null }
+        ]
+      },
+      {
+        id: 'p2',
+        code: 'P2',
+        text: 'P2. ¿La vendedora te saludó o reconoció tu presencia al llegar?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí por iniciativa propia', points: 2 },
+          { label: 'Solo después de que yo iniciara interacción', points: 1 },
+          { label: 'No saludó', points: 0 },
+          { label: 'NE: No pudo evaluarse', points: null }
+        ]
+      },
+      {
+        id: 'p3',
+        code: 'P3',
+        text: 'P3. ¿La vendedora se mantuvo enfocada en la atención, sin distracciones personales o actividades irrelevantes?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
+          { label: 'No', points: 0 },
+          { label: 'NE: Interacción demasiado breve', points: null }
+        ]
+      },
+      {
+        id: 'p4',
+        code: 'P4',
+        text: 'P4. ¿Explicó las opciones o características del producto de manera clara?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
+          { label: 'No', points: 0 },
+          { label: 'N/A: No requería explicación', points: null },
+          { label: 'NE: No se planteó pregunta', points: null }
+        ]
+      },
+      {
+        id: 'p5',
+        code: 'P5',
+        text: 'P5. ¿Recomendó un producto coherente con la necesidad expresada?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
+          { label: 'No', points: 0 },
+          { label: 'N/A: Pidió producto específico directamente', points: null },
+          { label: 'NE: Escenario no ejecutado', points: null }
+        ]
+      },
+      {
+        id: 'p6',
+        code: 'P6',
+        text: 'P6. ¿Ofreció espontáneamente un producto complementario específico y relacionado con la compra?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
+          { label: 'No', points: 0 },
+          { label: 'NE: Interacción terminó imprevistamente', points: null }
+        ]
+      },
+      {
+        id: 'p7',
+        code: 'P7',
+        text: 'P7. Considerando toda la experiencia, ¿cómo calificarías la atención recibida?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Excelente', points: 2 },
+          { label: 'Aceptable', points: 1 },
+          { label: 'Deficiente', points: 0 }
+        ]
+      },
+      {
+        id: 'p8',
+        code: 'P8',
+        text: 'P8. ¿Preguntó "Desea factura con datos o consumidor final"?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'No', points: 0 },
+          { label: 'NE: Pago no completado', points: null }
+        ]
+      },
+      {
+        id: 'p9',
+        code: 'P9',
+        text: 'P9. ¿La vendedora confirmó y facilitó adecuadamente la forma de pago?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí confirmó y procesó fluido', points: 2 },
+          { label: 'Parcial o lento sin errores', points: 1 },
+          { label: 'No/Errores/Molestia', points: 0 },
+          { label: 'NE: Pago no completado', points: null }
+        ]
+      },
+      {
+        id: 'p10',
+        code: 'P10',
+        text: 'P10. ¿La vendedora te entregó el ticket o comprobante de venta impreso?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí', points: 2 },
+          { label: 'No entregó/Dijo que no imprimía', points: 0 }
+        ]
+      },
+      {
+        id: 'p11',
+        code: 'P11',
+        text: 'P11. ¿El producto requerido estaba disponible o se ofreció alternativa adecuada proactivamente?',
+        type: 'ghost_choice',
+        ghostOptions: [
+          { label: 'Sí/Alternativa exitosa', points: 2 },
+          { label: 'Parcial/Alternativa pasiva', points: 1 },
+          { label: 'No hay', points: 0 },
+          { label: 'N/A: No aplica', points: null }
+        ]
+      },
+      {
+        id: 'p12',
+        code: 'P12',
+        text: 'P12. Observaciones: Describe una conducta concreta que podría mejorar: qué hizo o dejó de hacer y qué habría sido preferible.',
+        type: 'text'
+      }
     ]
   }
 ];
+
+export function calculateGhostKPI(responsesMap: Record<string, { value?: string | number }>) {
+  let puntosObtenidos = 0;
+  let puntosMaximos = 0;
+
+  const questions = ghostCategories[0].questions;
+  questions.forEach(q => {
+    if (q.type === 'ghost_choice' && q.ghostOptions) {
+      const selectedValue = responsesMap[q.id]?.value;
+      const matchedOpt = q.ghostOptions.find(opt => opt.label === selectedValue);
+      
+      if (matchedOpt && matchedOpt.points !== null && matchedOpt.points !== undefined) {
+        puntosObtenidos += matchedOpt.points;
+        puntosMaximos += 2; // Each evaluable question has max 2 points
+      }
+    }
+  });
+
+  const percentage = puntosMaximos > 0 ? Number(((puntosObtenidos / puntosMaximos) * 100).toFixed(2)) : 0;
+  
+  let rango = '';
+  let bono = '';
+  let accion = '';
+  let color = '';
+
+  if (percentage >= 90) {
+    rango = '90% - 100%';
+    bono = 'Califica 100% al bono de calidad';
+    accion = 'Reconocimiento en acta mensual.';
+    color = '#009C48';
+  } else if (percentage >= 75) {
+    rango = '75% - 89%';
+    bono = 'Califica 50% del bono';
+    accion = 'Plan de refuerzo individual por Richard.';
+    color = '#f7b500';
+  } else {
+    rango = 'Menor a 75%';
+    bono = 'No califica al bono en el periodo';
+    accion = 'Capacitación obligatoria y auditoría de seguimiento.';
+    color = 'var(--danger)';
+  }
+
+  return {
+    puntosObtenidos,
+    puntosMaximos,
+    percentage,
+    rango,
+    bono,
+    accion,
+    color
+  };
+}
 
 export const penaltyPolicies = {
   'Leve': {

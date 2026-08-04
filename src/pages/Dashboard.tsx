@@ -180,12 +180,7 @@ export function Dashboard() {
   const selectedIsla = mockIslas.find(i => i.id === selectedIslaId);
   const selectedIslaStats = selectedIslaId ? getIslaStats(selectedIslaId) : null;
 
-  const getGhostOptionPercent = (val: string) => {
-    const v = val.toLowerCase();
-    if (v.includes('sí, ofreció') || v.includes('muy bueno') || v === 'sí' || v === 'bueno') return 100;
-    if (v.includes('más o menos') || v.includes('regular') || v.includes('poco') || v.includes('ofreció factura, pero')) return 50;
-    return 0;
-  };
+
 
   if (loading) {
     return (
@@ -508,9 +503,9 @@ export function Dashboard() {
               <div className="card">
                 <h3 className="text-xl" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <UserCheck size={20} style={{ color: '#f7b500' }} />
-                  Éxito por Pregunta (Cliente Fantasma - Isla {selectedIsla?.name})
+                  Éxito por Pregunta P1 a P11 (Isla {selectedIsla?.name})
                 </h3>
-                <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '480px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
@@ -519,14 +514,20 @@ export function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ghostCategories[0].questions.filter(q => q.type !== 'text').map((q) => {
+                      {ghostCategories[0].questions.filter(q => q.type !== 'text').map((q: any) => {
                         const validEvalIds = selectedIslaStats.ghostEvals.map(e => e.id);
                         const qResponses = responses.filter(r => r.question_id === q.id && validEvalIds.includes(r.evaluation_id));
                         let totalPoints = 0;
+                        let maxPoints = 0;
                         qResponses.forEach(r => {
-                          totalPoints += getGhostOptionPercent(r.value || '');
+                          const val = r.value || '';
+                          const matchedOpt = q.ghostOptions?.find((opt: any) => opt.label === val);
+                          if (matchedOpt && matchedOpt.points !== null && matchedOpt.points !== undefined) {
+                            totalPoints += matchedOpt.points;
+                            maxPoints += 2;
+                          }
                         });
-                        const avg = qResponses.length > 0 ? totalPoints / qResponses.length : 0;
+                        const avg = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
                         return (
                           <tr key={q.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                             <td style={{ padding: '12px 10px', lineHeight: 1.4 }}>{q.text}</td>
@@ -543,24 +544,49 @@ export function Dashboard() {
 
               <div className="card">
                 <h3 className="text-xl" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <CheckCircle2 size={20} style={{ color: '#f7b500' }} />
-                  Observaciones y Comentarios Recientes
+                  <CheckCircle2 size={20} style={{ color: '#009C48' }} />
+                  Plan de Acción & Impacto en Bono de Calidad
                 </h3>
-                <div style={{ maxHeight: '450px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {selectedIslaStats.ghostEvals.map((ev) => (
-                    <div key={ev.id} style={{ padding: '14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--surface-color)' }}>
-                      <div className="flex justify-between items-center" style={{ marginBottom: '6px' }}>
-                        <span style={{ fontWeight: 700 }}>Visita Cliente Fantasma</span>
-                        <span style={{ fontWeight: 800, color: getScoreColor(ev.total_score) }}>{Number(ev.total_score).toFixed(1)}%</span>
+                <div style={{ maxHeight: '480px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {selectedIslaStats.ghostEvals.map((ev: any) => {
+                    const score = Number(ev.total_score || 0);
+                    let badge = { bono: '100% Bono Calidad', accion: 'Reconocimiento en acta mensual.', color: '#009C48', bg: 'rgba(0, 156, 72, 0.12)' };
+                    if (score < 75) {
+                      badge = { bono: 'No Califica al Bono (0%)', accion: 'Capacitación obligatoria y auditoría de seguimiento.', color: 'var(--danger)', bg: 'rgba(239, 68, 68, 0.12)' };
+                    } else if (score < 90) {
+                      badge = { bono: '50% Bono Calidad', accion: 'Plan de refuerzo individual por Richard.', color: '#f7b500', bg: 'rgba(247, 181, 0, 0.12)' };
+                    }
+
+                    return (
+                      <div key={ev.id} style={{ padding: '16px', border: `1px solid ${badge.color}`, borderRadius: '10px', background: 'var(--surface-color)' }}>
+                        <div className="flex justify-between items-center" style={{ marginBottom: '8px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>
+                            {ev.evaluated_employee ? `Vendedora: ${ev.evaluated_employee}` : 'Visita Cliente Fantasma'}
+                          </span>
+                          <span style={{ fontWeight: 800, fontSize: '1.2rem', color: badge.color }}>
+                            {score.toFixed(1)}%
+                          </span>
+                        </div>
+
+                        <div className="flex gap-2 items-center" style={{ marginBottom: '8px' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: '12px', fontWeight: 700, fontSize: '0.78rem', background: badge.bg, color: badge.color }}>
+                            {badge.bono}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            {ev.time_slot ? `Horario: ${ev.time_slot}` : ''}
+                          </span>
+                        </div>
+
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '6px' }}>
+                          📌 Acción Operativa: <span className="text-muted" style={{ fontWeight: 400 }}>{badge.accion}</span>
+                        </p>
+
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          Fecha: {new Date(ev.date || ev.created_at).toLocaleDateString()} | Evaluador: {ev.evaluator_name || 'Fantasma'}
+                        </div>
                       </div>
-                      <p className="text-muted" style={{ fontSize: '0.85rem', fontStyle: 'italic', marginBottom: '6px' }}>
-                        "{ev.notes || ev.comments || 'Sin comentarios adicionales'}"
-                      </p>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        Fecha: {new Date(ev.date || ev.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {selectedIslaStats.ghostEvals.length === 0 && (
                     <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                       No hay visitas de cliente fantasma registradas para esta isla.
