@@ -16,6 +16,7 @@ export function NewEvaluation() {
   const [auditorType, setAuditorType] = useState('');
   const [customAuditorName, setCustomAuditorName] = useState('');
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
+  const [timeSlot, setTimeSlot] = useState('Mañana (10am - 12h30)');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   
@@ -51,15 +52,20 @@ export function NewEvaluation() {
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasEmployee = selectedEmployee !== '' || (isGhost && customEmployeeName.trim() !== '');
-    const hasAuditor = !isGhost ? (auditorType !== '' && (auditorType !== 'otro' || customAuditorName.trim() !== '')) : true;
-    const hasTimes = !isGhost || (startTime !== '' && endTime !== '');
-
-    if (selectedIsla && hasEmployee && hasAuditor && hasTimes) {
-      setStep(1);
-    } else {
-      alert('Por favor completa todos los datos de cabecera obligatorios.');
+    if (!selectedIsla) {
+      alert('Por favor selecciona la isla evaluada.');
+      return;
     }
+    if (!isGhost && (!selectedEmployee || !auditorType)) {
+      alert('Por favor completa todos los datos de cabecera de auditoría.');
+      return;
+    }
+
+    // Automatically record start time from system
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setStartTime(nowTime);
+
+    setStep(1);
   };
 
   const handleAnswer = (qId: string, value: string | number) => {
@@ -68,8 +74,6 @@ export function NewEvaluation() {
       [qId]: { ...prev[qId], value, score: typeof value === 'number' ? value : undefined }
     }));
   };
-
-
 
   // KPI Calculation for Ghost Client
   const ghostKPI = isGhost ? calculateGhostKPI(responses) : null;
@@ -111,11 +115,13 @@ export function NewEvaluation() {
   const handleFinish = async () => {
     setIsSaving(true);
     try {
+      const autoEndTime = endTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const finalScore = calculateScore();
       const interpretation = getInterpretation(finalScore);
       const isla = mockIslas.find(i => i.id === selectedIsla);
-      const employeeObj = employees.find(e => e.id === selectedEmployee);
-      const evaluatedName = isGhost ? (customEmployeeName.trim() || employeeObj?.name || 'Vendedora') : employeeObj?.name;
+      
+      const employeeObj = employees.find(e => e.id === selectedEmployee || e.name === selectedEmployee);
+      const evaluatedName = selectedEmployee || customEmployeeName.trim() || employeeObj?.name || 'No especificada';
 
       const auditorName = isGhost ? (user?.name || 'Cliente Fantasma') : 
                           (auditorType === 'supervisor' ? 'Supervisor Richard' : 
@@ -132,9 +138,9 @@ export function NewEvaluation() {
           evaluator_role: user?.role,
           evaluated_employee: evaluatedName,
           auditor_type: auditorType,
-          time_slot: isGhost ? `${startTime} - ${endTime}` : null,
+          time_slot: timeSlot,
           start_time: startTime,
-          end_time: endTime,
+          end_time: autoEndTime,
           date: visitDate,
           total_score: finalScore,
           status: interpretation.text
@@ -205,6 +211,10 @@ export function NewEvaluation() {
         }
       }
     }
+    // Automatically record end time from system
+    const autoEndTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setEndTime(autoEndTime);
+
     setStep(2);
   };
 
@@ -256,6 +266,35 @@ export function NewEvaluation() {
               />
             </div>
 
+            {/* SECCIÓN HORARIO DE VISITA (CLIENTE FANTASMA) */}
+            {isGhost && (
+              <div className="form-group">
+                <label className="form-label">Horario de Visita *</label>
+                <select 
+                  className="form-control"
+                  value={timeSlot}
+                  onChange={(e) => setTimeSlot(e.target.value)}
+                  required
+                >
+                  <option value="Mañana (10am - 12h30)">Mañana (10am - 12h30)</option>
+                  <option value="Mediodía (12h30-14h00)">Mediodía (12h30-14h00)</option>
+                  <option value="Tarde (14h00-17h30)">Tarde (14h00-17h30)</option>
+                </select>
+              </div>
+            )}
+
+            {/* AVISO HORA AUTOMÁTICA DE SISTEMA */}
+            {isGhost && (
+              <div className="form-group" style={{ background: 'rgba(0, 156, 72, 0.08)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(0, 156, 72, 0.2)' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#009C48', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ⏱️ Registro de Hora Automático por el Sistema
+                </span>
+                <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: '4px' }}>
+                  La hora exacta de inicio y finalización será capturada automáticamente por la plataforma al avanzar y guardar la evaluación.
+                </p>
+              </div>
+            )}
+
             <div className="form-group">
               <label className="form-label">Nombre del Evaluador *</label>
               <input 
@@ -285,54 +324,39 @@ export function NewEvaluation() {
               </div>
             )}
 
+            {/* DESPLEGABLE DE EMPLEADOS (OPCIONAL PARA CLIENTE FANTASMA) */}
             <div className="form-group">
-              <label className="form-label">Nombre de la Evaluada (Vendedora) *</label>
-              {isGhost ? (
+              <label className="form-label">
+                Empleado / Vendedora a Evaluar {isGhost ? '(Opcional)' : '*'}
+              </label>
+              <select 
+                className="form-control"
+                value={selectedEmployee}
+                onChange={(e) => {
+                  setSelectedEmployee(e.target.value);
+                  setCustomEmployeeName(e.target.value);
+                }}
+                required={!isGhost}
+              >
+                <option value="">
+                  {isGhost ? '-- No identificada / No especificada (Opcional) --' : 'Seleccione la empleada...'}
+                </option>
+                {employees.map(emp => (
+                  <option key={emp.id || emp.name} value={emp.name}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {isGhost && (
+              <div className="form-group">
+                <label className="form-label">O escribir nombre manual (Opcional si no está en la lista)</label>
                 <input 
                   type="text" 
                   className="form-control" 
                   value={customEmployeeName}
                   onChange={(e) => setCustomEmployeeName(e.target.value)}
-                  placeholder="Ej. Shirley Reyes / Nombre de la vendedora"
-                  required
+                  placeholder="Ej. Shirley Reyes (Dejar en blanco si no se conoce el nombre)"
                 />
-              ) : (
-                <select 
-                  className="form-control"
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>Seleccione la empleada...</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {isGhost && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
-                  <label className="form-label">Hora de inicio de visita *</label>
-                  <input 
-                    type="time" 
-                    className="form-control" 
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Hora de finalización *</label>
-                  <input 
-                    type="time" 
-                    className="form-control" 
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    required
-                  />
-                </div>
               </div>
             )}
 
@@ -373,7 +397,7 @@ export function NewEvaluation() {
             }}>
               <div>
                 <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
-                  KPI Cliente Fantasma en Tiempo Real
+                  KPI Cliente Fantasma en Tiempo Real (Hora inicio: {startTime})
                 </span>
                 <div style={{ fontSize: '1.4rem', fontWeight: 800, color: ghostKPI.color }}>
                   {ghostKPI.percentage}% <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>({ghostKPI.puntosObtenidos} / {ghostKPI.puntosMaximos} pts evaluables)</span>
@@ -505,7 +529,15 @@ export function NewEvaluation() {
             <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               Dictamen: {getInterpretation(calculateScore()).text}
             </p>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+
+            {isGhost && (
+              <div style={{ marginTop: '10px', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                <span>⏱️ Duración de Visita (Automática): {startTime} a {endTime}</span><br />
+                <span>📅 Horario Seleccionado: {timeSlot}</span>
+              </div>
+            )}
+            
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
               Acción Operativa: {getInterpretation(calculateScore()).action}
             </p>
           </div>
@@ -521,7 +553,7 @@ export function NewEvaluation() {
               </button>
             </div>
 
-            <div className="flex gap-4 style={{ marginTop: '16px' }}">
+            <div className="flex gap-4" style={{ marginTop: '16px' }}>
               <button onClick={() => setStep(1)} className="btn btn-ghost" style={{ flex: 1 }}>
                 Volver al Cuestionario
               </button>
