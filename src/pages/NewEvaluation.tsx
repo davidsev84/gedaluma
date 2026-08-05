@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI } from '../data/mock';
-import { LogOut, ChevronRight, Check, Loader2, Award } from 'lucide-react';
+import { LogOut, Camera, ChevronRight, Check, Loader2, Award } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
 import { generatePDF } from '../lib/pdfGenerator';
@@ -61,7 +61,7 @@ export function NewEvaluation() {
       return;
     }
 
-    // Automatically record start time from system
+    // Record start time from system
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setStartTime(nowTime);
 
@@ -73,6 +73,43 @@ export function NewEvaluation() {
       ...prev,
       [qId]: { ...prev[qId], value, score: typeof value === 'number' ? value : undefined }
     }));
+  };
+
+  const handleObservation = (qId: string, observation: string) => {
+    setResponses(prev => ({
+      ...prev,
+      [qId]: { ...prev[qId], observation }
+    }));
+  };
+
+  const handlePhoto = (qId: string, file: File) => {
+    const url = URL.createObjectURL(file);
+    
+    // Compress and convert to base64 for DB
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let scaleSize = 1;
+        if (img.width > MAX_WIDTH) {
+          scaleSize = MAX_WIDTH / img.width;
+        }
+        canvas.width = img.width * scaleSize;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const base64 = canvas.toDataURL('image/jpeg', 0.6);
+        
+        setResponses(prev => ({
+          ...prev,
+          [qId]: { ...prev[qId], photo: url, photoData: base64 }
+        }));
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   // KPI Calculation for Ghost Client
@@ -161,6 +198,17 @@ export function NewEvaluation() {
           photo_data: responses[q.id]?.photoData || null
         }));
         
+        if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
+          qResponses.push({
+            evaluation_id: evalData.id,
+            question_id: cat.id,
+            question_text: `[Evidencia General] ${cat.name}`,
+            value: 'Evidencia adjunta',
+            observation: responses[cat.id]?.observation || null,
+            photo_data: responses[cat.id]?.photoData || null
+          });
+        }
+
         return qResponses;
       });
 
@@ -181,12 +229,21 @@ export function NewEvaluation() {
         }
         
         const formResponsesArr = activeCategories.flatMap(cat => {
-          return cat.questions.map(q => ({
+          const qArr = cat.questions.map(q => ({
             question_id: q.id,
             question_text: q.text,
             value: String(responses[q.id]?.value || ''),
             observation: responses[q.id]?.observation || null
           }));
+          if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
+            qArr.push({
+              question_id: cat.id,
+              question_text: `[Evidencia General] ${cat.name}`,
+              value: 'Evidencia adjunta',
+              observation: responses[cat.id]?.observation || null
+            });
+          }
+          return qArr;
         });
 
         generatePDF(evalData, formResponsesArr, evalDataSig);
@@ -209,8 +266,17 @@ export function NewEvaluation() {
           alert(`Falta responder la pregunta: "${q.text}".`);
           return;
         }
+
+        // Mandatory justification for low ratings (1 or 2) in regular audit
+        if (!isGhost && typeof resp.value === 'number' && resp.value <= 2) {
+          if (!resp.observation || resp.observation.trim() === '') {
+            alert(`Para puntajes de 2 o menos, debes adjuntar un comentario justificativo.\nFalta en: "${q.text}" (${cat.name}).`);
+            return;
+          }
+        }
       }
     }
+
     // Automatically record end time from system
     const autoEndTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setEndTime(autoEndTime);
@@ -222,7 +288,7 @@ export function NewEvaluation() {
     <div className="container" style={{ maxWidth: '900px', paddingBottom: '60px' }}>
       <header className="flex justify-between items-center" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
         <div>
-          <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Nueva Evaluación de Auditoría'}</h1>
+          <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Nueva Evaluación de Auditoría Interna'}</h1>
           <p className="text-muted">Evaluador: {user?.name}</p>
         </div>
         <button onClick={logout} className="btn btn-ghost">
@@ -309,7 +375,7 @@ export function NewEvaluation() {
 
             {!isGhost && (
               <div className="form-group">
-                <label className="form-label">¿Tipo de Evaluador?</label>
+                <label className="form-label">¿Tipo de Evaluador? *</label>
                 <select 
                   className="form-control"
                   value={auditorType}
@@ -319,12 +385,26 @@ export function NewEvaluation() {
                   <option value="" disabled>Seleccione el auditor...</option>
                   <option value="supervisor">Supervisor (Richard)</option>
                   <option value="fernando">Fernando Brito</option>
-                  <option value="otro">Otra persona</option>
+                  <option value="otro">Otra persona (Ingresar nombre)</option>
                 </select>
               </div>
             )}
 
-            {/* DESPLEGABLE DE EMPLEADOS (OPCIONAL PARA CLIENTE FANTASMA) */}
+            {!isGhost && auditorType === 'otro' && (
+              <div className="form-group">
+                <label className="form-label">Nombre del Auditor *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={customAuditorName}
+                  onChange={(e) => setCustomAuditorName(e.target.value)}
+                  placeholder="Ej. María López"
+                  required
+                />
+              </div>
+            )}
+
+            {/* DESPLEGABLE DE EMPLEADOS */}
             <div className="form-group">
               <label className="form-label">
                 Empleado / Vendedora a Evaluar {isGhost ? '(Opcional)' : '*'}
@@ -367,14 +447,14 @@ export function NewEvaluation() {
         </div>
       )}
 
-      {/* STEP 1: CUESTIONARIO DE EVALUACIÓN */}
+      {/* STEP 1: CUESTIONARIO DE EVALUACIÓN CON CATEGORÍAS */}
       {step === 1 && (
         <div className="card">
           <div className="flex justify-between items-center mb-6" style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div>
-              <h2 className="text-xl font-bold">{isGhost ? 'Protocolo Cliente Fantasma GEDALUMA' : 'Cuestionario de Auditoría'}</h2>
+              <h2 className="text-xl font-bold">{isGhost ? 'Protocolo Cliente Fantasma GEDALUMA' : 'Cuestionario de Auditoría Interna por Categorías'}</h2>
               <p className="text-muted" style={{ fontSize: '0.88rem' }}>
-                Responda objetivamente cada ítem. Los marcados como NE o N/A no se cuentan en el denominador.
+                {isGhost ? 'Responda objetivamente cada ítem. Los marcados como NE o N/A se excluyen del denominador.' : 'Evalúe cada ítem de 1 a 5. Para notas <= 2 es obligatorio justificar y opcionalmente adjuntar foto.'}
               </p>
             </div>
             
@@ -418,85 +498,176 @@ export function NewEvaluation() {
             </div>
           )}
 
-          <div className="flex flex-col gap-6">
-            {activeCategories.map((cat) => (
-              <div key={cat.id} className="flex flex-col gap-6">
-                {cat.questions.map((q: any) => (
-                  <div key={q.id} style={{ padding: '20px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)' }}>
-                    <p style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '14px', lineHeight: 1.4 }}>
-                      {q.text}
-                    </p>
+          {/* RENDERING CATEGORIES & QUESTIONS */}
+          <div className="flex flex-col gap-8">
+            {activeCategories.map((cat) => {
 
-                    {/* RATING 1-5 PARA AUDITORÍA NORMAL */}
-                    {(!q.type || q.type === 'rating') && (
-                      <div className="flex gap-2 flex-wrap">
-                        {[1, 2, 3, 4, 5].map(score => (
-                          <button 
-                            key={score} 
-                            type="button" 
-                            onClick={() => handleAnswer(q.id, score)}
-                            className={`btn ${responses[q.id]?.value === score ? 'btn-primary' : 'btn-ghost'}`} 
-                            style={{ padding: '10px 16px', flex: 1, minWidth: '40px' }}
-                          >
-                            {score}
-                          </button>
-                        ))}
+              return (
+                <div key={cat.id} style={{ padding: '24px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)' }}>
+                  {/* CATEGORY HEADER */}
+                  <h3 className="text-xl font-bold" style={{ marginBottom: '20px', color: '#009C48', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{cat.name}</span>
+                    {!isGhost && <span className="text-muted" style={{ fontSize: '0.95rem', fontWeight: 500 }}>Peso: {cat.weight}%</span>}
+                  </h3>
+
+                  {/* PREGUNTAS DE LA CATEGORÍA */}
+                  {cat.questions.map((q: any, idx: number) => {
+                    const questionCode = !isGhost ? `${cat.id}${idx + 1}` : q.code || `P${idx + 1}`;
+                    
+                    return (
+                      <div key={q.id} className="flex flex-col gap-3" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px dashed var(--border-color)' }}>
+                        <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>
+                          <span style={{ color: '#009C48', fontWeight: 800, marginRight: '6px' }}>{questionCode}.</span>
+                          {q.text.startsWith(questionCode) ? q.text.replace(`${questionCode}.`, '').trim() : q.text}
+                        </p>
+
+                        {/* RATING 1-5 PARA AUDITORÍA NORMAL */}
+                        {(!q.type || q.type === 'rating') && (
+                          <div className="flex gap-2 flex-wrap">
+                            {[1, 2, 3, 4, 5].map(score => (
+                              <button 
+                                key={score} 
+                                type="button" 
+                                onClick={() => handleAnswer(q.id, score)}
+                                className={`btn ${responses[q.id]?.value === score ? 'btn-primary' : 'btn-ghost'}`} 
+                                style={{ padding: '10px 16px', flex: 1, minWidth: '40px', background: responses[q.id]?.value === score ? '#009C48' : 'transparent', borderColor: responses[q.id]?.value === score ? '#009C48' : 'var(--border-color)' }}
+                              >
+                                {score}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* OPCIONES DE CLIENTE FANTASMA P1 a P11 */}
+                        {q.type === 'ghost_choice' && q.ghostOptions && (
+                          <div className="grid grid-cols-2 gap-3">
+                            {q.ghostOptions.map((opt: any) => {
+                              const isSelected = responses[q.id]?.value === opt.label;
+                              const isExcluded = opt.points === null;
+                              return (
+                                <button
+                                  key={opt.label}
+                                  type="button"
+                                  onClick={() => handleAnswer(q.id, opt.label)}
+                                  className={`btn ${isSelected ? 'btn-primary' : 'btn-ghost'}`}
+                                  style={{ 
+                                    textAlign: 'left', 
+                                    padding: '12px 14px', 
+                                    justifyContent: 'space-between',
+                                    background: isSelected ? '#009C48' : 'var(--bg-color)',
+                                    borderColor: isSelected ? '#009C48' : 'var(--border-color)',
+                                    color: isSelected ? '#fff' : 'inherit'
+                                  }}
+                                >
+                                  <span>{opt.label}</span>
+                                  <span style={{ 
+                                    fontSize: '0.75rem', 
+                                    padding: '2px 6px', 
+                                    borderRadius: '4px', 
+                                    background: isSelected ? 'rgba(255,255,255,0.2)' : 'var(--border-color)',
+                                    color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                    fontWeight: 700
+                                  }}>
+                                    {isExcluded ? 'Excluido' : `${opt.points} pts`}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* P12 / TEXTO LIBRE */}
+                        {q.type === 'text' && (
+                          <textarea
+                            className="form-control"
+                            rows={3}
+                            placeholder="Describe una conducta concreta que podría mejorar..."
+                            value={(responses[q.id]?.value as string) || ''}
+                            onChange={(e) => handleAnswer(q.id, e.target.value)}
+                            style={{ width: '100%' }}
+                          />
+                        )}
+
+                        {/* COMENTARIO Y FOTO OBLIGATORIA SI EL PUNTAJE ES <= 2 (AUDITORÍA INTERNA) */}
+                        {!isGhost && typeof responses[q.id]?.value === 'number' && (responses[q.id].value as number) <= 2 && (
+                          <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
+                            <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 600 }}>
+                              * Puntuación baja ({responses[q.id].value}/5). Se requiere comentario justificativo obligatorio.
+                            </p>
+                            
+                            <div className="flex flex-col gap-3">
+                              <textarea
+                                className="form-control"
+                                rows={2}
+                                placeholder="Escribe el motivo o hallazgo de esta baja calificación..."
+                                value={responses[q.id]?.observation || ''}
+                                onChange={(e) => handleObservation(q.id, e.target.value)}
+                                required
+                              />
+                              
+                              <div className="flex items-center gap-4">
+                                <label className="btn btn-ghost" style={{ border: '1px dashed var(--danger)', color: 'var(--danger)', cursor: 'pointer' }}>
+                                  <Camera size={18} /> Subir Evidencia Fotográfica (Opcional)
+                                  <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    capture="environment" 
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        handlePhoto(q.id, e.target.files[0]);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                                {responses[q.id]?.photo && (
+                                  <img src={responses[q.id]?.photo} alt="Evidencia de Pregunta" style={{ height: '45px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    );
+                  })}
 
-                    {/* OPCIONES DE CLIENTE FANTASMA P1 a P11 */}
-                    {q.type === 'ghost_choice' && q.ghostOptions && (
-                      <div className="grid grid-cols-2 gap-3">
-                        {q.ghostOptions.map((opt: any) => {
-                          const isSelected = responses[q.id]?.value === opt.label;
-                          const isExcluded = opt.points === null;
-                          return (
-                            <button
-                              key={opt.label}
-                              type="button"
-                              onClick={() => handleAnswer(q.id, opt.label)}
-                              className={`btn ${isSelected ? 'btn-primary' : 'btn-ghost'}`}
-                              style={{ 
-                                textAlign: 'left', 
-                                padding: '12px 14px', 
-                                justifyContent: 'space-between',
-                                background: isSelected ? '#009C48' : 'var(--bg-color)',
-                                borderColor: isSelected ? '#009C48' : 'var(--border-color)',
-                                color: isSelected ? '#fff' : 'inherit'
+                  {/* COMENTARIO GENERAL Y ADJUNTAR FOTO DE LA CATEGORÍA (AUDITORÍA INTERNA) */}
+                  {!isGhost && (
+                    <div className="form-group" style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-color)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Observaciones generales y Evidencia de la Categoría {cat.name} (Opcional)</label>
+                      <div className="flex flex-col gap-3">
+                        <textarea 
+                          className="form-control" 
+                          rows={2} 
+                          placeholder={`Escribe un comentario o hallazgo general sobre la categoría ${cat.name}...`}
+                          value={responses[cat.id]?.observation || ''}
+                          onChange={(e) => handleObservation(cat.id, e.target.value)}
+                        />
+                        <div className="flex items-center gap-4">
+                          <label className="btn btn-outline" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Camera size={18} /> Adjuntar Foto de la Categoría
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              capture="environment" 
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handlePhoto(cat.id, e.target.files[0]);
+                                }
                               }}
-                            >
-                              <span>{opt.label}</span>
-                              <span style={{ 
-                                fontSize: '0.75rem', 
-                                padding: '2px 6px', 
-                                borderRadius: '4px', 
-                                background: isSelected ? 'rgba(255,255,255,0.2)' : 'var(--border-color)',
-                                color: isSelected ? '#fff' : 'var(--text-secondary)',
-                                fontWeight: 700
-                              }}>
-                                {isExcluded ? 'Excluido' : `${opt.points} pts`}
-                              </span>
-                            </button>
-                          );
-                        })}
+                            />
+                          </label>
+                          {responses[cat.id]?.photo && (
+                            <img src={responses[cat.id]?.photo} alt="Evidencia de Categoría" style={{ height: '55px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                          )}
+                        </div>
                       </div>
-                    )}
-
-                    {/* P12: OBSERVACIONES TEXTO ABIERTO */}
-                    {q.type === 'text' && (
-                      <textarea
-                        className="form-control"
-                        rows={4}
-                        placeholder="Describe una conducta concreta que podría mejorar: qué hizo o dejó de hacer y qué habría sido preferible..."
-                        value={(responses[q.id]?.value as string) || ''}
-                        onChange={(e) => handleAnswer(q.id, e.target.value)}
-                        style={{ width: '100%' }}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex justify-between items-center mt-8" style={{ paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
@@ -505,7 +676,7 @@ export function NewEvaluation() {
                 Calificación Calculada: <span style={{ color: isGhost && ghostKPI ? ghostKPI.color : 'var(--primary)' }}>{calculateScore()}%</span>
               </p>
               <p className="text-muted" style={{ fontSize: '0.85rem' }}>
-                {isGhost ? 'Los ítems marcados NE o N/A han sido excluidos del denominador.' : 'Promedio ponderado.'}
+                {isGhost ? 'Los ítems marcados NE o N/A han sido excluidos del denominador.' : 'Promedio ponderado según pesos de cada categoría.'}
               </p>
             </div>
 
