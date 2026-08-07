@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LogOut, BarChart3, TrendingUp, Users, Loader2, 
   UserCheck, ShieldAlert, Plus, Trash2, ArrowLeft, Store, 
-  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus
+  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount } from '../data/mock';
@@ -26,6 +26,77 @@ export function Dashboard() {
   const [responses, setResponses] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>(mockEmployees.filter(e => !e.name.toLowerCase().includes('susana')));
   const [penalties, setPenalties] = useState<any[]>([]);
+  
+  // State for bonuses (persisted in localStorage / Supabase fallback)
+  const [bonuses, setBonuses] = useState<any[]>(() => {
+    const saved = localStorage.getItem('gedaluma_bonuses_v1');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [];
+  });
+
+  const saveBonuses = (newBonuses: any[]) => {
+    setBonuses(newBonuses);
+    localStorage.setItem('gedaluma_bonuses_v1', JSON.stringify(newBonuses));
+  };
+
+  const [showBonusModal, setShowBonusModal] = useState(false);
+  const [bonusForm, setBonusForm] = useState({
+    employee_id: '',
+    month: 'Agosto 2026',
+    amount: 50,
+    reason: 'Bono de Calidad Cliente Fantasma (100%)',
+    observation: ''
+  });
+
+  const [selectedConsolidatedMonth, setSelectedConsolidatedMonth] = useState<string>('Agosto 2026');
+
+  const monthsList = [
+    'Enero 2026', 'Febrero 2026', 'Marzo 2026', 'Abril 2026', 
+    'Mayo 2026', 'Junio 2026', 'Julio 2026', 'Agosto 2026', 
+    'Septiembre 2026', 'Octubre 2026', 'Noviembre 2026', 'Diciembre 2026'
+  ];
+
+  const handleSaveBonus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bonusForm.employee_id || !bonusForm.amount) return alert('Por favor selecciona la empleada y el monto del bono.');
+
+    const empObj = employees.find(emp => emp.id === bonusForm.employee_id || emp.name === bonusForm.employee_id);
+    const empName = empObj?.name || bonusForm.employee_id;
+
+    const newBonus = {
+      id: `bonus_${Date.now()}`,
+      employee_id: bonusForm.employee_id,
+      employee_name: empName,
+      month: bonusForm.month,
+      amount: Number(bonusForm.amount),
+      reason: bonusForm.reason,
+      observation: bonusForm.observation,
+      reported_by: user?.name || 'Admin',
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await supabase.from('bonuses').insert([newBonus]);
+    } catch (err) {
+      console.warn('Tabla de bonos Supabase opcional fallback', err);
+    }
+
+    const updated = [newBonus, ...bonuses];
+    saveBonuses(updated);
+    setShowBonusModal(false);
+    setBonusForm({ employee_id: '', month: 'Agosto 2026', amount: 50, reason: 'Bono de Calidad Cliente Fantasma (100%)', observation: '' });
+  };
+
+  const handleDeleteBonus = async (id: string) => {
+    if (!window.confirm('¿Eliminar este bono registrado?')) return;
+    try {
+      await supabase.from('bonuses').delete().eq('id', id);
+    } catch (err) {}
+    const updated = bonuses.filter(b => b.id !== id);
+    saveBonuses(updated);
+  };
   
   // Modal state for registering a penalty
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
@@ -690,7 +761,7 @@ export function Dashboard() {
               className={`btn ${islaTab === 'responsabilidad' ? 'btn-primary' : 'btn-ghost'}`}
               style={{ background: islaTab === 'responsabilidad' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
             >
-              <ShieldAlert size={18} /> Faltas y Responsabilidad (${selectedIslaStats.totalAdjustments.toFixed(0)})
+              <Gift size={18} /> Faltas y Bonos (${selectedIslaStats.totalAdjustments.toFixed(0)})
             </button>
 
             <button 
@@ -859,54 +930,120 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* TAB 3: RESPONSABILIDAD (FALTAS Y AJUSTES DE LA ISLA) */}
+          {/* TAB 3: FALTAS Y BONOS DE LA ISLA */}
           {islaTab === 'responsabilidad' && selectedIslaStats && (
             <div className="card">
-              <div className="flex justify-between items-center" style={{ marginBottom: '20px' }}>
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-xl flex items-center gap-2" style={{ color: 'var(--danger)' }}>
-                    <ShieldAlert size={22} /> Faltas y Responsabilidad en Isla {selectedIsla.name}
+                  <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+                    <Gift size={24} style={{ color: '#009C48' }} /> Faltas y Bonos de Incentivo en Isla {selectedIsla.name}
                   </h3>
-                  <p className="text-muted" style={{ fontSize: '0.9rem' }}>Avisos y ajustes económicos de esta isla</p>
+                  <p className="text-muted" style={{ fontSize: '0.88rem' }}>
+                    Gestión de penalizaciones y registro manual de bonos de desempeño
+                  </p>
                 </div>
                 
-                <button 
-                  onClick={() => setShowPenaltyModal(true)} 
-                  className="btn btn-danger"
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <Plus size={18} /> Registrar Nueva Falta
-                </button>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowPenaltyModal(true)} 
+                    className="btn btn-danger flex items-center gap-2"
+                  >
+                    <ShieldAlert size={18} /> Registrar Nueva Falta
+                  </button>
+
+                  <button 
+                    onClick={() => setShowBonusModal(true)} 
+                    className="btn btn-primary flex items-center gap-2"
+                    style={{ background: '#009C48', borderColor: '#009C48' }}
+                  >
+                    <Gift size={18} /> Registrar Nuevo Bono
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                {/* Resumen por Empleado de la Isla */}
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
-                  <h4 className="text-lg" style={{ marginBottom: '12px' }}>Ajustes por Empleado de la Isla</h4>
+              {/* SECCIÓN DE CONSOLIDADO Y CIERRE MENSUAL */}
+              <div className="mb-6" style={{ background: 'var(--bg-color)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h4 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                      📊 Cierre Mensual Consolidado (Faltas vs Bonos)
+                    </h4>
+                    <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                      Cálculo del incentivo neto a pagar por empleada en el periodo seleccionado
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>Periodo de Cierre:</label>
+                    <select 
+                      className="form-control"
+                      style={{ width: 'auto', fontSize: '0.88rem', padding: '6px 12px' }}
+                      value={selectedConsolidatedMonth}
+                      onChange={e => setSelectedConsolidatedMonth(e.target.value)}
+                    >
+                      <option value="Todos los Meses">-- Todos los Meses --</option>
+                      {monthsList.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                        <th style={{ padding: '8px' }}>Empleado</th>
-                        <th style={{ padding: '8px', textAlign: 'center' }}>Faltas</th>
-                        <th style={{ padding: '8px', textAlign: 'right' }}>Ajuste Total</th>
+                      <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left', background: 'var(--surface-color)' }}>
+                        <th style={{ padding: '10px 12px' }}>Empleado</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Bonos Registrados (+)</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Ajustes por Faltas (-)</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Incentivo Neto a Pagar ($)</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'right' }}>Estado del Periodo</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedIslaStats.islaEmployees.map(emp => {
-                        const empPenalties = selectedIslaStats.islaPenalties.filter(p => 
-                          p.employee_id === emp.id || p.employees?.name === emp.name
-                        );
+                        // Filter penalties for employee in selected month or all
+                        const empPenalties = selectedIslaStats.islaPenalties.filter(p => {
+                          const matchEmp = p.employee_id === emp.id || p.employees?.name === emp.name;
+                          if (!matchEmp) return false;
+                          if (selectedConsolidatedMonth === 'Todos los Meses') return true;
+                          const pDate = new Date(p.created_at || Date.now());
+                          const pMonthName = pDate.toLocaleString('es-ES', { month: 'long' });
+                          return selectedConsolidatedMonth.toLowerCase().includes(pMonthName.toLowerCase());
+                        });
                         const totalDeductions = empPenalties.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+                        // Filter bonuses for employee in selected month or all
+                        const empBonuses = bonuses.filter(b => {
+                          const matchEmp = b.employee_id === emp.id || b.employee_name === emp.name;
+                          if (!matchEmp) return false;
+                          if (selectedConsolidatedMonth === 'Todos los Meses') return true;
+                          return b.month === selectedConsolidatedMonth;
+                        });
+                        const totalBonuses = empBonuses.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+
+                        const netIncentive = totalBonuses - totalDeductions;
+
                         return (
-                          <tr key={emp.name} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{emp.name}</td>
-                            <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                              <span style={{ background: empPenalties.length > 0 ? 'var(--warning)' : 'var(--bg-color)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
-                                {empPenalties.length} avisos
-                              </span>
+                          <tr key={emp.name} style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--surface-color)' }}>
+                            <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name}</td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#009C48' }}>
+                              +${totalBonuses.toFixed(2)} ({empBonuses.length})
                             </td>
-                            <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', color: totalDeductions > 0 ? 'var(--danger)' : 'inherit' }}>
-                              ${totalDeductions.toFixed(2)}
+                            <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: totalDeductions > 0 ? 'var(--danger)' : 'inherit' }}>
+                              -${totalDeductions.toFixed(2)} ({empPenalties.length})
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, fontSize: '1.05rem', color: netIncentive >= 0 ? '#009C48' : 'var(--danger)' }}>
+                              ${netIncentive.toFixed(2)}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'right' }}>
+                              <span style={{ 
+                                padding: '4px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700,
+                                background: netIncentive > 0 ? 'rgba(0, 156, 72, 0.12)' : netIncentive === 0 ? 'var(--bg-color)' : 'rgba(239, 68, 68, 0.12)',
+                                color: netIncentive > 0 ? '#009C48' : netIncentive === 0 ? 'var(--text-secondary)' : 'var(--danger)'
+                              }}>
+                                {netIncentive > 0 ? 'Incentivo a Favor' : netIncentive === 0 ? 'Sin Incentivo' : 'Ajuste Negativo'}
+                              </span>
                             </td>
                           </tr>
                         );
@@ -914,13 +1051,18 @@ export function Dashboard() {
                     </tbody>
                   </table>
                 </div>
+              </div>
 
+              {/* SECCIÓN DE HISTORIALES DE FALTAS Y BONOS */}
+              <div className="grid grid-cols-2 gap-6">
                 {/* Historial de Faltas */}
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
-                  <h4 className="text-lg" style={{ marginBottom: '12px' }}>Historial de Faltas en esta Isla</h4>
-                  <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '16px' }}>
+                  <h4 className="text-lg font-bold flex items-center gap-2" style={{ marginBottom: '12px', color: 'var(--danger)' }}>
+                    <ShieldAlert size={18} /> Historial de Faltas de la Isla
+                  </h4>
+                  <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {selectedIslaStats.islaPenalties.map((p) => (
-                      <div key={p.id} style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', position: 'relative' }}>
+                      <div key={p.id} style={{ padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', position: 'relative', background: 'var(--surface-color)' }}>
                         <div className="flex justify-between">
                           <span style={{ fontWeight: 'bold' }}>{p.employees?.name || 'Empleado'}</span>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -946,7 +1088,7 @@ export function Dashboard() {
                         <button 
                           onClick={() => handleDeletePenalty(p.id)}
                           style={{ position: 'absolute', top: '8px', right: '8px', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                          title="Eliminar"
+                          title="Eliminar Falta"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -954,7 +1096,52 @@ export function Dashboard() {
                     ))}
                     {selectedIslaStats.islaPenalties.length === 0 && (
                       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        No hay faltas ni sanciones en esta isla.
+                        No hay faltas registradas en esta isla.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Historial de Bonos */}
+                <div style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '16px' }}>
+                  <h4 className="text-lg font-bold flex items-center gap-2" style={{ marginBottom: '12px', color: '#009C48' }}>
+                    <Gift size={18} /> Historial de Bonos de Incentivo
+                  </h4>
+                  <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {bonuses.filter(b => selectedIslaStats.islaEmployees.some(e => e.name === b.employee_name || e.id === b.employee_id)).map((b) => (
+                      <div key={b.id} style={{ padding: '12px', border: '1px solid #009C48', borderRadius: '8px', position: 'relative', background: 'rgba(0, 156, 72, 0.04)' }}>
+                        <div className="flex justify-between">
+                          <span style={{ fontWeight: 'bold' }}>{b.employee_name}</span>
+                          <span style={{ fontSize: '0.8rem', color: '#009C48', fontWeight: 700 }}>
+                            {b.month}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.88rem', margin: '4px 0', fontWeight: 600 }}>
+                          🎁 {b.reason}
+                        </div>
+                        {b.observation && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                            {b.observation}
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center" style={{ marginTop: '6px', borderTop: '1px dashed var(--border-color)', paddingTop: '6px' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Registrado por: {b.reported_by}</span>
+                          <span style={{ fontWeight: 800, color: '#009C48', fontSize: '1rem' }}>
+                            +${Number(b.amount).toFixed(2)}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteBonus(b.id)}
+                          style={{ position: 'absolute', top: '8px', right: '8px', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                          title="Eliminar Bono"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    {bonuses.filter(b => selectedIslaStats.islaEmployees.some(e => e.name === b.employee_name || e.id === b.employee_id)).length === 0 && (
+                      <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        No hay bonos registrados en esta isla. Presiona "Registrar Nuevo Bono" para otorgar uno.
                       </div>
                     )}
                   </div>
@@ -1302,6 +1489,114 @@ export function Dashboard() {
               <div className="flex justify-end gap-3 mt-4">
                 <button type="button" onClick={() => setShowPenaltyModal(false)} className="btn btn-ghost">Cancelar</button>
                 <button type="submit" className="btn btn-danger">Guardar Falta y Aplicar Sanción</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA REGISTRAR NUEVO BONO */}
+      {showBonusModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+                  <Gift size={22} /> Registrar Nuevo Bono de Incentivo
+                </h2>
+                <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                  Otorgar un bono o reconocimiento mensual a una empleada
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowBonusModal(false)}
+                className="btn btn-ghost" 
+                style={{ fontSize: '1.2rem', padding: '4px 10px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBonus} className="flex flex-col gap-4">
+              <div className="form-group">
+                <label className="form-label">Empleado a Otorgar el Bono *</label>
+                <select 
+                  className="form-control" 
+                  required
+                  value={bonusForm.employee_id}
+                  onChange={e => setBonusForm({...bonusForm, employee_id: e.target.value})}
+                >
+                  <option value="">Seleccionar empleada...</option>
+                  {(selectedIslaStats?.islaEmployees || employees).map(e => (
+                    <option key={e.id || e.name} value={e.id}>{e.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Mes del Bono *</label>
+                <select 
+                  className="form-control"
+                  required
+                  value={bonusForm.month}
+                  onChange={e => setBonusForm({...bonusForm, month: e.target.value})}
+                >
+                  {monthsList.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Concepto / Motivo del Bono *</label>
+                <select 
+                  className="form-control"
+                  required
+                  value={bonusForm.reason}
+                  onChange={e => setBonusForm({...bonusForm, reason: e.target.value})}
+                >
+                  <option value="Bono de Calidad Cliente Fantasma (100%)">Bono de Calidad Cliente Fantasma (100%)</option>
+                  <option value="Bono de Calidad Cliente Fantasma (50%)">Bono de Calidad Cliente Fantasma (50%)</option>
+                  <option value="Bono por Cumplimiento de Metas">Bono por Cumplimiento de Metas</option>
+                  <option value="Bono de Puntualidad y Asistencia">Bono de Puntualidad y Asistencia</option>
+                  <option value="Reconocimiento Especial de Desempeño">Reconocimiento Especial de Desempeño</option>
+                  <option value="Otro Incentivo">Otro Incentivo</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Monto del Bono ($) *</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  className="form-control" 
+                  value={bonusForm.amount}
+                  onChange={e => setBonusForm({...bonusForm, amount: Number(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Observaciones / Detalles</label>
+                <textarea 
+                  className="form-control" 
+                  rows={3} 
+                  placeholder="Comentarios adicionales sobre la entrega de este bono..."
+                  value={bonusForm.observation}
+                  onChange={e => setBonusForm({...bonusForm, observation: e.target.value})}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setShowBonusModal(false)} className="btn btn-ghost">Cancelar</button>
+                <button type="submit" className="btn btn-primary" style={{ background: '#009C48', borderColor: '#009C48' }}>
+                  Guardar Bono
+                </button>
               </div>
             </form>
           </div>
