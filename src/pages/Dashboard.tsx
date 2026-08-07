@@ -302,6 +302,9 @@ export function Dashboard() {
           <Link to="/evaluate" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48' }}>
             <Plus size={18} /> Nueva Evaluación
           </Link>
+          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-2" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000' }}>
+            <UserCheck size={18} /> Nueva Fantasma
+          </Link>
           <button onClick={logout} className="btn btn-ghost">
             <LogOut size={20} />
             <span>Salir</span>

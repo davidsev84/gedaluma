@@ -48,7 +48,9 @@ export function NewEvaluation() {
   
   const evalSigRef = useRef<SignatureCanvas>(null);
 
-  const isGhost = user?.role === 'ghost';
+  const searchParams = new URLSearchParams(window.location.search);
+  const isGhostModeParam = searchParams.get('mode') === 'ghost' || searchParams.get('role') === 'ghost';
+  const isGhost = user?.role === 'ghost' || isGhostModeParam;
   const activeCategories = isGhost ? ghostCategories : categories;
 
   const handleStart = (e: React.FormEvent) => {
@@ -173,7 +175,7 @@ export function NewEvaluation() {
           isla_id: selectedIsla,
           isla_name: isla?.name || 'Desconocida',
           evaluator_name: auditorName,
-          evaluator_role: user?.role,
+          evaluator_role: isGhost ? 'ghost' : user?.role,
           evaluated_employee: evaluatedName,
           auditor_type: auditorType,
           time_slot: timeSlot,
