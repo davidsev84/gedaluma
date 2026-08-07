@@ -313,11 +313,14 @@ export function Dashboard() {
       {viewMode === 'employees' && (
         <div>
           <button 
-            onClick={() => setViewMode('islands')} 
-            className="btn btn-ghost mb-4 flex items-center gap-2"
-            style={{ padding: '6px 12px' }}
+            onClick={() => {
+              setSelectedIslaId(null);
+              setViewMode('islands');
+            }} 
+            className="btn btn-primary mb-4 flex items-center gap-2"
+            style={{ padding: '8px 16px', background: '#009C48', borderColor: '#009C48' }}
           >
-            <ArrowLeft size={20} /> Volver al Cuadro General de Islas
+            <ArrowLeft size={20} /> Volver a Ver Todas las Islas ({mockIslas.length})
           </button>
 
           <div className="card mb-6" style={{ background: 'var(--surface-color)', border: '1px solid #009C48' }}>
@@ -477,26 +480,37 @@ export function Dashboard() {
               <p className="text-3xl font-bold" style={{ color: '#f7b500', marginTop: '4px' }}>{totalGhostVisits}</p>
             </div>
             
-            {/* CUADRO CLICABLE DE PERSONAL REGISTRADO */}
+            {/* CUADRO CLICABLE DE PERSONAL REGISTRADO CON BOTÓN VER TODOS */}
             <div 
               className="card text-center hover-lift" 
               onClick={() => setViewMode('employees')}
               style={{ 
-                padding: '20px', 
+                padding: '16px 20px', 
                 cursor: 'pointer', 
                 border: '2px solid #009C48',
                 background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%)',
-                position: 'relative'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}
               title="Haz clic para ver la tabla completa de empleadas"
             >
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Personal Registrado 👆
+                Personal Registrado
               </span>
-              <p className="text-3xl font-bold" style={{ color: '#009C48', marginTop: '4px' }}>{employees.length}</p>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '2px' }}>
-                Ver tabla de empleadas →
-              </span>
+              <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>{employees.length}</p>
+
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewMode('employees');
+                }}
+                className="btn btn-primary"
+                style={{ fontSize: '0.8rem', padding: '4px 14px', background: '#009C48', borderColor: '#009C48', borderRadius: '14px', fontWeight: 700 }}
+              >
+                Ver todos
+              </button>
             </div>
           </div>
 
@@ -579,11 +593,14 @@ export function Dashboard() {
         <div>
           {/* BOTÓN VOLVER Y ENCABEZADO DE LA ISLA */}
           <button 
-            onClick={() => setSelectedIslaId(null)} 
-            className="btn btn-ghost mb-4 flex items-center gap-2"
-            style={{ padding: '6px 12px' }}
+            onClick={() => {
+              setSelectedIslaId(null);
+              setViewMode('islands');
+            }} 
+            className="btn btn-primary mb-4 flex items-center gap-2"
+            style={{ padding: '8px 16px', background: '#009C48', borderColor: '#009C48' }}
           >
-            <ArrowLeft size={20} /> Volver al Cuadro General de Islas
+            <ArrowLeft size={20} /> Volver a Ver Todas las Islas ({mockIslas.length})
           </button>
 
           <div className="card mb-6" style={{ background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.06) 0%, rgba(247, 181, 0, 0.06) 100%)', border: '1px solid #009C48' }}>
