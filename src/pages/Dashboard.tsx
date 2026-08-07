@@ -43,20 +43,19 @@ export function Dashboard() {
   const [customEmpName, setCustomEmpName] = useState('');
   const [targetIslaForAdd, setTargetIslaForAdd] = useState<string>('');
 
-  // Official initial island to employee assignment mapping
+  // Official initial island to employee assignment mapping (7 official islands)
   const defaultIslaEmployeeMap: Record<string, string[]> = {
     '1': ['Carmen Larenas', 'Liliana Estrada'], // ALBAN
     '2': ['Yamilet Delgado', 'Virginia Miño', 'Jackeline Mera Collazo'], // JUAN TANCA
     '3': ['Johanna Mendoza', 'Dayse Rodriguez'], // CALIFORNIA
-    '4': ['Yamilet Delgado'], // DAULE
-    '5': ['Teresa Vargas'], // PASEO DAULE
-    '6': ['Liliana Estrada', 'Jackeline Mera Collazo', 'Jackie Rodriguez'], // TERMINAL
-    '7': ['Gabriel Perero', 'Shirley Reyes'], // SALINAS
-    '8': ['Andrea Meza Saltos', 'Maritza Cedeño'] // PUERTO AZUL
+    '4': ['Yamilet Delgado', 'Teresa Vargas'], // PASEO DAULE (Unificada Daule y Paseo Daule)
+    '5': ['Liliana Estrada', 'Jackeline Mera Collazo', 'Jackie Rodriguez'], // TERMINAL
+    '6': ['Gabriel Perero', 'Shirley Reyes'], // SALINAS
+    '7': ['Andrea Meza Saltos', 'Maritza Cedeño'] // PUERTO AZUL
   };
 
   const [islaEmployeeMap, setIslaEmployeeMap] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem('gedaluma_isla_emp_map_v4');
+    const saved = localStorage.getItem('gedaluma_isla_emp_map_v5');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -69,7 +68,7 @@ export function Dashboard() {
 
   const saveIslaEmployeeMap = (newMap: Record<string, string[]>) => {
     setIslaEmployeeMap(newMap);
-    localStorage.setItem('gedaluma_isla_emp_map_v4', JSON.stringify(newMap));
+    localStorage.setItem('gedaluma_isla_emp_map_v5', JSON.stringify(newMap));
   };
 
   const handleAddEmployeeToIsla = (islaId: string, empNameOverride?: string) => {
@@ -218,12 +217,19 @@ export function Dashboard() {
   const getIslaStats = (islaId: string) => {
     const assignedNames = islaEmployeeMap[islaId] || [];
 
+    // Helper to match island ID or name (unifying DAULE & PASEO DAULE under island id '4')
+    const isMatchingIsla = (e: any) => {
+      if (e.isla_id === islaId) return true;
+      if (islaId === '4' && (e.isla_id === '5' || e.isla_name === 'DAULE' || e.isla_name === 'PASEO DAULE')) return true;
+      return false;
+    };
+
     // Evaluations matching either isla_id or assigned employees
     const ghostEvals = evaluations.filter(e => 
-      e.evaluator_role === 'ghost' && (e.isla_id === islaId || assignedNames.includes(e.evaluated_employee))
+      e.evaluator_role === 'ghost' && (isMatchingIsla(e) || assignedNames.includes(e.evaluated_employee))
     );
     const audEvals = evaluations.filter(e => 
-      e.evaluator_role !== 'ghost' && (e.isla_id === islaId || assignedNames.includes(e.evaluated_employee))
+      e.evaluator_role !== 'ghost' && (isMatchingIsla(e) || assignedNames.includes(e.evaluated_employee))
     );
 
     const audAvg = audEvals.length > 0
