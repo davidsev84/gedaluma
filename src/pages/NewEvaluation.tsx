@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI } from '../data/mock';
-import { LogOut, Camera, ChevronRight, Check, Loader2, Award } from 'lucide-react';
+import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
 import { generatePDF } from '../lib/pdfGenerator';
@@ -29,14 +30,14 @@ export function NewEvaluation() {
     observation?: string;
   }>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [employees, setEmployees] = useState<any[]>(mockEmployees);
+  const [employees, setEmployees] = useState<any[]>(mockEmployees.filter(e => !e.name.toLowerCase().includes('susana')));
   
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
         const { data, error } = await supabase.from('employees').select('*');
         if (!error && data && data.length > 0) {
-          setEmployees(data);
+          setEmployees(data.filter((e: any) => !e.name.toLowerCase().includes('susana')));
         }
       } catch (err) {
         console.warn('V3 tables might not exist yet', err);
@@ -249,7 +250,11 @@ export function NewEvaluation() {
         generatePDF(evalData, formResponsesArr, evalDataSig);
       }
       
-      window.location.href = '/dashboard';
+      if (user?.role === 'admin') {
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = '/evaluate';
+      }
     } catch (error) {
       console.error("Error guardando la evaluación:", error);
       alert('Ocurrió un error al guardar o generar el PDF. Revisa la consola.');
@@ -291,10 +296,17 @@ export function NewEvaluation() {
           <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Nueva Evaluación de Auditoría Interna'}</h1>
           <p className="text-muted">Evaluador: {user?.name}</p>
         </div>
-        <button onClick={logout} className="btn btn-ghost">
-          <LogOut size={20} />
-          <span>Salir</span>
-        </button>
+        <div className="flex gap-3">
+          {user?.role === 'admin' && (
+            <Link to="/dashboard" className="btn btn-outline flex items-center gap-2">
+              <ArrowLeft size={18} /> Volver al Panel
+            </Link>
+          )}
+          <button onClick={logout} className="btn btn-ghost">
+            <LogOut size={20} />
+            <span>Salir</span>
+          </button>
+        </div>
       </header>
 
       {/* STEP 0: CHECKLIST MAESTRO / CABECERA */}
@@ -361,28 +373,30 @@ export function NewEvaluation() {
               </div>
             )}
 
-            <div className="form-group">
-              <label className="form-label">Nombre del Evaluador *</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={user?.role === 'ghost' ? (customAuditorName || user?.name) : (auditorType === 'otro' ? customAuditorName : (auditorType === 'supervisor' ? 'Supervisor Richard' : 'Fernando Brito'))}
-                onChange={(e) => setCustomAuditorName(e.target.value)}
-                placeholder="Nombre completo del evaluador"
-                required
-              />
-            </div>
+            {isGhost && (
+              <div className="form-group">
+                <label className="form-label">Nombre del Evaluador *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={customAuditorName || user?.name || ''}
+                  onChange={(e) => setCustomAuditorName(e.target.value)}
+                  placeholder="Nombre completo del evaluador"
+                  required
+                />
+              </div>
+            )}
 
             {!isGhost && (
               <div className="form-group">
-                <label className="form-label">¿Tipo de Evaluador? *</label>
+                <label className="form-label">Nombre del Evaluador *</label>
                 <select 
                   className="form-control"
                   value={auditorType}
                   onChange={(e) => setAuditorType(e.target.value)}
                   required
                 >
-                  <option value="" disabled>Seleccione el auditor...</option>
+                  <option value="" disabled>Seleccione el evaluador...</option>
                   <option value="supervisor">Supervisor (Richard)</option>
                   <option value="fernando">Fernando Brito</option>
                   <option value="otro">Otra persona (Ingresar nombre)</option>
@@ -392,7 +406,7 @@ export function NewEvaluation() {
 
             {!isGhost && auditorType === 'otro' && (
               <div className="form-group">
-                <label className="form-label">Nombre del Auditor *</label>
+                <label className="form-label">Nombre del Evaluador Manual *</label>
                 <input 
                   type="text" 
                   className="form-control" 

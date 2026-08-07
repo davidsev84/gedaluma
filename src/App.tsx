@@ -65,10 +65,12 @@ function App() {
           } />
           
           <Route path="/evaluate" element={
-            <PrivateRoute roles={['evaluator', 'ghost']}>
+            <PrivateRoute roles={['admin', 'evaluator', 'ghost']}>
               <NewEvaluation />
             </PrivateRoute>
           } />
+          
+          <Route path="/evaluation/new" element={<Navigate to="/evaluate" replace />} />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
