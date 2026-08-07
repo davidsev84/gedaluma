@@ -10,10 +10,11 @@ export const mockIslas: Isla[] = [
   { id: '1', name: 'ALBAN', location: 'Guayaquil', manager: 'N/A' },
   { id: '2', name: 'JUAN TANCA', location: 'Guayaquil', manager: 'N/A' },
   { id: '3', name: 'CALIFORNIA', location: 'Guayaquil', manager: 'N/A' },
-  { id: '4', name: 'DAULE', location: 'Guayaquil', manager: 'N/A' },
-  { id: '5', name: 'TERMINAL', location: 'Guayaquil', manager: 'N/A' },
-  { id: '6', name: 'SALINAS', location: 'Salinas', manager: 'N/A' },
-  { id: '7', name: 'PUERTO AZUL', location: 'Guayaquil', manager: 'N/A' },
+  { id: '4', name: 'DAULE', location: 'Daule', manager: 'N/A' },
+  { id: '5', name: 'PASEO DAULE', location: 'Daule', manager: 'N/A' },
+  { id: '6', name: 'TERMINAL', location: 'Guayaquil', manager: 'N/A' },
+  { id: '7', name: 'SALINAS', location: 'Salinas', manager: 'N/A' },
+  { id: '8', name: 'PUERTO AZUL', location: 'Guayaquil', manager: 'N/A' },
 ];
 
 export const mockEmployees = [
