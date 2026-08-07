@@ -286,27 +286,45 @@ export function Dashboard() {
     <div className="container" style={{ maxWidth: '1200px', paddingBottom: '60px' }}>
       
       {/* HEADER PRINCIPAL */}
-      <header className="flex justify-between items-center" style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Store style={{ color: '#009C48' }} size={32} />
-            Panel de Control de Islas GEDALUMA
+      <header 
+        className="flex justify-between items-center" 
+        style={{ 
+          marginBottom: '24px', 
+          paddingBottom: '16px', 
+          borderBottom: '1px solid var(--border-color)',
+          flexWrap: 'nowrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ minWidth: '320px' }}>
+          <h1 
+            className="font-bold flex items-center gap-2" 
+            style={{ 
+              fontSize: '1.75rem', 
+              whiteSpace: 'nowrap', 
+              letterSpacing: '-0.5px' 
+            }}
+          >
+            <Store style={{ color: '#009C48', flexShrink: 0 }} size={30} />
+            Panel de Control GEDALUMA
           </h1>
-          <p className="text-muted">Gestión Operativa, Auditorías y Cliente Fantasma</p>
+          <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '2px', whiteSpace: 'nowrap' }}>
+            Gestión Operativa, Auditorías y Cliente Fantasma
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link to="/history" className="btn btn-outline flex items-center gap-2">
-            <FileText size={18} /> Ver Historial Completo
+        <div className="flex items-center gap-2 flex-wrap" style={{ justifyContent: 'flex-end' }}>
+          <Link to="/history" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+            <FileText size={16} /> Ver Historial
           </Link>
-          <Link to="/evaluate" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48' }}>
-            <Plus size={18} /> Nueva Evaluación
+          <Link to="/evaluate" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem' }}>
+            <Plus size={16} /> Nueva Evaluación
           </Link>
-          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-2" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000' }}>
-            <UserCheck size={18} /> Nueva Fantasma
+          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-2" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            <UserCheck size={16} /> Nueva Fantasma
           </Link>
-          <button onClick={logout} className="btn btn-ghost">
-            <LogOut size={20} />
+          <button onClick={logout} className="btn btn-ghost flex items-center gap-1" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+            <LogOut size={18} />
             <span>Salir</span>
           </button>
         </div>
