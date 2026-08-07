@@ -352,59 +352,90 @@ export function calculateGhostKPI(responsesMap: Record<string, { value?: string 
   };
 }
 
-export const penaltyPolicies = {
-  'Leve': {
-    name: 'Leve',
-    impact: 'Estética y Disciplina',
-    options: [
-      '2. Atrasos', 
-      '5. Orden de Isla', 
-      '6. Implementos', 
-      '7. Atención', 
-      '19. Uniforme'
-    ],
-    amounts: [0, 1.50]
-  },
-  'Moderada': {
-    name: 'Moderada',
-    impact: 'Trazabilidad Operativa',
-    options: [
-      '3. Notificaciones', 
-      '10. Cierres', 
-      '11. Abastecimiento', 
-      '12. Soporte', 
-      '17. Entrega de Cierres',
-      '20. Depósitos',
-      '21. Ingreso al Sistema'
-    ],
-    amounts: [3.00, 5.00]
-  },
-  'Grave': {
-    name: 'Grave',
-    impact: 'Rentabilidad y Seguridad',
-    options: [
-      '4. Facturación',
-      '8. Internet',
-      '9. Abandono',
-      '13. Inventario Físico',
-      '14. Secuencia',
-      '15. Novedades',
-      '18. Verificación',
-      '25. Mala Manipulación de Producto',
-      '26. Registro Recurrente e Incorrecto de Información en el Sistema de Punto de Venta (PDV)'
-    ],
-    amounts: [10.00, 14.00]
-  },
-  'Crítica': {
-    name: 'Crítica',
-    impact: 'Integridad Ética (Despido)',
-    options: [
-      '1. Respeto',
-      '16. Engaño',
-      '22. Sustracción',
-      '23. Sistemas',
-      '24. Calidad/Caducidad'
-    ],
-    amounts: [0]
+export interface PenaltyItem {
+  id: number;
+  severity: 'Leve' | 'Moderada' | 'Grave' | 'Crítica';
+  title: string;
+  description: string;
+}
+
+export const penaltyCatalog: PenaltyItem[] = [
+  // FALTAS LEVES
+  { id: 2, severity: 'Leve', title: 'ID 2: Atrasos (Hasta 3 por mes)', description: 'Atrasos (Hasta 3 por mes).' },
+  { id: 5, severity: 'Leve', title: 'ID 5: Dejar sucia la isla al cierre', description: 'Dejar sucia la isla al cierre.' },
+  { id: 6, severity: 'Leve', title: 'ID 6: Dejar implementos sobre el mostrador', description: 'Dejar implementos sobre el mostrador.' },
+  { id: 7, severity: 'Leve', title: 'ID 7: Conversar con amigos/familiares en horario laboral', description: 'Conversar con amigos/familiares en horario laboral.' },
+  { id: 19, severity: 'Leve', title: 'ID 19: No uso correcto del uniforme completo', description: 'No uso correcto del uniforme completo.' },
+
+  // FALTAS MODERADAS
+  { id: 3, severity: 'Moderada', title: 'ID 3: No avisar cambios de turno', description: 'No avisar cambios de turno.' },
+  { id: 10, severity: 'Moderada', title: 'ID 10: Cierres con información incompleta o desordenados', description: 'Cierres con información incompleta o desordenados.' },
+  { id: 11, severity: 'Moderada', title: 'ID 11: No prever cantidades adecuadas de producto (Abastecimiento)', description: 'No prever cantidades adecuadas de producto (Abastecimiento).' },
+  { id: 12, severity: 'Moderada', title: 'ID 12: Omitir adjuntar recibos/ingresos en cierres', description: 'Omitir adjuntar recibos/ingresos en cierres.' },
+  { id: 17, severity: 'Moderada', title: 'ID 17: Olvidar entregar cierres a oficina', description: 'Olvidar entregar cierres a oficina.' },
+  { id: 20, severity: 'Moderada', title: 'ID 20: No realizar depósitos en los días asignados', description: 'No realizar depósitos en los días asignados.' },
+  { id: 21, severity: 'Moderada', title: 'ID 21: No ingresar productos recibidos al sistema', description: 'No ingresar productos recibidos al sistema.' },
+
+  // FALTAS GRAVES
+  { id: 4, severity: 'Grave', title: 'ID 4: No facturar al momento de la venta', description: 'No facturar al momento de la venta.' },
+  { id: 8, severity: 'Grave', title: 'ID 8: Mal uso del enlace de puntos de venta (Internet)', description: 'Mal uso del enlace de puntos de venta (Internet).' },
+  { id: 9, severity: 'Grave', title: 'ID 9: Salir del lugar sin autorización (Abandono)', description: 'Salir del lugar sin autorización (Abandono).' },
+  { id: 13, severity: 'Grave', title: 'ID 13: No contar inventario al inicio/cierre', description: 'No contar inventario al inicio/cierre.' },
+  { id: 14, severity: 'Grave', title: 'ID 14: Seguir secuencia numérica sin conteo físico real', description: 'Seguir secuencia numérica sin conteo físico real.' },
+  { id: 15, severity: 'Grave', title: 'ID 15: No reportar novedades (merma, devoluciones) en canales oficiales', description: 'No reportar novedades (merma, devoluciones) en canales oficiales.' },
+  { id: 18, severity: 'Grave', title: 'ID 18: Firmar facturas sin verificar la mercadería completa', description: 'Firmar facturas sin verificar la mercadería completa.' },
+  { id: 25, severity: 'Grave', title: 'ID 25: Daño o pérdida de producto por negligencia o romper cadena de frío', description: 'Daño o pérdida de producto por negligencia o romper cadena de frío.' },
+  { id: 26, severity: 'Grave', title: 'ID 26: Ingreso de datos erróneos en PDV (3 o más veces/mes) u omisiones', description: 'Ingreso de datos erróneos en PDV (3 o más veces/mes) u omisiones.' },
+
+  // FALTAS CRÍTICAS
+  { id: 1, severity: 'Crítica', title: 'ID 1: Falta de autoridad o respeto a superiores/compañeros', description: 'Falta de autoridad o respeto a superiores/compañeros.' },
+  { id: 16, severity: 'Crítica', title: 'ID 16: Engañar al cliente en el cobro', description: 'Engañar al cliente en el cobro.' },
+  { id: 22, severity: 'Crítica', title: 'ID 22: Sustraer valores de caja chica', description: 'Sustraer valores de caja chica.' },
+  { id: 23, severity: 'Crítica', title: 'ID 23: Alteración o manipulación de sistemas de venta', description: 'Alteración o manipulación de sistemas de venta.' },
+  { id: 24, severity: 'Crítica', title: 'ID 24: Venta con fechas borradas, calidad alterada o reutilización de envases', description: 'Venta con fechas borradas, calidad alterada o reutilización de envases.' }
+];
+
+export function calculatePenaltyAmount(
+  severity: 'Leve' | 'Moderada' | 'Grave' | 'Crítica',
+  occurrenceIndex: number
+): { amount: number; isCriticalAlert: boolean; message: string } {
+  if (severity === 'Leve') {
+    const rates = [0, 1.50, 5.00, 6.00, 7.00, 8.00];
+    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 8.00;
+    const message = occurrenceIndex === 1 
+      ? '1ra vez en el mes: $0.00 (Aviso de advertencia sin descuento)' 
+      : `Ocurrencia #${occurrenceIndex} del mes en Faltas Leves -> Descuento: $${amount.toFixed(2)}`;
+    return { amount, isCriticalAlert: false, message };
   }
+
+  if (severity === 'Moderada') {
+    const rates = [3.00, 4.00, 5.00, 6.00];
+    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 6.00;
+    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Moderadas -> Descuento: $${amount.toFixed(2)}`;
+    return { amount, isCriticalAlert: false, message };
+  }
+
+  if (severity === 'Grave') {
+    const rates = [10.00, 14.00];
+    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 14.00;
+    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Graves -> Descuento: $${amount.toFixed(2)}`;
+    return { amount, isCriticalAlert: false, message };
+  }
+
+  if (severity === 'Crítica') {
+    return { 
+      amount: 0, 
+      isCriticalAlert: true, 
+      message: '🚨 ALERTA DE DESVINCULACIÓN INMEDIATA (Fin de Contrato) - No aplica descuento numérico acumulable.' 
+    };
+  }
+
+  return { amount: 0, isCriticalAlert: false, message: '' };
+}
+
+export const penaltyPolicies = {
+  'Leve': { name: 'Leve', impact: 'Estética y Disciplina' },
+  'Moderada': { name: 'Moderada', impact: 'Trazabilidad Operativa' },
+  'Grave': { name: 'Grave', impact: 'Rentabilidad y Seguridad' },
+  'Crítica': { name: 'Crítica', impact: 'Integridad Ética (Despido)' }
 };

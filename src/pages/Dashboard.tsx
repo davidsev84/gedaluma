@@ -7,7 +7,7 @@ import {
   MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { mockIslas, mockEmployees, ghostCategories, penaltyPolicies } from '../data/mock';
+import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount } from '../data/mock';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -1115,26 +1115,47 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* MODAL PARA REGISTRAR NUEVA FALTA */}
+      {/* MODAL PARA REGISTRAR NUEVA FALTA (CALCULADORA DE SANCIONES Y ACUMULACIÓN MENSUAL) */}
       {showPenaltyModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
           background: 'rgba(0,0,0,0.5)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <div className="card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 className="text-xl mb-4" style={{ color: 'var(--danger)' }}>Registrar Falta a Personal de Isla</h2>
+          <div className="card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--danger)' }}>
+                  ⚖️ Calculadora & Registro de Sanciones
+                </h2>
+                <p className="text-muted" style={{ fontSize: '0.82rem' }}>
+                  Cálculo automático según ocurrencias acumuladas en el mes
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowPenaltyModal(false)}
+                className="btn btn-ghost" 
+                style={{ fontSize: '1.2rem', padding: '4px 10px' }}
+              >
+                ✕
+              </button>
+            </div>
+
             <form onSubmit={handleSavePenalty} className="flex flex-col gap-4">
               
               <div className="form-group">
-                <label>Empleado</label>
+                <label className="form-label">Empleado a Sancionar *</label>
                 <select 
                   className="form-control" 
                   required
                   value={penaltyForm.employee_id}
-                  onChange={e => setPenaltyForm({...penaltyForm, employee_id: e.target.value})}
+                  onChange={e => {
+                    const empId = e.target.value;
+                    setPenaltyForm({...penaltyForm, employee_id: empId});
+                  }}
                 >
-                  <option value="">Seleccionar...</option>
+                  <option value="">Seleccionar empleado...</option>
                   {(selectedIslaStats?.islaEmployees || employees).map(e => (
                     <option key={e.id || e.name} value={e.id}>{e.name}</option>
                   ))}
@@ -1142,59 +1163,110 @@ export function Dashboard() {
               </div>
 
               <div className="form-group">
-                <label>Nivel de Gravedad</label>
-                <select 
-                  className="form-control" 
-                  value={penaltyForm.severity}
-                  onChange={e => setPenaltyForm({...penaltyForm, severity: e.target.value, reason: '', amount: 0})}
-                >
-                  {Object.values(penaltyPolicies).map(p => (
-                    <option key={p.name} value={p.name}>{p.name} ({p.impact})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Motivo de la Falta</label>
+                <label className="form-label">Seleccionar Falta del Catálogo Oficial (ID y Gravedad) *</label>
                 <select 
                   className="form-control" 
                   required
                   value={penaltyForm.reason}
                   onChange={e => {
-                    const policy = (penaltyPolicies as any)[penaltyForm.severity];
-                    const idx = policy?.options?.indexOf(e.target.value);
-                    const amt = (idx !== undefined && idx >= 0 && policy?.amounts && policy.amounts[idx] !== undefined) ? policy.amounts[idx] : (policy?.amounts ? policy.amounts[0] : 0);
+                    const selectedTitle = e.target.value;
+                    const matchedFault = penaltyCatalog.find(f => f.title === selectedTitle);
+                    if (!matchedFault) return;
+
+                    // Calculate occurrences for this employee & severity in current month
+                    const empObj = employees.find(emp => emp.id === penaltyForm.employee_id || emp.name === penaltyForm.employee_id);
+                    const empName = empObj?.name || penaltyForm.employee_id;
+
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+
+                    const empPenaltiesThisMonth = penalties.filter(p => {
+                      const pDate = new Date(p.created_at || Date.now());
+                      const matchEmp = p.employee_id === penaltyForm.employee_id || p.employees?.name === empName;
+                      return matchEmp && p.severity === matchedFault.severity && pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+                    });
+
+                    const occurrenceNumber = empPenaltiesThisMonth.length + 1;
+                    const calc = calculatePenaltyAmount(matchedFault.severity, occurrenceNumber);
+
                     setPenaltyForm({
-                      ...penaltyForm, 
-                      reason: e.target.value, 
-                      amount: amt || 0
+                      ...penaltyForm,
+                      severity: matchedFault.severity,
+                      reason: matchedFault.title,
+                      amount: calc.amount,
+                      observation: calc.message
                     });
                   }}
                 >
-                  <option value="">Seleccionar motivo...</option>
-                  {((penaltyPolicies as any)[penaltyForm.severity]?.options || []).map((opt: string) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
+                  <option value="">-- Seleccione una falta del catálogo --</option>
+                  
+                  <optgroup label="FALTAS LEVES ($0 1ra vez -> $1.50 -> $5.00 -> $6.00 -> $7.00 -> $8.00)">
+                    {penaltyCatalog.filter(f => f.severity === 'Leve').map(f => (
+                      <option key={f.id} value={f.title}>{f.title}</option>
+                    ))}
+                  </optgroup>
+
+                  <optgroup label="FALTAS MODERADAS ($3.00 1ra vez -> $4.00 -> $5.00 -> $6.00)">
+                    {penaltyCatalog.filter(f => f.severity === 'Moderada').map(f => (
+                      <option key={f.id} value={f.title}>{f.title}</option>
+                    ))}
+                  </optgroup>
+
+                  <optgroup label="FALTAS GRAVES ($10.00 1ra vez -> $14.00 2da vez)">
+                    {penaltyCatalog.filter(f => f.severity === 'Grave').map(f => (
+                      <option key={f.id} value={f.title}>{f.title}</option>
+                    ))}
+                  </optgroup>
+
+                  <optgroup label="FALTAS CRÍTICAS (🚨 Desvinculación Inmediata)">
+                    {penaltyCatalog.filter(f => f.severity === 'Crítica').map(f => (
+                      <option key={f.id} value={f.title}>{f.title}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
+              {/* MOSTRAR INFORMACIÓN DEL CÁLCULO DE OCURRENCIA */}
+              {penaltyForm.reason && (
+                <div style={{ 
+                  padding: '14px', 
+                  borderRadius: '8px', 
+                  background: penaltyForm.severity === 'Crítica' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 156, 72, 0.08)',
+                  border: `1px solid ${penaltyForm.severity === 'Crítica' ? 'var(--danger)' : '#009C48'}`
+                }}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: penaltyForm.severity === 'Crítica' ? 'var(--danger)' : '#009C48' }}>
+                      Nivel: {penaltyForm.severity}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>
+                      Descuento Calculado: ${Number(penaltyForm.amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', margin: 0 }}>
+                    {penaltyForm.observation}
+                  </p>
+                </div>
+              )}
+
               <div className="form-group">
-                <label>Descuento / Ajuste Económico ($)</label>
+                <label className="form-label">Descuento / Ajuste Económico Final ($)</label>
                 <input 
                   type="number" 
                   step="0.01"
                   className="form-control" 
                   value={penaltyForm.amount}
                   onChange={e => setPenaltyForm({...penaltyForm, amount: Number(e.target.value)})}
+                  required
                 />
               </div>
 
               <div className="form-group">
-                <label>Observaciones / Evidencia</label>
+                <label className="form-label">Observaciones Adicionales / Detalles de la Evidencia</label>
                 <textarea 
                   className="form-control" 
                   rows={3} 
-                  placeholder="Detalles sobre lo ocurrido..."
+                  placeholder="Detalles sobre lo ocurrido o la evidencia tomada..."
                   value={penaltyForm.observation}
                   onChange={e => setPenaltyForm({...penaltyForm, observation: e.target.value})}
                 />
@@ -1202,7 +1274,7 @@ export function Dashboard() {
 
               <div className="flex justify-end gap-3 mt-4">
                 <button type="button" onClick={() => setShowPenaltyModal(false)} className="btn btn-ghost">Cancelar</button>
-                <button type="submit" className="btn btn-danger">Guardar Falta</button>
+                <button type="submit" className="btn btn-danger">Guardar Falta y Aplicar Sanción</button>
               </div>
             </form>
           </div>
