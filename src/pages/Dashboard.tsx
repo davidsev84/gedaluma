@@ -13,6 +13,9 @@ export function Dashboard() {
   const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   
+  // State for view mode: 'islands' | 'employees'
+  const [viewMode, setViewMode] = useState<'islands' | 'employees'>('islands');
+
   // State for selected Island (null = view all islands grid)
   const [selectedIslaId, setSelectedIslaId] = useState<string | null>(null);
   
@@ -21,7 +24,7 @@ export function Dashboard() {
 
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>(mockEmployees);
+  const [employees, setEmployees] = useState<any[]>(mockEmployees.filter(e => !e.name.toLowerCase().includes('susana')));
   const [penalties, setPenalties] = useState<any[]>([]);
   
   // Modal state for registering a penalty
@@ -34,10 +37,11 @@ export function Dashboard() {
     observation: ''
   });
 
-  // Modal state for adding employee to island
+  // Modal state for adding employee to island or general
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
   const [selectedEmpToAssign, setSelectedEmpToAssign] = useState('');
   const [customEmpName, setCustomEmpName] = useState('');
+  const [targetIslaForAdd, setTargetIslaForAdd] = useState<string>('');
 
   // Official initial island to employee assignment mapping
   const defaultIslaEmployeeMap: Record<string, string[]> = {
@@ -52,7 +56,7 @@ export function Dashboard() {
   };
 
   const [islaEmployeeMap, setIslaEmployeeMap] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem('gedaluma_isla_emp_map_v3');
+    const saved = localStorage.getItem('gedaluma_isla_emp_map_v4');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -65,25 +69,27 @@ export function Dashboard() {
 
   const saveIslaEmployeeMap = (newMap: Record<string, string[]>) => {
     setIslaEmployeeMap(newMap);
-    localStorage.setItem('gedaluma_isla_emp_map_v3', JSON.stringify(newMap));
+    localStorage.setItem('gedaluma_isla_emp_map_v4', JSON.stringify(newMap));
   };
 
-  const handleAddEmployeeToIsla = (islaId: string) => {
-    const nameToAdd = (selectedEmpToAssign || customEmpName).trim();
+  const handleAddEmployeeToIsla = (islaId: string, empNameOverride?: string) => {
+    const nameToAdd = (empNameOverride || selectedEmpToAssign || customEmpName).trim();
     if (!nameToAdd) {
       alert('Por favor selecciona o escribe el nombre del empleado.');
       return;
     }
 
-    const currentList = islaEmployeeMap[islaId] || [];
-    if (currentList.includes(nameToAdd)) {
-      alert(`El empleado "${nameToAdd}" ya está asignado a esta isla.`);
-      return;
-    }
+    if (islaId) {
+      const currentList = islaEmployeeMap[islaId] || [];
+      if (currentList.includes(nameToAdd)) {
+        alert(`El empleado "${nameToAdd}" ya está asignado a esta isla.`);
+        return;
+      }
 
-    const updatedList = [...currentList, nameToAdd];
-    const newMap = { ...islaEmployeeMap, [islaId]: updatedList };
-    saveIslaEmployeeMap(newMap);
+      const updatedList = [...currentList, nameToAdd];
+      const newMap = { ...islaEmployeeMap, [islaId]: updatedList };
+      saveIslaEmployeeMap(newMap);
+    }
 
     // Make sure employee is in master employee list
     if (!employees.some(e => e.name.toLowerCase() === nameToAdd.toLowerCase())) {
@@ -92,14 +98,29 @@ export function Dashboard() {
 
     setSelectedEmpToAssign('');
     setCustomEmpName('');
+    setTargetIslaForAdd('');
     setShowAddEmpModal(false);
   };
 
   const handleRemoveEmployeeFromIsla = (islaId: string, employeeName: string) => {
-    if (!window.confirm(`¿Quitar a "${employeeName}" de la lista de esta isla?`)) return;
+    if (!window.confirm(`¿Quitar a "${employeeName}" de la isla?`)) return;
     const currentList = islaEmployeeMap[islaId] || [];
     const updatedList = currentList.filter(n => n !== employeeName);
     const newMap = { ...islaEmployeeMap, [islaId]: updatedList };
+    saveIslaEmployeeMap(newMap);
+  };
+
+  const handleDeleteEmployeeCompletely = (employeeName: string) => {
+    if (!window.confirm(`¿Eliminar completamente a "${employeeName}" del sistema GEDALUMA?`)) return;
+    
+    // Remove from master list
+    setEmployees(prev => prev.filter(e => e.name !== employeeName));
+
+    // Remove from all island mappings
+    const newMap: Record<string, string[]> = {};
+    Object.keys(islaEmployeeMap).forEach(key => {
+      newMap[key] = (islaEmployeeMap[key] || []).filter(n => n !== employeeName);
+    });
     saveIslaEmployeeMap(newMap);
   };
 
@@ -128,7 +149,7 @@ export function Dashboard() {
       try {
         const { data: empData, error: empErr } = await supabase.from('employees').select('*');
         if (!empErr && empData && empData.length > 0) {
-          setEmployees(empData);
+          setEmployees(empData.filter((e: any) => !e.name.toLowerCase().includes('susana')));
         }
         
         const { data: penData, error: penErr } = await supabase.from('penalties').select('*, employees(name)');
@@ -278,7 +299,7 @@ export function Dashboard() {
           <Link to="/history" className="btn btn-outline flex items-center gap-2">
             <FileText size={18} /> Ver Historial Completo
           </Link>
-          <Link to="/evaluation/new" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48' }}>
+          <Link to="/evaluate" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48' }}>
             <Plus size={18} /> Nueva Evaluación
           </Link>
           <button onClick={logout} className="btn btn-ghost">
@@ -288,8 +309,158 @@ export function Dashboard() {
         </div>
       </header>
 
+      {/* VISTA GENERAL DE PERSONAL REGISTRADO (TABLA COMPLETA) */}
+      {viewMode === 'employees' && (
+        <div>
+          <button 
+            onClick={() => setViewMode('islands')} 
+            className="btn btn-ghost mb-4 flex items-center gap-2"
+            style={{ padding: '6px 12px' }}
+          >
+            <ArrowLeft size={20} /> Volver al Cuadro General de Islas
+          </button>
+
+          <div className="card mb-6" style={{ background: 'var(--surface-color)', border: '1px solid #009C48' }}>
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+                  <Users size={28} /> Tabla General de Personal Registrado y Asignación de Islas
+                </h2>
+                <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '4px' }}>
+                  Gestión integral de las {employees.length} empleadas activas en las islas de GEDALUMA
+                </p>
+              </div>
+
+              <button 
+                onClick={() => {
+                  setTargetIslaForAdd('');
+                  setShowAddEmpModal(true);
+                }} 
+                className="btn btn-primary flex items-center gap-2"
+                style={{ background: '#009C48', borderColor: '#009C48' }}
+              >
+                <UserPlus size={18} /> Agregar Nuevo Empleado
+              </button>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
+                  <th style={{ padding: '14px 16px' }}>Nombre Empleado</th>
+                  <th style={{ padding: '14px 16px' }}>Isla(s) Asignada(s)</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Prom. Auditoría</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Prom. Cliente Fantasma</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'center' }}>Faltas / Ajustes</th>
+                  <th style={{ padding: '14px 16px', textAlign: 'right' }}>Acciones & Designar Isla</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.map((emp) => {
+                  const assignedIslands = mockIslas.filter(i => (islaEmployeeMap[i.id] || []).includes(emp.name));
+                  
+                  const empAudEvals = evaluations.filter(e => e.evaluator_role !== 'ghost' && e.evaluated_employee === emp.name);
+                  const empAudAvg = empAudEvals.length > 0 
+                    ? empAudEvals.reduce((sum, e) => sum + Number(e.total_score || 0), 0) / empAudEvals.length 
+                    : 0;
+
+                  const empGhostEvals = evaluations.filter(e => e.evaluator_role === 'ghost' && e.evaluated_employee === emp.name);
+                  const empGhostAvg = empGhostEvals.length > 0 
+                    ? empGhostEvals.reduce((sum, e) => sum + Number(e.total_score || 0), 0) / empGhostEvals.length 
+                    : 0;
+
+                  const empPenalties = penalties.filter(p => p.employee_id === emp.id || p.employees?.name === emp.name);
+                  const totalPenaltyAmount = empPenalties.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+                  return (
+                    <tr key={emp.name} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 800, fontSize: '1rem' }}>
+                        {emp.name}
+                      </td>
+
+                      <td style={{ padding: '14px 16px' }}>
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {assignedIslands.map(isla => (
+                            <span 
+                              key={isla.id}
+                              style={{ 
+                                background: 'rgba(0, 156, 72, 0.12)', color: '#009C48', 
+                                border: '1px solid rgba(0, 156, 72, 0.2)', padding: '3px 10px', 
+                                borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                              }}
+                            >
+                              {isla.name}
+                              <button 
+                                onClick={() => handleRemoveEmployeeFromIsla(isla.id, emp.name)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 0, display: 'flex' }}
+                                title={`Quitar de Isla ${isla.name}`}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          {assignedIslands.length === 0 && (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                              Sin isla asignada
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: getScoreColor(empAudAvg) }}>
+                        {empAudAvg > 0 ? `${empAudAvg.toFixed(1)}%` : 'Sin eval.'}
+                      </td>
+
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: getScoreColor(empGhostAvg) }}>
+                        {empGhostAvg > 0 ? `${empGhostAvg.toFixed(1)}%` : 'Sin eval.'}
+                      </td>
+
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: totalPenaltyAmount > 0 ? 'var(--danger)' : '#009C48' }}>
+                        ${totalPenaltyAmount.toFixed(0)} ({empPenalties.length})
+                      </td>
+
+                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                        <div className="flex justify-end items-center gap-2">
+                          <select
+                            className="form-control"
+                            style={{ width: 'auto', fontSize: '0.8rem', padding: '4px 8px' }}
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleAddEmployeeToIsla(e.target.value, emp.name);
+                                e.target.value = '';
+                              }
+                            }}
+                          >
+                            <option value="" disabled>+ Asignar Isla...</option>
+                            {mockIslas.map(i => (
+                              <option key={i.id} value={i.id}>ISLA {i.name}</option>
+                            ))}
+                          </select>
+
+                          <button 
+                            onClick={() => handleDeleteEmployeeCompletely(emp.name)}
+                            className="btn btn-ghost text-danger"
+                            style={{ padding: '6px' }}
+                            title="Eliminar empleado definitivamente"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* VISTA 1: GRILLA INICIAL DE ISLAS */}
-      {!selectedIslaId && (
+      {viewMode === 'islands' && !selectedIslaId && (
         <div>
           {/* BANNER DE RESUMEN GLOBAL */}
           <div className="grid grid-cols-4 gap-4 mb-6">
@@ -305,9 +476,27 @@ export function Dashboard() {
               <span className="text-muted" style={{ fontSize: '0.85rem' }}>Visitas Cliente Fantasma</span>
               <p className="text-3xl font-bold" style={{ color: '#f7b500', marginTop: '4px' }}>{totalGhostVisits}</p>
             </div>
-            <div className="card text-center" style={{ padding: '20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem' }}>Personal Registrado</span>
-              <p className="text-3xl font-bold" style={{ marginTop: '4px' }}>{employees.length}</p>
+            
+            {/* CUADRO CLICABLE DE PERSONAL REGISTRADO */}
+            <div 
+              className="card text-center hover-lift" 
+              onClick={() => setViewMode('employees')}
+              style={{ 
+                padding: '20px', 
+                cursor: 'pointer', 
+                border: '2px solid #009C48',
+                background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%)',
+                position: 'relative'
+              }}
+              title="Haz clic para ver la tabla completa de empleadas"
+            >
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Personal Registrado 👆
+              </span>
+              <p className="text-3xl font-bold" style={{ color: '#009C48', marginTop: '4px' }}>{employees.length}</p>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '2px' }}>
+                Ver tabla de empleadas →
+              </span>
             </div>
           </div>
 
@@ -361,10 +550,23 @@ export function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-muted" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                  <div className="flex justify-between items-center text-muted" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--border-color)', paddingTop: '12px', paddingBottom: '12px' }}>
                     <span>👥 Personal: <strong>{stats.islaEmployees.length} empleadas</strong></span>
                     <span>⚠️ Faltas: <strong>${stats.totalAdjustments.toFixed(0)}</strong></span>
                   </div>
+
+                  {/* BOTÓN RESTAURADO: VER INFORMACIÓN COMPLETA */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedIslaId(isla.id);
+                      setIslaTab('auditoria');
+                    }}
+                    className="btn btn-primary flex items-center justify-center gap-2"
+                    style={{ width: '100%', marginTop: '12px', background: '#009C48', borderColor: '#009C48' }}
+                  >
+                    <span>Ver información completa</span> <ChevronRight size={18} />
+                  </button>
                 </div>
               );
             })}
@@ -373,7 +575,7 @@ export function Dashboard() {
       )}
 
       {/* VISTA 2: DETALLE DESPLEGADO DE LA ISLA SELECCIONADA */}
-      {selectedIslaId && selectedIsla && selectedIslaStats && (
+      {viewMode === 'islands' && selectedIslaId && selectedIsla && selectedIslaStats && (
         <div>
           {/* BOTÓN VOLVER Y ENCABEZADO DE LA ISLA */}
           <button 
@@ -707,7 +909,7 @@ export function Dashboard() {
                       </div>
                     ))}
                     {selectedIslaStats.islaPenalties.length === 0 && (
-                      <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                         No hay faltas ni sanciones en esta isla.
                       </div>
                     )}
@@ -731,7 +933,10 @@ export function Dashboard() {
                 </div>
 
                 <button 
-                  onClick={() => setShowAddEmpModal(true)} 
+                  onClick={() => {
+                    setTargetIslaForAdd(selectedIslaId);
+                    setShowAddEmpModal(true);
+                  }} 
                   className="btn btn-primary flex items-center gap-2"
                   style={{ background: '#009C48', borderColor: '#009C48' }}
                 >
@@ -808,8 +1013,8 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* MODAL PARA AGREGAR EMPLEADO A LA ISLA */}
-      {showAddEmpModal && selectedIslaId && (
+      {/* MODAL PARA AGREGAR EMPLEADO A LA ISLA O GENERAL */}
+      {showAddEmpModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
           background: 'rgba(0,0,0,0.5)', zIndex: 1000,
@@ -817,7 +1022,7 @@ export function Dashboard() {
         }}>
           <div className="card" style={{ width: '100%', maxWidth: '480px' }}>
             <h2 className="text-xl mb-4" style={{ color: '#009C48', fontWeight: 800 }}>
-              Agregar Empleado a Isla {selectedIsla?.name}
+              {targetIslaForAdd ? `Agregar Empleado a Isla ${mockIslas.find(i => i.id === targetIslaForAdd)?.name}` : 'Registrar Nuevo Empleado General'}
             </h2>
             
             <div className="flex flex-col gap-4">
@@ -852,23 +1057,40 @@ export function Dashboard() {
                 />
               </div>
 
+              {!targetIslaForAdd && (
+                <div className="form-group">
+                  <label className="form-label">Designar Isla (Opcional)</label>
+                  <select 
+                    className="form-control"
+                    onChange={(e) => setTargetIslaForAdd(e.target.value)}
+                    value={targetIslaForAdd}
+                  >
+                    <option value="">-- Sin asignar isla inicial --</option>
+                    {mockIslas.map(i => (
+                      <option key={i.id} value={i.id}>ISLA {i.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 mt-4">
                 <button 
                   onClick={() => {
                     setShowAddEmpModal(false);
                     setSelectedEmpToAssign('');
                     setCustomEmpName('');
+                    setTargetIslaForAdd('');
                   }} 
                   className="btn btn-ghost"
                 >
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => handleAddEmployeeToIsla(selectedIslaId)}
+                  onClick={() => handleAddEmployeeToIsla(targetIslaForAdd)}
                   className="btn btn-primary"
                   style={{ background: '#009C48', borderColor: '#009C48' }}
                 >
-                  Asignar a la Isla
+                  Guardar Empleado
                 </button>
               </div>
             </div>
