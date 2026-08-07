@@ -399,25 +399,28 @@ export function calculatePenaltyAmount(
   occurrenceIndex: number
 ): { amount: number; isCriticalAlert: boolean; message: string } {
   if (severity === 'Leve') {
-    const rates = [0, 1.50, 5.00, 6.00, 7.00, 8.00];
-    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 8.00;
-    const message = occurrenceIndex === 1 
-      ? '1ra vez en el mes: $0.00 (Aviso de advertencia sin descuento)' 
-      : `Ocurrencia #${occurrenceIndex} del mes en Faltas Leves -> Descuento: $${amount.toFixed(2)}`;
+    // 1ra y 2da vez: $0.00 (Registro preventivo). 3ra: $2.00, 4ta: $3.00, 5ta: $4.00, 6ta o más: $5.00 c/u.
+    const rates = [0, 0, 2.00, 3.00, 4.00, 5.00];
+    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 5.00;
+    const message = (occurrenceIndex === 1 || occurrenceIndex === 2)
+      ? `Ocurrencia #${occurrenceIndex} del mes en Faltas Leves -> $0.00 (Registro preventivo)`
+      : `Ocurrencia #${occurrenceIndex} del mes en Faltas Leves -> Ajuste: $${amount.toFixed(2)}`;
     return { amount, isCriticalAlert: false, message };
   }
 
   if (severity === 'Moderada') {
-    const rates = [3.00, 4.00, 5.00, 6.00];
-    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 6.00;
-    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Moderadas -> Descuento: $${amount.toFixed(2)}`;
+    // 1ra: $2.00, 2da: $2.50, 3ra: $3.00, 4ta: $3.50, 5ta: $4.00, 6ta o más: $5.00 c/u.
+    const rates = [2.00, 2.50, 3.00, 3.50, 4.00, 5.00];
+    const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 5.00;
+    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Moderadas -> Ajuste: $${amount.toFixed(2)}`;
     return { amount, isCriticalAlert: false, message };
   }
 
   if (severity === 'Grave') {
-    const rates = [10.00, 14.00];
+    // 1ra: $10.00, 2da: $11.00, 3ra: $12.00, 4ta: $13.00, 5ta o más: $14.00.
+    const rates = [10.00, 11.00, 12.00, 13.00, 14.00];
     const amount = occurrenceIndex <= rates.length ? rates[occurrenceIndex - 1] : 14.00;
-    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Graves -> Descuento: $${amount.toFixed(2)}`;
+    const message = `Ocurrencia #${occurrenceIndex} del mes en Faltas Graves -> Ajuste: $${amount.toFixed(2)}`;
     return { amount, isCriticalAlert: false, message };
   }
 
@@ -425,7 +428,7 @@ export function calculatePenaltyAmount(
     return { 
       amount: 0, 
       isCriticalAlert: true, 
-      message: '🚨 ALERTA DE DESVINCULACIÓN INMEDIATA (Fin de Contrato) - No aplica descuento numérico acumulable.' 
+      message: '🚨 Visto bueno inmediato para inicio de proceso de desvinculación (Tolerancia Cero / Despido).' 
     };
   }
 

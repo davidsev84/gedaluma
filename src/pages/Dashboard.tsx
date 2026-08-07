@@ -1228,25 +1228,25 @@ export function Dashboard() {
                 >
                   <option value="">-- Seleccione una falta del catálogo --</option>
                   
-                  <optgroup label="FALTAS LEVES ($0 1ra vez -> $1.50 -> $5.00 -> $6.00 -> $7.00 -> $8.00)">
+                  <optgroup label="FALTAS LEVES (1ra-2da: $0 | 3ra: $2.00 | 4ta: $3.00 | 5ta: $4.00 | 6ta+: $5.00)">
                     {penaltyCatalog.filter(f => f.severity === 'Leve').map(f => (
                       <option key={f.id} value={f.title}>{f.title}</option>
                     ))}
                   </optgroup>
 
-                  <optgroup label="FALTAS MODERADAS ($3.00 1ra vez -> $4.00 -> $5.00 -> $6.00)">
+                  <optgroup label="FALTAS MODERADAS (1ra: $2.00 | 2da: $2.50 | 3ra: $3.00 | 4ta: $3.50 | 5ta: $4.00 | 6ta+: $5.00)">
                     {penaltyCatalog.filter(f => f.severity === 'Moderada').map(f => (
                       <option key={f.id} value={f.title}>{f.title}</option>
                     ))}
                   </optgroup>
 
-                  <optgroup label="FALTAS GRAVES ($10.00 1ra vez -> $14.00 2da vez)">
+                  <optgroup label="FALTAS GRAVES (1ra: $10.00 | 2da: $11.00 | 3ra: $12.00 | 4ta: $13.00 | 5ta+: $14.00)">
                     {penaltyCatalog.filter(f => f.severity === 'Grave').map(f => (
                       <option key={f.id} value={f.title}>{f.title}</option>
                     ))}
                   </optgroup>
 
-                  <optgroup label="FALTAS CRÍTICAS (🚨 Desvinculación Inmediata)">
+                  <optgroup label="FALTAS CRÍTICAS (🚨 Inicio de proceso de desvinculación / Despido)">
                     {penaltyCatalog.filter(f => f.severity === 'Crítica').map(f => (
                       <option key={f.id} value={f.title}>{f.title}</option>
                     ))}
