@@ -100,8 +100,10 @@ body {
 .gap-4 { gap: 16px; }
 .gap-6 { gap: 24px; }
 
-/* Buttons */
-.btn {
+/* Buttons & Universal Hover Effect (Color tenue al pasar el mouse) */
+button,
+.btn,
+a.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -111,11 +113,19 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
   font-size: 1rem;
 }
 
-.btn:active {
+button:hover,
+.btn:hover,
+a.btn:hover {
+  opacity: 0.82 !important;
+  filter: brightness(0.92);
+}
+
+.btn:active,
+button:active {
   transform: scale(0.98);
 }
 
@@ -125,7 +135,8 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-hover);
+  background-color: var(--primary);
+  opacity: 0.82 !important;
 }
 
 .btn-danger {
@@ -134,7 +145,8 @@ body {
 }
 
 .btn-danger:hover {
-  opacity: 0.9;
+  background-color: var(--danger);
+  opacity: 0.82 !important;
 }
 
 .btn-ghost {
@@ -145,6 +157,18 @@ body {
 
 .btn-ghost:hover {
   background-color: var(--surface-color);
+  opacity: 0.82 !important;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-outline:hover {
+  background-color: var(--surface-color);
+  opacity: 0.82 !important;
 }
 
 .btn-block {
