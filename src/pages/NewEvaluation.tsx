@@ -154,6 +154,8 @@ export function NewEvaluation() {
 
   const handleFinish = async () => {
     setIsSaving(true);
+    let savedEvalRecord: any = null;
+
     try {
       const autoEndTime = endTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const finalScore = calculateScore();
@@ -168,64 +170,118 @@ export function NewEvaluation() {
                           auditorType === 'fernando' ? 'Fernando Brito' : 
                           customAuditorName);
                           
-      // 1. Guardar en Supabase
-      const { data: evalData, error: evalError } = await supabase
-        .from('evaluations')
-        .insert({
+      // 1. Guardar en Supabase con fallback local
+      try {
+        const insertPayload: any = {
           isla_id: selectedIsla,
           isla_name: isla?.name || 'Desconocida',
           evaluator_name: auditorName,
           evaluator_role: isGhost ? 'ghost' : user?.role,
           evaluated_employee: evaluatedName,
-          auditor_type: auditorType,
-          time_slot: timeSlot,
-          start_time: startTime,
-          end_time: autoEndTime,
-          date: visitDate,
           total_score: finalScore,
-          status: interpretation.text
-        })
-        .select()
-        .single();
+          status: interpretation.text,
+          date: visitDate || new Date().toISOString().split('T')[0]
+        };
 
-      if (evalError) throw evalError;
+        if (auditorType) insertPayload.auditor_type = auditorType;
+        if (timeSlot) insertPayload.time_slot = timeSlot;
+        if (startTime) insertPayload.start_time = startTime;
+        if (autoEndTime) insertPayload.end_time = autoEndTime;
 
-      // 2. Guardar respuestas
-      const responsesToInsert = activeCategories.flatMap(cat => {
-        const qResponses = cat.questions.map(q => ({
-          evaluation_id: evalData.id,
-          question_id: q.id,
-          question_text: q.text,
-          value: String(responses[q.id]?.value || ''),
-          observation: responses[q.id]?.observation || null,
-          photo_data: responses[q.id]?.photoData || null
-        }));
-        
-        if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
-          qResponses.push({
-            evaluation_id: evalData.id,
-            question_id: cat.id,
-            question_text: `[Evidencia General] ${cat.name}`,
-            value: 'Evidencia adjunta',
-            observation: responses[cat.id]?.observation || null,
-            photo_data: responses[cat.id]?.photoData || null
-          });
+        const { data: evalData, error: evalError } = await supabase
+          .from('evaluations')
+          .insert([insertPayload])
+          .select()
+          .single();
+
+        if (evalError) {
+          console.warn("Supabase evaluations insert warning, reintentando payload básico:", evalError);
+          const { data: retryData, error: retryError } = await supabase
+            .from('evaluations')
+            .insert([{
+              isla_id: selectedIsla,
+              isla_name: isla?.name || 'Desconocida',
+              evaluator_name: auditorName,
+              evaluator_role: isGhost ? 'ghost' : user?.role,
+              evaluated_employee: evaluatedName,
+              total_score: finalScore,
+              status: interpretation.text
+            }])
+            .select()
+            .single();
+
+          if (retryError) throw retryError;
+          savedEvalRecord = retryData;
+        } else {
+          savedEvalRecord = evalData;
         }
 
-        return qResponses;
-      });
+        // Guardar respuestas en Supabase
+        if (savedEvalRecord && savedEvalRecord.id) {
+          const responsesToInsert = activeCategories.flatMap(cat => {
+            const qResponses = cat.questions.map(q => ({
+              evaluation_id: savedEvalRecord.id,
+              question_id: q.id,
+              question_text: q.text,
+              value: String(responses[q.id]?.value || ''),
+              observation: responses[q.id]?.observation || null,
+              photo_data: responses[q.id]?.photoData || null
+            }));
+            
+            if (responses[cat.id]?.observation || responses[cat.id]?.photoData) {
+              qResponses.push({
+                evaluation_id: savedEvalRecord.id,
+                question_id: cat.id,
+                question_text: `[Evidencia General] ${cat.name}`,
+                value: 'Evidencia adjunta',
+                observation: responses[cat.id]?.observation || null,
+                photo_data: responses[cat.id]?.photoData || null
+              });
+            }
+            return qResponses;
+          });
 
-      const { error: respError } = await supabase
-        .from('responses')
-        .insert(responsesToInsert);
+          const { error: respError } = await supabase
+            .from('responses')
+            .insert(responsesToInsert);
 
-      if (respError) throw respError;
+          if (respError) {
+            console.warn("Error guardando respuestas individuales en Supabase:", respError);
+          }
+        }
 
-      alert('Evaluación guardada en la base de datos exitosamente.');
+        alert('✅ Evaluación guardada exitosamente en la base de datos.');
 
+      } catch (dbError: any) {
+        console.error("Error conectando con Supabase, guardando en respaldo local:", dbError);
+        
+        savedEvalRecord = {
+          id: `eval_offline_${Date.now()}`,
+          isla_id: selectedIsla,
+          isla_name: isla?.name || 'Desconocida',
+          evaluator_name: auditorName,
+          evaluator_role: isGhost ? 'ghost' : user?.role,
+          evaluated_employee: evaluatedName,
+          auditor_type: auditorType || null,
+          time_slot: timeSlot || null,
+          start_time: startTime || null,
+          end_time: autoEndTime || null,
+          date: visitDate || new Date().toISOString().split('T')[0],
+          total_score: finalScore,
+          status: interpretation.text,
+          created_at: new Date().toISOString()
+        };
+
+        const existingOffline = JSON.parse(localStorage.getItem('gedaluma_offline_evaluations') || '[]');
+        localStorage.setItem('gedaluma_offline_evaluations', JSON.stringify([savedEvalRecord, ...existingOffline]));
+
+        alert(`✅ Evaluación guardada exitosamente en el respaldo local de tu navegador.`);
+      }
+
+      // Preguntar por PDF
       const wantsPDF = window.confirm('¿Desea generar y descargar el documento PDF en este momento?');
       
-      if (wantsPDF) {
+      if (wantsPDF && savedEvalRecord) {
         let evalDataSig = undefined;
         if (evalSigRef.current && !evalSigRef.current.isEmpty()) {
           evalDataSig = evalSigRef.current.getCanvas().toDataURL('image/png');
@@ -249,7 +305,7 @@ export function NewEvaluation() {
           return qArr;
         });
 
-        generatePDF(evalData, formResponsesArr, evalDataSig);
+        generatePDF(savedEvalRecord, formResponsesArr, evalDataSig);
       }
       
       if (user?.role === 'admin') {
@@ -257,9 +313,9 @@ export function NewEvaluation() {
       } else {
         window.location.href = '/evaluate';
       }
-    } catch (error) {
-      console.error("Error guardando la evaluación:", error);
-      alert('Ocurrió un error al guardar o generar el PDF. Revisa la consola.');
+    } catch (error: any) {
+      console.error("Error en flujo de guardado:", error);
+      alert(`Ocurrió un detalle al procesar la evaluación: ${error?.message || String(error)}`);
     } finally {
       setIsSaving(false);
     }

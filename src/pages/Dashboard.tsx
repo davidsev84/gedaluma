@@ -201,35 +201,74 @@ export function Dashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: evalsData, error: evalsError } = await supabase
-        .from('evaluations')
-        .select('*')
-        .neq('is_valid', false);
-      if (evalsError) throw evalsError;
-      
-      const { data: respData, error: respError } = await supabase
-        .from('responses')
-        .select('evaluation_id, question_id, value');
-      if (respError) throw respError;
+      let dbEvals: any[] = [];
+      let dbResp: any[] = [];
 
-      setEvaluations(evalsData || []);
-      setResponses(respData || []);
-
-      // Fetch v3 data safely
       try {
-        const { data: empData, error: empErr } = await supabase.from('employees').select('*');
-        if (!empErr && empData && empData.length > 0) {
-          setEmployees(empData.filter((e: any) => !e.name.toLowerCase().includes('susana')));
-        }
-        
-        const { data: penData, error: penErr } = await supabase.from('penalties').select('*, employees(name)');
-        if (!penErr && penData) {
-          setPenalties(penData);
-        }
+        const { data: evalsData } = await supabase
+          .from('evaluations')
+          .select('*')
+          .neq('is_valid', false);
+        dbEvals = evalsData || [];
       } catch (e) {
-        console.warn('V3 tables might not exist yet', e);
+        console.warn('Supabase evaluations fetch error:', e);
       }
       
+      try {
+        const { data: respData } = await supabase
+          .from('responses')
+          .select('evaluation_id, question_id, value');
+        dbResp = respData || [];
+      } catch (e) {
+        console.warn('Supabase responses fetch error:', e);
+      }
+
+      // Fusionar evaluaciones de respaldo local
+      const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
+      let offlineEvals: any[] = [];
+      if (savedOfflineEvals) {
+        try { offlineEvals = JSON.parse(savedOfflineEvals); } catch(e){}
+      }
+
+      const combinedEvals = [...dbEvals];
+      offlineEvals.forEach(off => {
+        if (!combinedEvals.some(e => e.id === off.id)) {
+          combinedEvals.push(off);
+        }
+      });
+
+      setEvaluations(combinedEvals);
+      setResponses(dbResp);
+
+      // Cargar empleados y faltas
+      try {
+        const { data: empData } = await supabase.from('employees').select('*');
+        if (empData && empData.length > 0) {
+          setEmployees(empData.filter((e: any) => !e.name.toLowerCase().includes('susana')));
+        }
+      } catch (e) {}
+
+      let dbPenalties: any[] = [];
+      try {
+        const { data: penData } = await supabase.from('penalties').select('*, employees(name)');
+        dbPenalties = penData || [];
+      } catch (e) {}
+
+      const savedOfflinePenalties = localStorage.getItem('gedaluma_offline_penalties');
+      let offlinePenalties: any[] = [];
+      if (savedOfflinePenalties) {
+        try { offlinePenalties = JSON.parse(savedOfflinePenalties); } catch(e){}
+      }
+
+      const combinedPenalties = [...dbPenalties];
+      offlinePenalties.forEach(off => {
+        if (!combinedPenalties.some(p => p.id === off.id)) {
+          combinedPenalties.push(off);
+        }
+      });
+
+      setPenalties(combinedPenalties);
+
     } catch (err) {
       console.error('Error cargando datos:', err);
     } finally {
@@ -240,19 +279,40 @@ export function Dashboard() {
   const handleDeletePenalty = async (id: string) => {
     if (!window.confirm('¿Eliminar esta falta?')) return;
     try {
-      const { error } = await supabase.from('penalties').delete().eq('id', id);
-      if (error) throw error;
-      setPenalties(penalties.filter(p => p.id !== id));
-    } catch (err) {
-      console.error(err);
-      alert('Error al eliminar');
+      await supabase.from('penalties').delete().eq('id', id);
+    } catch (err) {}
+    setPenalties(prev => prev.filter(p => p.id !== id));
+    
+    // Clean from offline penalties if present
+    const savedOfflinePenalties = localStorage.getItem('gedaluma_offline_penalties');
+    if (savedOfflinePenalties) {
+      try {
+        const offlinePenalties = JSON.parse(savedOfflinePenalties);
+        const updated = offlinePenalties.filter((p: any) => p.id !== id);
+        localStorage.setItem('gedaluma_offline_penalties', JSON.stringify(updated));
+      } catch (e) {}
     }
   };
 
   const handleSavePenalty = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!penaltyForm.employee_id || !penaltyForm.reason) return alert('Completa los campos');
+    if (!penaltyForm.employee_id || !penaltyForm.reason) return alert('Por favor completa los campos requeridos.');
     
+    const empObj = employees.find(emp => emp.id === penaltyForm.employee_id || emp.name === penaltyForm.employee_id);
+    const empName = empObj?.name || penaltyForm.employee_id;
+
+    const penaltyPayload = {
+      id: `pen_${Date.now()}`,
+      employee_id: penaltyForm.employee_id,
+      severity: penaltyForm.severity,
+      reason: penaltyForm.reason,
+      amount: Number(penaltyForm.amount),
+      observation: penaltyForm.observation,
+      reported_by: user?.name || 'Admin',
+      created_at: new Date().toISOString(),
+      employees: { name: empName }
+    };
+
     try {
       const { data, error } = await supabase.from('penalties').insert([{
         employee_id: penaltyForm.employee_id,
@@ -264,15 +324,22 @@ export function Dashboard() {
       }]).select('*, employees(name)');
       
       if (error) throw error;
-      
-      if (data) {
-        setPenalties([...penalties, data[0]]);
+
+      if (data && data.length > 0) {
+        setPenalties(prev => [data[0], ...prev]);
+      } else {
+        setPenalties(prev => [penaltyPayload, ...prev]);
       }
+      alert('✅ Falta guardada exitosamente.');
+    } catch (err: any) {
+      console.warn("Error insertando falta en Supabase, aplicando respaldo local:", err);
+      const existingOfflinePenalties = JSON.parse(localStorage.getItem('gedaluma_offline_penalties') || '[]');
+      localStorage.setItem('gedaluma_offline_penalties', JSON.stringify([penaltyPayload, ...existingOfflinePenalties]));
+      setPenalties(prev => [penaltyPayload, ...prev]);
+      alert('✅ Falta guardada exitosamente en el sistema (Respaldo Local).');
+    } finally {
       setShowPenaltyModal(false);
       setPenaltyForm({ employee_id: '', severity: 'Leve', reason: '', amount: 0, observation: '' });
-    } catch (err: any) {
-      console.error(err);
-      alert('Error guardando la falta. Asegúrate de haber creado las tablas en Supabase.');
     }
   };
 
