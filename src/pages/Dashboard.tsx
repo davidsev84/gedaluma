@@ -431,33 +431,31 @@ export function Dashboard() {
       
       {/* HEADER PRINCIPAL */}
       <header 
-        className="flex justify-between items-center" 
+        className="flex justify-between items-center header-flex-mobile" 
         style={{ 
           marginBottom: '24px', 
           paddingBottom: '16px', 
           borderBottom: '1px solid var(--border-color)',
-          flexWrap: 'nowrap',
           gap: '16px'
         }}
       >
-        <div style={{ minWidth: '320px' }}>
+        <div>
           <h1 
             className="font-bold flex items-center gap-2" 
             style={{ 
               fontSize: '1.75rem', 
-              whiteSpace: 'nowrap', 
               letterSpacing: '-0.5px' 
             }}
           >
             <Store style={{ color: '#009C48', flexShrink: 0 }} size={30} />
             Panel de Control GEDALUMA
           </h1>
-          <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '2px', whiteSpace: 'nowrap' }}>
+          <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '2px' }}>
             Gestión Operativa, Auditorías y Cliente Fantasma
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap" style={{ justifyContent: 'flex-end' }}>
+        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
           <Link to="/history" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
             <FileText size={16} /> Ver Historial
           </Link>
@@ -512,7 +510,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card table-responsive" style={{ padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
@@ -806,7 +804,7 @@ export function Dashboard() {
           </div>
 
           {/* PESTAÑAS DE NAVEGACIÓN DENTRO DE LA ISLA */}
-          <div className="flex gap-2 mb-6" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+          <div className="flex gap-2 mb-6 flex-wrap" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
             <button 
               onClick={() => setIslaTab('auditoria')}
               className={`btn ${islaTab === 'auditoria' ? 'btn-primary' : 'btn-ghost'}`}

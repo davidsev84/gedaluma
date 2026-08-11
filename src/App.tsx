@@ -40,7 +40,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 1000 }}>
+        <div className="theme-toggle-container">
           <ThemeToggle />
         </div>
         <Routes>

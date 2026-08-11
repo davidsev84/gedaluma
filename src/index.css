@@ -281,18 +281,112 @@ html {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
+/* Theme Toggle Positioning & Styling */
+.theme-toggle-container {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-theme-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 156, 72, 0.18);
+}
+
+.theme-toggle-label {
+  display: inline-block;
+}
+
 /* Mobile responsive utilities */
 .show-mobile {
   display: none !important;
 }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
 @media (max-width: 768px) {
+  .theme-toggle-container {
+    top: 14px;
+    right: 14px;
+  }
+  
+  .btn-theme-toggle {
+    padding: 6px 10px;
+    border-radius: 50%;
+  }
+  
+  .theme-toggle-label {
+    display: none;
+  }
+
   .hidden-mobile {
     display: none !important;
   }
+  
   .show-mobile {
     display: flex !important;
   }
+  
+  .container {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  /* Responsive Headers */
+  .header-flex-mobile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .header-actions-mobile {
+    width: 100%;
+    justify-content: flex-start !important;
+    flex-wrap: wrap;
+  }
+
+  /* Responsive Grids */
+  .grid-cols-4, .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Modals on Mobile */
+  .modal-card-mobile {
+    width: 95vw !important;
+    max-height: 90vh !important;
+    padding: 16px !important;
+  }
+
   .mobile-menu-overlay {
     position: fixed;
     top: 0;
@@ -306,6 +400,12 @@ html {
     flex-direction: column;
     gap: 24px;
     animation: fadeIn 0.3s ease;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-cols-4, .grid-cols-3, .grid-cols-2 {
+    grid-template-columns: 1fr !important;
   }
 }
 

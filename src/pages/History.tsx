@@ -79,14 +79,16 @@ export function History() {
 
   return (
     <div className="container" style={{ maxWidth: '1200px' }}>
-      <header className="flex justify-between items-center" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+      <header className="flex justify-between items-center header-flex-mobile" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
         <div>
           <h1 className="text-2xl">Historial de Evaluaciones</h1>
           <p className="text-muted">Revisión y auditoría de registros</p>
         </div>
-        <Link to="/dashboard" className="btn btn-outline">
-          Volver al Panel
-        </Link>
+        <div style={{ paddingRight: '90px' }}>
+          <Link to="/dashboard" className="btn btn-outline">
+            Volver al Panel
+          </Link>
+        </div>
       </header>
 
       <div className="card">

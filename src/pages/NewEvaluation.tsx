@@ -355,12 +355,12 @@ export function NewEvaluation() {
 
   return (
     <div className="container" style={{ maxWidth: '900px', paddingBottom: '60px' }}>
-      <header className="flex justify-between items-center" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
+      <header className="flex justify-between items-center header-flex-mobile" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
         <div>
           <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Nueva Evaluación de Auditoría Interna'}</h1>
           <p className="text-muted">Evaluador: {user?.name}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center header-actions-mobile" style={{ paddingRight: '90px' }}>
           {user?.role === 'admin' && (
             <Link to="/dashboard" className="btn btn-outline flex items-center gap-2">
               <ArrowLeft size={18} /> Volver al Panel
