@@ -284,8 +284,8 @@ html {
 /* Theme Toggle Positioning & Styling */
 .theme-toggle-container {
   position: fixed;
-  top: 24px;
-  right: 28px;
+  top: 14px;
+  right: 20px;
   z-index: 1000;
   transition: all 0.3s ease;
 }

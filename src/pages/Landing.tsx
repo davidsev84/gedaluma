@@ -22,7 +22,7 @@ export function Landing() {
           </span>
         </div>
         
-        <div className="flex gap-4 items-center hidden-mobile">
+        <div className="flex gap-4 items-center hidden-mobile" style={{ paddingRight: '160px' }}>
           <a href="#proposito" className="btn btn-ghost" style={{ border: 'none' }}>Visión</a>
           <a href="#adn" className="btn btn-ghost" style={{ border: 'none' }}>Valores</a>
           <a href="#compromiso" className="btn btn-ghost" style={{ border: 'none' }}>Compromiso</a>
@@ -32,7 +32,7 @@ export function Landing() {
         </div>
         
         {/* Mobile menu toggle */}
-        <div className="show-mobile">
+        <div className="show-mobile" style={{ marginRight: '54px' }}>
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
             className="btn btn-ghost" 
