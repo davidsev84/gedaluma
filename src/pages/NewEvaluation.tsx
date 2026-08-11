@@ -210,7 +210,10 @@ export function NewEvaluation() {
             .select()
             .single();
 
-          if (retryError) throw retryError;
+          if (retryError) {
+            const causeMsg = retryError.message || retryError.details || retryError.hint || JSON.stringify(retryError);
+            throw new Error(`Error en Tabla evaluations: ${causeMsg} (Código DB: ${retryError.code || 'N/A'})`);
+          }
           savedEvalRecord = retryData;
         } else {
           savedEvalRecord = evalData;
@@ -247,13 +250,16 @@ export function NewEvaluation() {
 
           if (respError) {
             console.warn("Error guardando respuestas individuales en Supabase:", respError);
+            const causeMsg = respError.message || respError.details || respError.hint || JSON.stringify(respError);
+            throw new Error(`Error en Tabla responses: ${causeMsg} (Código DB: ${respError.code || 'N/A'})`);
           }
         }
 
-        alert('✅ Evaluación guardada exitosamente en la base de datos.');
+        alert('✅ Evaluación guardada exitosamente en la base de datos Supabase.');
 
       } catch (dbError: any) {
-        console.error("Error conectando con Supabase, guardando en respaldo local:", dbError);
+        const errorCause = dbError.message || dbError.details || dbError.hint || String(dbError);
+        console.error("Error conectando con Supabase:", dbError);
         
         savedEvalRecord = {
           id: `eval_offline_${Date.now()}`,
@@ -275,7 +281,7 @@ export function NewEvaluation() {
         const existingOffline = JSON.parse(localStorage.getItem('gedaluma_offline_evaluations') || '[]');
         localStorage.setItem('gedaluma_offline_evaluations', JSON.stringify([savedEvalRecord, ...existingOffline]));
 
-        alert(`✅ Evaluación guardada exitosamente en el respaldo local de tu navegador.`);
+        alert(`⚠️ NOTA: La evaluación fue guardada en el respaldo local del navegador para no perder tu información.\n\n📌 CAUSA DEL ERROR AL GUARDAR EN SUPABASE:\n${errorCause}`);
       }
 
       // Preguntar por PDF
