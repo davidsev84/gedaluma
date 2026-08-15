@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LogOut, BarChart3, TrendingUp, Users, Loader2, 
   UserCheck, ShieldAlert, Plus, Trash2, ArrowLeft, Store, 
-  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift
+  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount } from '../data/mock';
+import { generateInventoryPDF } from '../lib/pdfGenerator';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -20,12 +21,39 @@ export function Dashboard() {
   const [selectedIslaId, setSelectedIslaId] = useState<string | null>(null);
   
   // Active tab within selected island
-  const [islaTab, setIslaTab] = useState<'auditoria' | 'fantasma' | 'responsabilidad' | 'personal'>('auditoria');
+  const [islaTab, setIslaTab] = useState<'auditoria' | 'fantasma' | 'responsabilidad' | 'personal' | 'inventario'>('auditoria');
 
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>(mockEmployees.filter(e => !e.name.toLowerCase().includes('susana')));
   const [penalties, setPenalties] = useState<any[]>([]);
+  const [inventories, setInventories] = useState<any[]>([]);
+
+  const toggleInventoryDiscount = async (invId: string, currentDiscounted: boolean) => {
+    const updatedStatus = !currentDiscounted;
+
+    setInventories(prev => prev.map(inv => 
+      inv.id === invId ? { ...inv, is_discounted: updatedStatus } : inv
+    ));
+
+    try {
+      await supabase
+        .from('inventories')
+        .update({ is_discounted: updatedStatus })
+        .eq('id', invId);
+    } catch (e) {}
+
+    const savedOffline = localStorage.getItem('gedaluma_offline_inventories');
+    if (savedOffline) {
+      try {
+        const offArr = JSON.parse(savedOffline);
+        const updated = offArr.map((inv: any) => 
+          inv.id === invId ? { ...inv, is_discounted: updatedStatus } : inv
+        );
+        localStorage.setItem('gedaluma_offline_inventories', JSON.stringify(updated));
+      } catch (e) {}
+    }
+  };
   
   // State for bonuses (persisted in localStorage / Supabase fallback)
   const [bonuses, setBonuses] = useState<any[]>(() => {
@@ -269,6 +297,28 @@ export function Dashboard() {
 
       setPenalties(combinedPenalties);
 
+      // Cargar inventarios
+      let dbInventories: any[] = [];
+      try {
+        const { data: invData } = await supabase.from('inventories').select('*').order('created_at', { ascending: false });
+        dbInventories = invData || [];
+      } catch (e) {}
+
+      const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
+      let offlineInventories: any[] = [];
+      if (savedOfflineInventories) {
+        try { offlineInventories = JSON.parse(savedOfflineInventories); } catch(e){}
+      }
+
+      const combinedInventories = [...dbInventories];
+      offlineInventories.forEach(off => {
+        if (!combinedInventories.some(inv => inv.id === off.id)) {
+          combinedInventories.push(off);
+        }
+      });
+
+      setInventories(combinedInventories);
+
     } catch (err) {
       console.error('Error cargando datos:', err);
     } finally {
@@ -397,6 +447,12 @@ export function Dashboard() {
     
     const totalAdjustments = islaPenalties.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
+    // Get inventories for this island
+    const islaInventories = inventories.filter(inv => isMatchingIsla(inv));
+    const pendingMissingUnits = islaInventories
+      .filter(inv => !inv.is_discounted)
+      .reduce((sum, inv) => sum + Number(inv.total_missing || 0), 0);
+
     return {
       audAvg,
       audCount: audEvals.length,
@@ -406,7 +462,9 @@ export function Dashboard() {
       islaPenalties,
       totalAdjustments,
       audEvals,
-      ghostEvals
+      ghostEvals,
+      islaInventories,
+      pendingMissingUnits
     };
   };
 
@@ -464,6 +522,9 @@ export function Dashboard() {
           </Link>
           <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-2" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
             <UserCheck size={16} /> Nueva Fantasma
+          </Link>
+          <Link to="/inventory/new" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}>
+            <Package size={16} /> Realizar Inventario
           </Link>
           <button onClick={logout} className="btn btn-ghost flex items-center gap-1" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
             <LogOut size={18} />
@@ -799,6 +860,13 @@ export function Dashboard() {
                     ${selectedIslaStats.totalAdjustments.toFixed(2)}
                   </div>
                 </div>
+
+                <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.78rem' }}>Inventario Faltante</span>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: selectedIslaStats.pendingMissingUnits > 0 ? 'var(--danger)' : '#009C48' }}>
+                    {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un.` : 'Al día (0)'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -827,6 +895,14 @@ export function Dashboard() {
               style={{ background: islaTab === 'responsabilidad' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
             >
               <Gift size={18} /> Faltas y Bonos (${selectedIslaStats.totalAdjustments.toFixed(0)})
+            </button>
+
+            <button 
+              onClick={() => setIslaTab('inventario')}
+              className={`btn ${islaTab === 'inventario' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ background: islaTab === 'inventario' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+            >
+              <Package size={18} /> Inventario ({selectedIslaStats.islaInventories.length})
             </button>
 
             <button 
@@ -1302,6 +1378,151 @@ export function Dashboard() {
                     No hay empleados asignados a esta isla. Presiona el botón "Agregar Empleado a la Isla" para registrar el personal.
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: INVENTARIOS DE LA ISLA */}
+          {islaTab === 'inventario' && selectedIslaStats && (
+            <div className="card">
+              <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+                    <Package size={24} style={{ color: '#009C48' }} /> Control de Inventarios de Isla {selectedIsla.name}
+                  </h3>
+                  <p className="text-muted" style={{ fontSize: '0.88rem' }}>
+                    Registro de conteos físicos vs sistema y gestión mensual de faltantes
+                  </p>
+                </div>
+
+                <Link 
+                  to={`/inventory/new?isla=${selectedIslaId}`}
+                  className="btn btn-primary flex items-center gap-2"
+                  style={{ background: '#009C48', borderColor: '#009C48' }}
+                >
+                  <Package size={18} /> Realizar Nuevo Inventario
+                </Link>
+              </div>
+
+              {/* TARJETA RESUMEN DE ESTADO DEL INVENTARIO Y VISTO DE DESCUENTO */}
+              <div className="mb-6" style={{ background: 'var(--bg-color)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase' }}>
+                      Estado del Inventario Mensual
+                    </span>
+                    <h4 className="text-2xl font-bold" style={{ marginTop: '2px' }}>
+                      {selectedIslaStats.pendingMissingUnits > 0 
+                        ? `⚠️ Unidades Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un.` 
+                        : '✅ Inventario al Día (0 Faltantes Pendientes)'}
+                    </h4>
+                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                      {selectedIslaStats.islaInventories.length > 0 
+                        ? `Último inventario realizado el: ${new Date(selectedIslaStats.islaInventories[0].date || selectedIslaStats.islaInventories[0].created_at).toLocaleDateString()}` 
+                        : 'No se han registrado inventarios en esta isla.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3" style={{ background: 'var(--surface-color)', padding: '12px 20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        Cierre / Descuento Mensual:
+                      </span>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
+                        {selectedIslaStats.pendingMissingUnits === 0 ? 'Resuelto a 0' : 'Faltantes activos'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* HISTORIAL DE INVENTARIOS DE ESTA ISLA */}
+              <h4 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <FileText size={20} /> Historial de Inventarios Realizados
+              </h4>
+
+              <div className="table-responsive">
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 14px' }}>Fecha</th>
+                      <th style={{ padding: '12px 14px' }}>Responsable / Auditor</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Faltantes (-)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Cuadran (=)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Sobran (+)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado / Descuento</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Acciones & PDF</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedIslaStats.islaInventories.map((inv) => {
+                      const isDiscounted = !!inv.is_discounted;
+                      return (
+                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)', background: isDiscounted ? 'rgba(0, 156, 72, 0.04)' : 'inherit' }}>
+                          <td style={{ padding: '14px', fontWeight: 700 }}>
+                            {new Date(inv.date || inv.created_at).toLocaleDateString()}
+                          </td>
+
+                          <td style={{ padding: '14px' }}>
+                            {inv.evaluator_name || 'Auditor Operativo'}
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: inv.total_missing > 0 ? 'var(--danger)' : '#009C48' }}>
+                            {inv.total_missing || 0} un.
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#009C48' }}>
+                            {inv.total_match || 0} prod.
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#0284c7' }}>
+                            +{inv.total_surplus || 0} un.
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'center' }}>
+                            <button
+                              onClick={() => toggleInventoryDiscount(inv.id, isDiscounted)}
+                              className="btn"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.8rem',
+                                fontWeight: 800,
+                                borderRadius: '20px',
+                                background: isDiscounted ? 'rgba(0, 156, 72, 0.15)' : 'rgba(239, 68, 68, 0.12)',
+                                color: isDiscounted ? '#009C48' : 'var(--danger)',
+                                border: `1px solid ${isDiscounted ? '#009C48' : 'var(--danger)'}`
+                              }}
+                              title="Haz clic para cambiar el visto de descuento a 0"
+                            >
+                              {isDiscounted ? '✓ Descontado (0 Pendiente)' : '⚠️ Pendiente por Descontar'}
+                            </button>
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => {
+                                const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+                                const items = offlineItemsMap[inv.id] || [];
+                                generateInventoryPDF(inv, items);
+                              }}
+                              className="btn btn-outline flex items-center gap-1"
+                              style={{ padding: '6px 12px', fontSize: '0.8rem', marginLeft: 'auto' }}
+                            >
+                              <FileText size={16} /> Descargar PDF
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {selectedIslaStats.islaInventories.length === 0 && (
+                      <tr>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          No hay inventarios registrados en esta isla. Presiona "Realizar Nuevo Inventario" para hacer el primer conteo.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

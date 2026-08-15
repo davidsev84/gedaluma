@@ -5,6 +5,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { NewEvaluation } from './pages/NewEvaluation';
+import { NewInventory } from './pages/NewInventory';
 import { Landing } from './pages/Landing';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -67,6 +68,12 @@ function App() {
           <Route path="/evaluate" element={
             <PrivateRoute roles={['admin', 'evaluator', 'ghost']}>
               <NewEvaluation />
+            </PrivateRoute>
+          } />
+
+          <Route path="/inventory/new" element={
+            <PrivateRoute roles={['admin', 'evaluator', 'ghost']}>
+              <NewInventory />
             </PrivateRoute>
           } />
           

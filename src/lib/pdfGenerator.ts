@@ -129,3 +129,140 @@ export const generatePDF = (
     return false;
   }
 };
+
+export const generateInventoryPDF = (
+  inventory: any,
+  items: any[],
+  evaluatorSignature?: string
+) => {
+  try {
+    const doc = new jsPDF();
+
+    // Header Title
+    doc.setFontSize(18);
+    doc.setTextColor(0, 156, 72); // Coco Express Green
+    doc.text('Reporte de Inventario Fisico vs Sistema - GEDALUMA', 20, 20);
+
+    doc.setFontSize(11);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Isla: ISLA ${inventory.isla_name || 'Desconocida'}`, 20, 32);
+    doc.text(`Responsable / Evaluador: ${inventory.evaluator_name || 'N/A'}`, 20, 39);
+    doc.text(`Fecha y Hora: ${inventory.date || new Date().toLocaleDateString()} (${inventory.start_time || ''} - ${inventory.end_time || ''})`, 20, 46);
+
+    // Summary Card Box
+    doc.setFillColor(244, 248, 245);
+    doc.rect(20, 52, 170, 24, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 156, 72);
+    doc.text(`Total Productos Evaluados: ${items.length}`, 25, 60);
+    doc.setTextColor(239, 68, 68);
+    doc.text(`Total Unidades Faltantes: ${inventory.total_missing || 0}`, 25, 66);
+    doc.setTextColor(2, 132, 199);
+    doc.text(`Total Productos Cuadran: ${inventory.total_match || 0}`, 110, 60);
+    doc.setTextColor(247, 181, 0);
+    doc.text(`Total Productos Sobran: ${inventory.total_surplus || 0}`, 110, 66);
+
+    let currentY = 86;
+
+    // Separate items by Category
+    const categoriesList = ['COCOEXPRESS', 'KELAO'];
+
+    categoriesList.forEach((catName) => {
+      const catItems = items.filter(it => it.category === catName);
+      if (catItems.length === 0) return;
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 156, 72);
+      doc.text(`CATEGORIA: ${catName}`, 20, currentY);
+      currentY += 8;
+
+      // Table Header
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.setFillColor(0, 156, 72);
+      doc.rect(20, currentY, 170, 7, 'F');
+      doc.text('Producto', 22, currentY + 5);
+      doc.text('U/M', 90, currentY + 5);
+      doc.text('Sistema', 105, currentY + 5);
+      doc.text('Fisico', 125, currentY + 5);
+      doc.text('Diferencia', 145, currentY + 5);
+      doc.text('Obs.', 170, currentY + 5);
+      currentY += 9;
+
+      doc.setFontSize(8.5);
+
+      catItems.forEach((it: any) => {
+        const sys = Number(it.system_qty || 0);
+        const phys = Number(it.physical_qty || 0);
+        const diff = phys - sys;
+
+        let diffText = 'Cuadra (0)';
+        if (diff < 0) {
+          diffText = `Falta (${diff})`;
+        } else if (diff > 0) {
+          diffText = `Sobra (+${diff})`;
+        }
+
+        // Draw row background for Faltantes
+        if (diff < 0) {
+          doc.setFillColor(254, 242, 242);
+          doc.rect(20, currentY - 3, 170, 6, 'F');
+          doc.setTextColor(185, 28, 28);
+        } else if (diff > 0) {
+          doc.setFillColor(240, 249, 255);
+          doc.rect(20, currentY - 3, 170, 6, 'F');
+          doc.setTextColor(3, 105, 161);
+        } else {
+          doc.setTextColor(50, 50, 50);
+        }
+
+        const prodNameTruncated = doc.splitTextToSize(it.name, 65);
+        doc.text(prodNameTruncated[0], 22, currentY);
+        doc.text(String(it.unit || 'UN'), 90, currentY);
+        doc.text(String(sys), 108, currentY);
+        doc.text(String(phys), 128, currentY);
+        doc.text(diffText, 145, currentY);
+        
+        const obsTrunc = doc.splitTextToSize(it.observation || '-', 20);
+        doc.text(obsTrunc[0], 170, currentY);
+
+        currentY += 6;
+
+        if (currentY > 270) {
+          doc.addPage();
+          currentY = 20;
+        }
+      });
+
+      currentY += 6;
+      if (currentY > 270) {
+        doc.addPage();
+        currentY = 20;
+      }
+    });
+
+    // Signature Block
+    if (evaluatorSignature) {
+      if (currentY > 220) {
+        doc.addPage();
+        currentY = 30;
+      } else {
+        currentY += 10;
+      }
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Firma de Conformidad del Responsable de Inventario:', 20, currentY);
+      currentY += 8;
+      doc.addImage(evaluatorSignature, 'PNG', 20, currentY, 60, 20);
+    }
+
+    const islaNameSafe = (inventory.isla_name || 'Isla').replace(/ /g, '_');
+    doc.save(`inventario_${islaNameSafe}_${new Date().getTime()}.pdf`);
+
+    return true;
+  } catch (error) {
+    console.error('Error generando PDF de inventario:', error);
+    alert('Hubo un problema al generar el PDF del inventario.');
+    return false;
+  }
+};
