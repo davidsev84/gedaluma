@@ -151,16 +151,23 @@ export const generateInventoryPDF = (
 
     // Summary Card Box
     doc.setFillColor(244, 248, 245);
-    doc.rect(20, 52, 170, 24, 'F');
-    doc.setFontSize(10);
+    doc.rect(20, 52, 170, 26, 'F');
+    doc.setFontSize(9.5);
     doc.setTextColor(0, 156, 72);
     doc.text(`Total Productos Evaluados: ${items.length}`, 25, 60);
+
+    const missingUn = inventory.total_missing || 0;
+    const missingDol = Number(inventory.total_missing_dollars || missingUn * 1.00).toFixed(2);
     doc.setTextColor(239, 68, 68);
-    doc.text(`Total Unidades Faltantes: ${inventory.total_missing || 0}`, 25, 66);
+    doc.text(`Total Faltantes: ${missingUn} un. ($${missingDol})`, 25, 67);
+
     doc.setTextColor(2, 132, 199);
-    doc.text(`Total Productos Cuadran: ${inventory.total_match || 0}`, 110, 60);
+    doc.text(`Total Cuadran: ${inventory.total_match || 0} prod.`, 110, 60);
+
+    const surplusUn = inventory.total_surplus || 0;
+    const surplusDol = Number(inventory.total_surplus_dollars || surplusUn * 1.00).toFixed(2);
     doc.setTextColor(247, 181, 0);
-    doc.text(`Total Productos Sobran: ${inventory.total_surplus || 0}`, 110, 66);
+    doc.text(`Total Sobran: +${surplusUn} un. (+$${surplusDol})`, 110, 67);
 
     let currentY = 86;
 
@@ -171,36 +178,39 @@ export const generateInventoryPDF = (
       const catItems = items.filter(it => it.category === catName);
       if (catItems.length === 0) return;
 
-      doc.setFontSize(12);
+      doc.setFontSize(11.5);
       doc.setTextColor(0, 156, 72);
       doc.text(`CATEGORIA: ${catName}`, 20, currentY);
       currentY += 8;
 
       // Table Header
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(255, 255, 255);
       doc.setFillColor(0, 156, 72);
       doc.rect(20, currentY, 170, 7, 'F');
       doc.text('Producto', 22, currentY + 5);
-      doc.text('U/M', 90, currentY + 5);
-      doc.text('Sistema', 105, currentY + 5);
-      doc.text('Fisico', 125, currentY + 5);
-      doc.text('Diferencia', 145, currentY + 5);
-      doc.text('Obs.', 170, currentY + 5);
+      doc.text('U/M', 80, currentY + 5);
+      doc.text('Costo', 93, currentY + 5);
+      doc.text('Sistema', 110, currentY + 5);
+      doc.text('Fisico', 126, currentY + 5);
+      doc.text('Diferencia ($)', 142, currentY + 5);
+      doc.text('Obs.', 175, currentY + 5);
       currentY += 9;
 
-      doc.setFontSize(8.5);
+      doc.setFontSize(8);
 
       catItems.forEach((it: any) => {
         const sys = Number(it.system_qty || 0);
         const phys = Number(it.physical_qty || 0);
         const diff = phys - sys;
+        const unitCost = Number(it.cost || 1.00);
+        const diffDollars = diff * unitCost;
 
-        let diffText = 'Cuadra (0)';
+        let diffText = 'Cuadra ($0)';
         if (diff < 0) {
-          diffText = `Falta (${diff})`;
+          diffText = `Falta (${diff} / -$${Math.abs(diffDollars).toFixed(2)})`;
         } else if (diff > 0) {
-          diffText = `Sobra (+${diff})`;
+          diffText = `Sobra (+${diff} / +$${diffDollars.toFixed(2)})`;
         }
 
         // Draw row background for Faltantes
@@ -216,15 +226,16 @@ export const generateInventoryPDF = (
           doc.setTextColor(50, 50, 50);
         }
 
-        const prodNameTruncated = doc.splitTextToSize(it.name, 65);
+        const prodNameTruncated = doc.splitTextToSize(it.name, 56);
         doc.text(prodNameTruncated[0], 22, currentY);
-        doc.text(String(it.unit || 'UN'), 90, currentY);
-        doc.text(String(sys), 108, currentY);
+        doc.text(String(it.unit || 'UN'), 80, currentY);
+        doc.text(`$${unitCost.toFixed(2)}`, 93, currentY);
+        doc.text(String(sys), 112, currentY);
         doc.text(String(phys), 128, currentY);
-        doc.text(diffText, 145, currentY);
+        doc.text(diffText, 142, currentY);
         
-        const obsTrunc = doc.splitTextToSize(it.observation || '-', 20);
-        doc.text(obsTrunc[0], 170, currentY);
+        const obsTrunc = doc.splitTextToSize(it.observation || '-', 15);
+        doc.text(obsTrunc[0], 175, currentY);
 
         currentY += 6;
 

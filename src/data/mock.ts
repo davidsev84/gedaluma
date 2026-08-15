@@ -447,68 +447,84 @@ export interface InventoryProduct {
   category: 'COCOEXPRESS' | 'KELAO';
   name: string;
   unit: 'UN' | 'LT' | 'GR';
+  cost: number;
 }
 
 export const inventoryProductsCatalog: InventoryProduct[] = [
   // CATEGORÍA 1: COCOEXPRESS (Lista Principal - 50 Productos)
-  { id: 'inv_coco_1', category: 'COCOEXPRESS', name: 'Aceite Coco Express 200ml', unit: 'UN' },
-  { id: 'inv_coco_2', category: 'COCOEXPRESS', name: 'Aceite Coco Express 400ml', unit: 'UN' },
-  { id: 'inv_coco_3', category: 'COCOEXPRESS', name: 'Agua Botella 1lt', unit: 'UN' },
-  { id: 'inv_coco_4', category: 'COCOEXPRESS', name: 'Agua Botella 250', unit: 'UN' },
-  { id: 'inv_coco_5', category: 'COCOEXPRESS', name: 'Agua Botella 370', unit: 'UN' },
-  { id: 'inv_coco_6', category: 'COCOEXPRESS', name: 'Agua Botella 500', unit: 'UN' },
-  { id: 'inv_coco_7', category: 'COCOEXPRESS', name: 'Agua Botella Vidrio 310', unit: 'UN' },
-  { id: 'inv_coco_8', category: 'COCOEXPRESS', name: 'Alfajor Blanco', unit: 'UN' },
-  { id: 'inv_coco_9', category: 'COCOEXPRESS', name: 'Alfajor Chocolate', unit: 'UN' },
-  { id: 'inv_coco_10', category: 'COCOEXPRESS', name: 'Alfajor Grande', unit: 'UN' },
-  { id: 'inv_coco_11', category: 'COCOEXPRESS', name: 'Alfajor Pequeño', unit: 'UN' },
-  { id: 'inv_coco_12', category: 'COCOEXPRESS', name: 'Base Soft Coco', unit: 'LT' },
-  { id: 'inv_coco_13', category: 'COCOEXPRESS', name: 'Base Soft Coco Chocolate', unit: 'LT' },
-  { id: 'inv_coco_14', category: 'COCOEXPRESS', name: 'Bolitas De Coco', unit: 'UN' },
-  { id: 'inv_coco_15', category: 'COCOEXPRESS', name: 'Botella 250 Refresco Lleno', unit: 'UN' },
-  { id: 'inv_coco_16', category: 'COCOEXPRESS', name: 'Botella 370 Refresco Lleno', unit: 'UN' },
-  { id: 'inv_coco_17', category: 'COCOEXPRESS', name: 'Cocada Manjar', unit: 'UN' },
-  { id: 'inv_coco_18', category: 'COCOEXPRESS', name: 'Cocada Volcan', unit: 'UN' },
-  { id: 'inv_coco_19', category: 'COCOEXPRESS', name: 'Cono', unit: 'UN' },
-  { id: 'inv_coco_20', category: 'COCOEXPRESS', name: 'Galleta Avena', unit: 'UN' },
-  { id: 'inv_coco_21', category: 'COCOEXPRESS', name: 'Galleta Coco', unit: 'UN' },
-  { id: 'inv_coco_22', category: 'COCOEXPRESS', name: 'Granizado', unit: 'LT' },
-  { id: 'inv_coco_23', category: 'COCOEXPRESS', name: 'Helado Chocolate Medio lt', unit: 'UN' },
-  { id: 'inv_coco_24', category: 'COCOEXPRESS', name: 'Helado Coco Medio lt', unit: 'UN' },
-  { id: 'inv_coco_25', category: 'COCOEXPRESS', name: 'Helado Cremoso Medio lt', unit: 'UN' },
-  { id: 'inv_coco_26', category: 'COCOEXPRESS', name: 'Helado Paleta Chocolate', unit: 'UN' },
-  { id: 'inv_coco_27', category: 'COCOEXPRESS', name: 'Helado Paleta Coco Clasica', unit: 'UN' },
-  { id: 'inv_coco_28', category: 'COCOEXPRESS', name: 'Helado Paleta Coco Cuadrada', unit: 'UN' },
-  { id: 'inv_coco_29', category: 'COCOEXPRESS', name: 'Helado Paleta Coco/Menta', unit: 'UN' },
-  { id: 'inv_coco_30', category: 'COCOEXPRESS', name: 'Helado Paleta Vegana', unit: 'UN' },
-  { id: 'inv_coco_31', category: 'COCOEXPRESS', name: 'Helado Vasito Chocolate', unit: 'UN' },
-  { id: 'inv_coco_32', category: 'COCOEXPRESS', name: 'Helado Vasito Coco', unit: 'UN' },
-  { id: 'inv_coco_33', category: 'COCOEXPRESS', name: 'Helado Vasito Cremoso', unit: 'UN' },
-  { id: 'inv_coco_34', category: 'COCOEXPRESS', name: 'Helado Vasito Vegano', unit: 'UN' },
-  { id: 'inv_coco_35', category: 'COCOEXPRESS', name: 'Helado Vegano Medio lt', unit: 'UN' },
-  { id: 'inv_coco_36', category: 'COCOEXPRESS', name: 'Jalea ChocoAvellana', unit: 'GR' },
-  { id: 'inv_coco_37', category: 'COCOEXPRESS', name: 'Jalea Maracuya', unit: 'GR' },
-  { id: 'inv_coco_38', category: 'COCOEXPRESS', name: 'Jalea Mora', unit: 'GR' },
-  { id: 'inv_coco_39', category: 'COCOEXPRESS', name: 'Jugo Coco Stevia 250', unit: 'UN' },
-  { id: 'inv_coco_40', category: 'COCOEXPRESS', name: 'Jugo Coco Stevia 370', unit: 'UN' },
-  { id: 'inv_coco_41', category: 'COCOEXPRESS', name: 'Kit Botella Refresco 250', unit: 'UN' },
-  { id: 'inv_coco_42', category: 'COCOEXPRESS', name: 'Kit Botella Refresco 370', unit: 'UN' },
-  { id: 'inv_coco_43', category: 'COCOEXPRESS', name: 'Leche Coco 1lt', unit: 'UN' },
-  { id: 'inv_coco_44', category: 'COCOEXPRESS', name: 'Paleta Madera', unit: 'UN' },
-  { id: 'inv_coco_45', category: 'COCOEXPRESS', name: 'Refresco Leche/Coco Al Granel', unit: 'LT' },
-  { id: 'inv_coco_46', category: 'COCOEXPRESS', name: 'Vaso 4oz Soft', unit: 'UN' },
-  { id: 'inv_coco_47', category: 'COCOEXPRESS', name: 'Vaso 6oz Soft', unit: 'UN' },
-  { id: 'inv_coco_48', category: 'COCOEXPRESS', name: 'Vaso 7oz Sundae', unit: 'UN' },
-  { id: 'inv_coco_49', category: 'COCOEXPRESS', name: 'Vaso 8oz', unit: 'UN' },
-  { id: 'inv_coco_50', category: 'COCOEXPRESS', name: 'Vaso Blanco 6 oz', unit: 'UN' },
+  { id: 'inv_coco_1', category: 'COCOEXPRESS', name: 'Aceite Coco Express 200ml', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_2', category: 'COCOEXPRESS', name: 'Aceite Coco Express 400ml', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_3', category: 'COCOEXPRESS', name: 'Agua Botella 1lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_4', category: 'COCOEXPRESS', name: 'Agua Botella 250', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_5', category: 'COCOEXPRESS', name: 'Agua Botella 370', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_6', category: 'COCOEXPRESS', name: 'Agua Botella 500', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_7', category: 'COCOEXPRESS', name: 'Agua Botella Vidrio 310', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_8', category: 'COCOEXPRESS', name: 'Alfajor Blanco', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_9', category: 'COCOEXPRESS', name: 'Alfajor Chocolate', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_10', category: 'COCOEXPRESS', name: 'Alfajor Grande', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_11', category: 'COCOEXPRESS', name: 'Alfajor Pequeño', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_12', category: 'COCOEXPRESS', name: 'Base Soft Coco', unit: 'LT', cost: 1.00 },
+  { id: 'inv_coco_13', category: 'COCOEXPRESS', name: 'Base Soft Coco Chocolate', unit: 'LT', cost: 1.00 },
+  { id: 'inv_coco_14', category: 'COCOEXPRESS', name: 'Bolitas De Coco', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_15', category: 'COCOEXPRESS', name: 'Botella 250 Refresco Lleno', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_16', category: 'COCOEXPRESS', name: 'Botella 370 Refresco Lleno', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_17', category: 'COCOEXPRESS', name: 'Cocada Manjar', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_18', category: 'COCOEXPRESS', name: 'Cocada Volcan', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_19', category: 'COCOEXPRESS', name: 'Cono', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_20', category: 'COCOEXPRESS', name: 'Galleta Avena', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_21', category: 'COCOEXPRESS', name: 'Galleta Coco', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_22', category: 'COCOEXPRESS', name: 'Granizado', unit: 'LT', cost: 1.00 },
+  { id: 'inv_coco_23', category: 'COCOEXPRESS', name: 'Helado Chocolate Medio lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_24', category: 'COCOEXPRESS', name: 'Helado Coco Medio lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_25', category: 'COCOEXPRESS', name: 'Helado Cremoso Medio lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_26', category: 'COCOEXPRESS', name: 'Helado Paleta Chocolate', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_27', category: 'COCOEXPRESS', name: 'Helado Paleta Coco Clasica', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_28', category: 'COCOEXPRESS', name: 'Helado Paleta Coco Cuadrada', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_29', category: 'COCOEXPRESS', name: 'Helado Paleta Coco/Menta', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_30', category: 'COCOEXPRESS', name: 'Helado Paleta Vegana', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_31', category: 'COCOEXPRESS', name: 'Helado Vasito Chocolate', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_32', category: 'COCOEXPRESS', name: 'Helado Vasito Coco', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_33', category: 'COCOEXPRESS', name: 'Helado Vasito Cremoso', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_34', category: 'COCOEXPRESS', name: 'Helado Vasito Vegano', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_35', category: 'COCOEXPRESS', name: 'Helado Vegano Medio lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_36', category: 'COCOEXPRESS', name: 'Jalea ChocoAvellana', unit: 'GR', cost: 1.00 },
+  { id: 'inv_coco_37', category: 'COCOEXPRESS', name: 'Jalea Maracuya', unit: 'GR', cost: 1.00 },
+  { id: 'inv_coco_38', category: 'COCOEXPRESS', name: 'Jalea Mora', unit: 'GR', cost: 1.00 },
+  { id: 'inv_coco_39', category: 'COCOEXPRESS', name: 'Jugo Coco Stevia 250', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_40', category: 'COCOEXPRESS', name: 'Jugo Coco Stevia 370', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_41', category: 'COCOEXPRESS', name: 'Kit Botella Refresco 250', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_42', category: 'COCOEXPRESS', name: 'Kit Botella Refresco 370', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_43', category: 'COCOEXPRESS', name: 'Leche Coco 1lt', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_44', category: 'COCOEXPRESS', name: 'Paleta Madera', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_45', category: 'COCOEXPRESS', name: 'Refresco Leche/Coco Al Granel', unit: 'LT', cost: 1.00 },
+  { id: 'inv_coco_46', category: 'COCOEXPRESS', name: 'Vaso 4oz Soft', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_47', category: 'COCOEXPRESS', name: 'Vaso 6oz Soft', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_48', category: 'COCOEXPRESS', name: 'Vaso 7oz Sundae', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_49', category: 'COCOEXPRESS', name: 'Vaso 8oz', unit: 'UN', cost: 1.00 },
+  { id: 'inv_coco_50', category: 'COCOEXPRESS', name: 'Vaso Blanco 6 oz', unit: 'UN', cost: 1.00 },
 
   // CATEGORÍA 2: KELAO (8 Productos)
-  { id: 'inv_kelao_1', category: 'KELAO', name: 'Choco rocher 1/8', unit: 'UN' },
-  { id: 'inv_kelao_2', category: 'KELAO', name: 'Chocolate brownie 1/8', unit: 'UN' },
-  { id: 'inv_kelao_3', category: 'KELAO', name: 'Coco maracuya 1/8', unit: 'UN' },
-  { id: 'inv_kelao_4', category: 'KELAO', name: 'Coco sin azucar 1/8', unit: 'UN' },
-  { id: 'inv_kelao_5', category: 'KELAO', name: 'Coffe tiramisu 1/8', unit: 'UN' },
-  { id: 'inv_kelao_6', category: 'KELAO', name: 'Cookies & cream 1/8', unit: 'UN' },
-  { id: 'inv_kelao_7', category: 'KELAO', name: 'Maracuya sin Azucar 1/8', unit: 'UN' },
-  { id: 'inv_kelao_8', category: 'KELAO', name: 'Mocha latte 1/8', unit: 'UN' }
+  { id: 'inv_kelao_1', category: 'KELAO', name: 'Choco rocher 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_2', category: 'KELAO', name: 'Chocolate brownie 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_3', category: 'KELAO', name: 'Coco maracuya 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_4', category: 'KELAO', name: 'Coco sin azucar 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_5', category: 'KELAO', name: 'Coffe tiramisu 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_6', category: 'KELAO', name: 'Cookies & cream 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_7', category: 'KELAO', name: 'Maracuya sin Azucar 1/8', unit: 'UN', cost: 1.00 },
+  { id: 'inv_kelao_8', category: 'KELAO', name: 'Mocha latte 1/8', unit: 'UN', cost: 1.00 }
 ];
+
+export const getStoredInventoryProducts = (): InventoryProduct[] => {
+  const saved = localStorage.getItem('gedaluma_inventory_products_v1');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {}
+  }
+  return inventoryProductsCatalog;
+};
+
+export const saveStoredInventoryProducts = (products: InventoryProduct[]) => {
+  localStorage.setItem('gedaluma_inventory_products_v1', JSON.stringify(products));
+};

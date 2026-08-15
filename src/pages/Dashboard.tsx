@@ -4,11 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LogOut, BarChart3, TrendingUp, Users, Loader2, 
   UserCheck, ShieldAlert, Plus, Trash2, ArrowLeft, Store, 
-  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package
+  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount } from '../data/mock';
 import { generateInventoryPDF } from '../lib/pdfGenerator';
+import { ProductCatalogModal } from '../components/ProductCatalogModal';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -22,6 +23,8 @@ export function Dashboard() {
   
   // Active tab within selected island
   const [islaTab, setIslaTab] = useState<'auditoria' | 'fantasma' | 'responsabilidad' | 'personal' | 'inventario'>('auditoria');
+
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
 
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
@@ -452,6 +455,9 @@ export function Dashboard() {
     const pendingMissingUnits = islaInventories
       .filter(inv => !inv.is_discounted)
       .reduce((sum, inv) => sum + Number(inv.total_missing || 0), 0);
+    const pendingMissingDollars = islaInventories
+      .filter(inv => !inv.is_discounted)
+      .reduce((sum, inv) => sum + Number(inv.total_missing_dollars || (inv.total_missing * 1.00) || 0), 0);
 
     return {
       audAvg,
@@ -464,7 +470,8 @@ export function Dashboard() {
       audEvals,
       ghostEvals,
       islaInventories,
-      pendingMissingUnits
+      pendingMissingUnits,
+      pendingMissingDollars
     };
   };
 
@@ -486,7 +493,12 @@ export function Dashboard() {
 
   return (
     <div className="container" style={{ maxWidth: '1200px', paddingBottom: '60px' }}>
-      
+      <ProductCatalogModal 
+        isOpen={showCatalogModal}
+        onClose={() => setShowCatalogModal(false)}
+        onSave={fetchData}
+      />
+
       {/* HEADER PRINCIPAL */}
       <header 
         className="flex justify-between items-center header-flex-mobile" 
@@ -514,6 +526,13 @@ export function Dashboard() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
+          <button 
+            onClick={() => setShowCatalogModal(true)} 
+            className="btn btn-outline flex items-center gap-2" 
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
+          >
+            <Tag size={16} /> 🏷️ Productos (Costos)
+          </button>
           <Link to="/history" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
             <FileText size={16} /> Ver Historial
           </Link>
@@ -864,7 +883,7 @@ export function Dashboard() {
                 <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                   <span className="text-muted" style={{ fontSize: '0.78rem' }}>Inventario Faltante</span>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, color: selectedIslaStats.pendingMissingUnits > 0 ? 'var(--danger)' : '#009C48' }}>
-                    {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un.` : 'Al día (0)'}
+                    {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un. ($${selectedIslaStats.pendingMissingDollars.toFixed(2)})` : 'Al día ($0)'}
                   </div>
                 </div>
               </div>
@@ -1395,13 +1414,23 @@ export function Dashboard() {
                   </p>
                 </div>
 
-                <Link 
-                  to={`/inventory/new?isla=${selectedIslaId}`}
-                  className="btn btn-primary flex items-center gap-2"
-                  style={{ background: '#009C48', borderColor: '#009C48' }}
-                >
-                  <Package size={18} /> Realizar Nuevo Inventario
-                </Link>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowCatalogModal(true)} 
+                    className="btn btn-outline flex items-center gap-2"
+                    style={{ borderColor: '#009C48', color: '#009C48' }}
+                  >
+                    <Tag size={18} /> 🏷️ Productos (Costos)
+                  </button>
+
+                  <Link 
+                    to={`/inventory/new?isla=${selectedIslaId}`}
+                    className="btn btn-primary flex items-center gap-2"
+                    style={{ background: '#009C48', borderColor: '#009C48' }}
+                  >
+                    <Package size={18} /> Realizar Nuevo Inventario
+                  </Link>
+                </div>
               </div>
 
               {/* TARJETA RESUMEN DE ESTADO DEL INVENTARIO Y VISTO DE DESCUENTO */}
@@ -1413,7 +1442,7 @@ export function Dashboard() {
                     </span>
                     <h4 className="text-2xl font-bold" style={{ marginTop: '2px' }}>
                       {selectedIslaStats.pendingMissingUnits > 0 
-                        ? `⚠️ Unidades Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un.` 
+                        ? `⚠️ Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un. ($${selectedIslaStats.pendingMissingDollars.toFixed(2)})` 
                         : '✅ Inventario al Día (0 Faltantes Pendientes)'}
                     </h4>
                     <p className="text-muted" style={{ fontSize: '0.85rem' }}>
@@ -1429,7 +1458,7 @@ export function Dashboard() {
                         Cierre / Descuento Mensual:
                       </span>
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
-                        {selectedIslaStats.pendingMissingUnits === 0 ? 'Resuelto a 0' : 'Faltantes activos'}
+                        {selectedIslaStats.pendingMissingUnits === 0 ? 'Resuelto a $0.00' : 'Faltantes activos'}
                       </p>
                     </div>
                   </div>
@@ -1457,6 +1486,9 @@ export function Dashboard() {
                   <tbody>
                     {selectedIslaStats.islaInventories.map((inv) => {
                       const isDiscounted = !!inv.is_discounted;
+                      const missingUn = inv.total_missing || 0;
+                      const missingDol = Number(inv.total_missing_dollars || missingUn * 1.00).toFixed(2);
+
                       return (
                         <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)', background: isDiscounted ? 'rgba(0, 156, 72, 0.04)' : 'inherit' }}>
                           <td style={{ padding: '14px', fontWeight: 700 }}>
@@ -1467,8 +1499,8 @@ export function Dashboard() {
                             {inv.evaluator_name || 'Auditor Operativo'}
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: inv.total_missing > 0 ? 'var(--danger)' : '#009C48' }}>
-                            {inv.total_missing || 0} un.
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
+                            {missingUn} un. <span style={{ fontSize: '0.82rem' }}>(${missingDol})</span>
                           </td>
 
                           <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#009C48' }}>
