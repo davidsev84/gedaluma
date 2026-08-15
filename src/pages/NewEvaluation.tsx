@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI } from '../data/mock';
-import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft } from 'lucide-react';
+import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft, Package, Tag } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
 import { generatePDF } from '../lib/pdfGenerator';
+import { ProductCatalogModal } from '../components/ProductCatalogModal';
 
 export function NewEvaluation() {
   const { user, logout } = useAuth();
@@ -48,8 +49,12 @@ export function NewEvaluation() {
   
   const evalSigRef = useRef<SignatureCanvas>(null);
 
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
   const searchParams = new URLSearchParams(window.location.search);
   const isGhostModeParam = searchParams.get('mode') === 'ghost' || searchParams.get('role') === 'ghost';
+  const hasDirectMode = isGhostModeParam || searchParams.has('isla') || searchParams.has('employee');
+
+  const [entryMode, setEntryMode] = useState<'selection' | 'form'>(hasDirectMode ? 'form' : 'selection');
   const isGhost = user?.role === 'ghost' || isGhostModeParam;
   const activeCategories = isGhost ? ghostCategories : categories;
 
@@ -355,14 +360,35 @@ export function NewEvaluation() {
 
   return (
     <div className="container" style={{ maxWidth: '900px', paddingBottom: '60px' }}>
+      <ProductCatalogModal 
+        isOpen={showCatalogModal}
+        onClose={() => setShowCatalogModal(false)}
+      />
+
       <header className="flex justify-between items-center header-flex-mobile" style={{ marginBottom: '32px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
         <div>
-          <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Nueva Evaluación de Auditoría Interna'}</h1>
-          <p className="text-muted">Evaluador: {user?.name}</p>
+          <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Panel Operativo de Evaluaciones e Inventarios'}</h1>
+          <p className="text-muted">Evaluador / Supervisor: {user?.name}</p>
         </div>
-        <div className="flex gap-3 items-center header-actions-mobile" style={{ paddingRight: '90px' }}>
+        <div className="flex gap-2 items-center header-actions-mobile" style={{ paddingRight: '90px' }}>
+          <button 
+            onClick={() => setShowCatalogModal(true)} 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
+          >
+            <Tag size={16} /> 🏷️ Productos (Costos)
+          </button>
+
+          <Link 
+            to="/inventory/new" 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7' }}
+          >
+            <Package size={16} /> 📦 Realizar Inventario
+          </Link>
+
           {user?.role === 'admin' && (
-            <Link to="/dashboard" className="btn btn-outline flex items-center gap-2">
+            <Link to="/dashboard" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
               <ArrowLeft size={18} /> Volver al Panel
             </Link>
           )}
@@ -373,12 +399,91 @@ export function NewEvaluation() {
         </div>
       </header>
 
+      {/* SELECCIÓN INICIAL DE PROCESO PARA EL EVALUADOR */}
+      {step === 0 && entryMode === 'selection' && (
+        <div className="card" style={{ maxWidth: '650px', margin: '0 auto', textAlign: 'center', padding: '32px 24px' }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Portal del Evaluador Operativo GEDALUMA
+          </span>
+          <h2 className="text-2xl font-bold mt-2 mb-2" style={{ color: 'var(--text-primary)' }}>
+            ¿Qué proceso deseas realizar hoy?
+          </h2>
+          <p className="text-muted mb-8" style={{ fontSize: '0.9rem' }}>
+            Escoge entre realizar la evaluación de auditoría/cliente fantasma o el conteo físico de inventario de isla:
+          </p>
+
+          <div className="grid grid-cols-2 gap-6">
+            <button
+              onClick={() => setEntryMode('form')}
+              className="btn"
+              style={{
+                padding: '24px 16px',
+                borderRadius: '14px',
+                border: '2px solid #009C48',
+                background: 'rgba(0, 156, 72, 0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                textAlign: 'center'
+              }}
+            >
+              <Award size={44} style={{ color: '#009C48' }} />
+              <div>
+                <h3 className="font-bold text-lg" style={{ margin: 0, color: '#009C48' }}>📋 Realizar Evaluación</h3>
+                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '6px' }}>
+                  Auditoría interna de desempeño o evaluación de cliente fantasma
+                </p>
+              </div>
+            </button>
+
+            <Link
+              to="/inventory/new"
+              className="btn"
+              style={{
+                padding: '24px 16px',
+                borderRadius: '14px',
+                border: '2px solid #0284c7',
+                background: 'rgba(2, 132, 199, 0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                textDecoration: 'none',
+                textAlign: 'center'
+              }}
+            >
+              <Package size={44} style={{ color: '#0284c7' }} />
+              <div>
+                <h3 className="font-bold text-lg" style={{ margin: 0, color: '#0284c7' }}>📦 Realizar Inventario</h3>
+                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '6px' }}>
+                  Conteo físico vs sistema, faltantes en dólares ($) y reportes PDF
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* STEP 0: CHECKLIST MAESTRO / CABECERA */}
-      {step === 0 && (
+      {step === 0 && entryMode === 'form' && (
         <div className="card" style={{ maxWidth: '650px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <Award size={24} style={{ color: '#009C48' }} />
-            <h2 className="text-xl">Variables de Cabecera (Checklist Maestro)</h2>
+          <div className="flex justify-between items-center mb-4">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Award size={24} style={{ color: '#009C48' }} />
+              <h2 className="text-xl">Variables de Cabecera (Checklist Maestro)</h2>
+            </div>
+            {!hasDirectMode && (
+              <button 
+                type="button" 
+                onClick={() => setEntryMode('selection')}
+                className="btn btn-ghost text-muted"
+                style={{ fontSize: '0.82rem' }}
+              >
+                ← Cambiar opción
+              </button>
+            )}
           </div>
 
           <form onSubmit={handleStart} className="flex flex-col gap-4">
