@@ -32,6 +32,26 @@ export const mockEmployees = [
   { id: 'e13', name: 'Jackie Rodriguez' }
 ];
 
+export const defaultIslaEmployeeMap: Record<string, string[]> = {
+  '1': ['Carmen Larenas', 'Liliana Estrada'], // ALBAN
+  '2': ['Yamilet Delgado', 'Virginia Miño', 'Jackeline Mera Collazo'], // JUAN TANCA
+  '3': ['Johanna Mendoza', 'Dayse Rodriguez'], // CALIFORNIA
+  '4': ['Yamilet Delgado', 'Teresa Vargas'], // PASEO DAULE (Unificada Daule y Paseo Daule)
+  '5': ['Liliana Estrada', 'Jackeline Mera Collazo', 'Jackie Rodriguez'], // TERMINAL
+  '6': ['Gabriel Perero', 'Shirley Reyes'], // SALINAS
+  '7': ['Andrea Meza Saltos', 'Maritza Cedeño'] // PUERTO AZUL
+};
+
+export const getStoredIslaEmployeeMap = (): Record<string, string[]> => {
+  const saved = localStorage.getItem('gedaluma_isla_emp_map_v5');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {}
+  }
+  return defaultIslaEmployeeMap;
+};
+
 export const categories: Category[] = [
   {
     id: 'A',

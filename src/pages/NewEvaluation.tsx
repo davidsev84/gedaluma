@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI } from '../data/mock';
+import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI, getStoredIslaEmployeeMap } from '../data/mock';
 import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft, Package, Tag } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
@@ -131,9 +131,12 @@ export function NewEvaluation() {
     let totalScore = 0;
     activeCategories.forEach(cat => {
       let catScore = 0;
-      let maxCatScore = cat.questions.length * 5;
+      let maxCatScore = cat.questions.length; // Each question is worth 1 point max (SÍ = 1, NO = 0)
       cat.questions.forEach(q => {
-        catScore += (typeof responses[q.id]?.value === 'number') ? (responses[q.id].value as number) : 0;
+        const val = responses[q.id]?.value;
+        if (val === 'SÍ' || val === 1) {
+          catScore += 1;
+        }
       });
       if (maxCatScore > 0) {
         let percentage = (catScore / maxCatScore) * 100;
@@ -341,10 +344,10 @@ export function NewEvaluation() {
           return;
         }
 
-        // Mandatory justification for low ratings (1 or 2) in regular audit
-        if (!isGhost && typeof resp.value === 'number' && resp.value <= 2) {
+        // Mandatory justification for "NO" responses in regular audit
+        if (!isGhost && (resp.value === 'NO' || resp.value === 0)) {
           if (!resp.observation || resp.observation.trim() === '') {
-            alert(`Para puntajes de 2 o menos, debes adjuntar un comentario justificativo.\nFalta en: "${q.text}" (${cat.name}).`);
+            alert(`Para respuestas "NO" (No cumple), debes escribir un comentario justificativo obligatorio.\nFalta en: "${q.text}" (${cat.name}).`);
             return;
           }
         }
@@ -587,32 +590,50 @@ export function NewEvaluation() {
               </div>
             )}
 
-            {/* DESPLEGABLE DE EMPLEADOS */}
+            {/* DESPLEGABLE DE EMPLEADOS FILTRADOS POR LA ISLA SELECCIONADA */}
             <div className="form-group">
-              <label className="form-label">
+              <label className="form-label font-bold">
                 Empleado / Vendedora a Evaluar {isGhost ? '(Opcional)' : '*'}
               </label>
               <select 
                 className="form-control"
                 value={selectedEmployee}
                 onChange={(e) => {
-                  setSelectedEmployee(e.target.value);
-                  setCustomEmployeeName(e.target.value);
+                  const val = e.target.value;
+                  setSelectedEmployee(val);
+                  if (val !== 'otro') {
+                    setCustomEmployeeName(val);
+                  } else {
+                    setCustomEmployeeName('');
+                  }
                 }}
                 required={!isGhost}
+                disabled={!selectedIsla}
               >
-                <option value="">
-                  {isGhost ? '-- No identificada / No especificada (Opcional) --' : 'Seleccione la empleada...'}
-                </option>
-                {employees.map(emp => (
-                  <option key={emp.id || emp.name} value={emp.name}>{emp.name}</option>
-                ))}
+                {!selectedIsla ? (
+                  <option value="" disabled>-- Primero seleccione una isla evaluada --</option>
+                ) : (
+                  <>
+                    <option value="">
+                      {isGhost ? '-- No identificada / No especificada (Opcional) --' : 'Seleccione la empleada de esta isla...'}
+                    </option>
+
+                    {/* Empleados oficialmente asignados a la isla seleccionada */}
+                    {(getStoredIslaEmployeeMap()[selectedIsla] || []).map(empName => (
+                      <option key={empName} value={empName}>
+                        👤 {empName}
+                      </option>
+                    ))}
+
+                    <option value="otro">-- Otra empleada (Ingresar nombre manualmente) --</option>
+                  </>
+                )}
               </select>
             </div>
 
-            {isGhost && (
+            {(selectedEmployee === 'otro' || isGhost) && (
               <div className="form-group">
-                <label className="form-label">O escribir nombre manual (Opcional si no está en la lista)</label>
+                <label className="form-label">Escribir nombre de la empleada (Ingreso manual)</label>
                 <input 
                   type="text" 
                   className="form-control" 
@@ -704,20 +725,42 @@ export function NewEvaluation() {
                           {q.text.startsWith(questionCode) ? q.text.replace(`${questionCode}.`, '').trim() : q.text}
                         </p>
 
-                        {/* RATING 1-5 PARA AUDITORÍA NORMAL */}
+                        {/* RATING SÍ / NO PARA AUDITORÍA NORMAL */}
                         {(!q.type || q.type === 'rating') && (
-                          <div className="flex gap-2 flex-wrap">
-                            {[1, 2, 3, 4, 5].map(score => (
-                              <button 
-                                key={score} 
-                                type="button" 
-                                onClick={() => handleAnswer(q.id, score)}
-                                className={`btn ${responses[q.id]?.value === score ? 'btn-primary' : 'btn-ghost'}`} 
-                                style={{ padding: '10px 16px', flex: 1, minWidth: '40px', background: responses[q.id]?.value === score ? '#009C48' : 'transparent', borderColor: responses[q.id]?.value === score ? '#009C48' : 'var(--border-color)' }}
-                              >
-                                {score}
-                              </button>
-                            ))}
+                          <div className="flex gap-3 mt-2">
+                            <button 
+                              type="button" 
+                              onClick={() => handleAnswer(q.id, 'SÍ')}
+                              className={`btn ${responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? 'btn-primary' : 'btn-ghost'}`} 
+                              style={{ 
+                                padding: '12px 24px', 
+                                flex: 1, 
+                                fontWeight: 800,
+                                fontSize: '1rem',
+                                background: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#009C48' : 'var(--bg-color)', 
+                                borderColor: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#009C48' : 'var(--border-color)',
+                                color: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#fff' : 'inherit'
+                              }}
+                            >
+                              ✓ SÍ (Cumple)
+                            </button>
+
+                            <button 
+                              type="button" 
+                              onClick={() => handleAnswer(q.id, 'NO')}
+                              className={`btn ${responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'btn-danger' : 'btn-ghost'}`} 
+                              style={{ 
+                                padding: '12px 24px', 
+                                flex: 1, 
+                                fontWeight: 800,
+                                fontSize: '1rem',
+                                background: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'var(--danger)' : 'var(--bg-color)', 
+                                borderColor: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'var(--danger)' : 'var(--border-color)',
+                                color: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? '#fff' : 'inherit'
+                              }}
+                            >
+                              ✕ NO (No cumple)
+                            </button>
                           </div>
                         )}
 
@@ -771,18 +814,18 @@ export function NewEvaluation() {
                           />
                         )}
 
-                        {/* COMENTARIO Y FOTO OBLIGATORIA SI EL PUNTAJE ES <= 2 (AUDITORÍA INTERNA) */}
-                        {!isGhost && typeof responses[q.id]?.value === 'number' && (responses[q.id].value as number) <= 2 && (
-                          <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
-                            <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 600 }}>
-                              * Puntuación baja ({responses[q.id].value}/5). Se requiere comentario justificativo obligatorio.
+                        {/* COMENTARIO Y FOTO OBLIGATORIA SI LA RESPUESTA ES 'NO' (AUDITORÍA INTERNA) */}
+                        {!isGhost && (responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0) && (
+                          <div style={{ marginTop: '10px', padding: '14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
+                            <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 700 }}>
+                              ⚠️ Respuesta "NO" (No cumple). Se requiere comentario justificativo obligatorio:
                             </p>
                             
                             <div className="flex flex-col gap-3">
                               <textarea
                                 className="form-control"
                                 rows={2}
-                                placeholder="Escribe el motivo o hallazgo de esta baja calificación..."
+                                placeholder="Describe el hallazgo o motivo por el cual no cumple este requisito..."
                                 value={responses[q.id]?.observation || ''}
                                 onChange={(e) => handleObservation(q.id, e.target.value)}
                                 required
