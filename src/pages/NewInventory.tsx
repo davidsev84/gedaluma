@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
-import { mockIslas, getStoredInventoryProducts } from '../data/mock';
+import { getStoredIslas, getStoredInventoryProducts } from '../data/mock';
 import type { InventoryProduct } from '../data/mock';
 import { supabase } from '../lib/supabase';
 import { generateInventoryPDF } from '../lib/pdfGenerator';
@@ -15,8 +15,9 @@ export function NewInventory() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [islands] = useState(() => getStoredIslas());
   const searchParams = new URLSearchParams(window.location.search);
-  const initialIslaId = searchParams.get('isla') || mockIslas[0].id;
+  const initialIslaId = searchParams.get('isla') || (islands[0]?.id || '1');
 
   const [step, setStep] = useState(0);
   const [selectedIsla, setSelectedIsla] = useState(initialIslaId);
@@ -111,7 +112,7 @@ export function NewInventory() {
     let savedInventory: any = null;
 
     try {
-      const islaObj = mockIslas.find(i => i.id === selectedIsla);
+      const islaObj = islands.find(i => i.id === selectedIsla);
       const totals = calculateTotals();
 
       const itemsDetail = productsCatalog.map(prod => {
@@ -239,35 +240,43 @@ export function NewInventory() {
           <button 
             type="button"
             onClick={() => setShowCatalogModal(true)} 
-            className="btn btn-outline"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.1)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             Productos (Costos)
           </button>
 
           <Link 
             to="/evaluate" 
-            className="btn btn-outline"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Evaluación
           </Link>
 
           <Link 
             to="/evaluate?mode=ghost" 
-            className="btn btn-outline"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#f7b500', color: '#b48200', fontWeight: 700 }}
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Cliente Fantasma
           </Link>
 
           {user?.role === 'admin' && (
-            <Link to="/dashboard" className="btn btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+            <Link 
+              to="/dashboard" 
+              className="btn" 
+              style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: 'var(--surface-color)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            >
               Volver al Panel
             </Link>
           )}
-          <button onClick={logout} className="btn btn-ghost">
-            <span>Salir</span>
+          <button 
+            onClick={logout} 
+            className="btn btn-ghost"
+            style={{ height: '40px', padding: '0 14px', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}
+          >
+            Salir
           </button>
         </div>
       </header>
@@ -289,7 +298,7 @@ export function NewInventory() {
                 onChange={e => setSelectedIsla(e.target.value)}
                 required
               >
-                {mockIslas.map(i => (
+                {islands.map(i => (
                   <option key={i.id} value={i.id}>ISLA {i.name} ({i.location})</option>
                 ))}
               </select>
@@ -340,7 +349,7 @@ export function NewInventory() {
                   Resumen de Conteo en Vivo
                 </span>
                 <h3 className="text-xl font-bold" style={{ margin: 0 }}>
-                  ISLA {mockIslas.find(i => i.id === selectedIsla)?.name}
+                  ISLA {islands.find(i => i.id === selectedIsla)?.name}
                 </h3>
               </div>
 
@@ -547,7 +556,7 @@ export function NewInventory() {
           </h2>
 
           <div className="mb-6" style={{ background: 'var(--bg-color)', padding: '16px', borderRadius: '10px' }}>
-            <p style={{ margin: '4px 0', fontSize: '0.9rem' }}><strong>Isla:</strong> ISLA {mockIslas.find(i => i.id === selectedIsla)?.name}</p>
+            <p style={{ margin: '4px 0', fontSize: '0.9rem' }}><strong>Isla:</strong> ISLA {islands.find(i => i.id === selectedIsla)?.name}</p>
             <p style={{ margin: '4px 0', fontSize: '0.9rem' }}><strong>Responsable:</strong> {evaluatorName}</p>
             <p style={{ margin: '4px 0', fontSize: '0.9rem' }}><strong>Fecha / Hora:</strong> {inventoryDate} ({startTime} - {endTime})</p>
             

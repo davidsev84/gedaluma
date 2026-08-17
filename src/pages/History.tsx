@@ -84,8 +84,36 @@ export function History() {
           <h1 className="text-2xl">Historial de Evaluaciones</h1>
           <p className="text-muted">Revisión y auditoría de registros</p>
         </div>
-        <div style={{ paddingRight: '90px' }}>
-          <Link to="/dashboard" className="btn btn-outline">
+        <div className="flex gap-2 items-center header-actions-mobile" style={{ paddingRight: '90px' }}>
+          <Link 
+            to="/evaluate" 
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            Evaluación
+          </Link>
+
+          <Link 
+            to="/evaluate?mode=ghost" 
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            Cliente Fantasma
+          </Link>
+
+          <Link 
+            to="/inventory/new" 
+            className="btn"
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#0284c7', border: '1.5px solid #0284c7', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            Nuevo Inventario
+          </Link>
+
+          <Link 
+            to="/dashboard" 
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: 'var(--surface-color)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
             Volver al Panel
           </Link>
         </div>

@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { 
   BarChart3, TrendingUp, Users, Loader2, 
   UserCheck, ShieldAlert, Trash2, ArrowLeft, Store, 
-  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag
+  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag, X, Plus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount } from '../data/mock';
+import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount, getStoredIslas, saveStoredIslas } from '../data/mock';
+import type { Isla } from '../types';
 import { generateInventoryPDF } from '../lib/pdfGenerator';
 import { ProductCatalogModal } from '../components/ProductCatalogModal';
 
@@ -15,6 +16,12 @@ export function Dashboard() {
   const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   
+  // State for islands & island creation
+  const [islands, setIslands] = useState<Isla[]>(() => getStoredIslas());
+  const [showAddIslaModal, setShowAddIslaModal] = useState(false);
+  const [newIslaName, setNewIslaName] = useState('');
+  const [newIslaLocation, setNewIslaLocation] = useState('Guayaquil');
+
   // State for view mode: 'islands' | 'employees'
   const [viewMode, setViewMode] = useState<'islands' | 'employees'>('islands');
 
@@ -31,6 +38,26 @@ export function Dashboard() {
   const [employees, setEmployees] = useState<any[]>(mockEmployees.filter(e => !e.name.toLowerCase().includes('susana')));
   const [penalties, setPenalties] = useState<any[]>([]);
   const [inventories, setInventories] = useState<any[]>([]);
+
+  const handleCreateIsla = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newIslaName.trim()) return alert('Por favor ingresa un nombre para la nueva isla');
+
+    const newIsla: Isla = {
+      id: String(Date.now()),
+      name: newIslaName.trim().toUpperCase(),
+      location: newIslaLocation.trim() || 'Guayaquil',
+      manager: 'N/A'
+    };
+
+    const updatedIslas = [...islands, newIsla];
+    setIslands(updatedIslas);
+    saveStoredIslas(updatedIslas);
+
+    setNewIslaName('');
+    setShowAddIslaModal(false);
+    alert(`✅ Isla ${newIsla.name} registrada exitosamente.`);
+  };
 
   const toggleInventoryDiscount = async (invId: string, currentDiscounted: boolean) => {
     const updatedStatus = !currentDiscounted;
@@ -525,31 +552,123 @@ export function Dashboard() {
           </p>
         </div>
 
-             <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
+        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
           <button 
             onClick={() => setShowCatalogModal(true)} 
-            className="btn btn-outline" 
-            style={{ padding: '8px 14px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.1)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             Productos (Costos)
           </button>
-          <Link to="/history" className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+          <Link 
+            to="/history" 
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#6366f1', border: '1.5px solid #6366f1', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
             Ver Historial
           </Link>
-          <Link to="/evaluate" className="btn btn-primary" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+          <Link 
+            to="/evaluate" 
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
             Evaluación
           </Link>
-          <Link to="/evaluate?mode=ghost" className="btn btn-primary" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+          <Link 
+            to="/evaluate?mode=ghost" 
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
             Cliente Fantasma
           </Link>
-          <Link to="/inventory/new" className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}>
-            Inventario
+          <Link 
+            to="/inventory/new" 
+            className="btn" 
+            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#0284c7', border: '1.5px solid #0284c7', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            Nuevo Inventario
           </Link>
-          <button onClick={logout} className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
+          <button 
+            onClick={logout} 
+            className="btn btn-ghost" 
+            style={{ height: '40px', padding: '0 14px', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}
+          >
             Salir
           </button>
         </div>
       </header>
+
+      {/* MODAL PARA CREAR NUEVA ISLA */}
+      {showAddIslaModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          padding: '16px'
+        }}>
+          <div className="card" style={{ maxWidth: '480px', width: '100%', padding: '24px', borderRadius: '14px' }}>
+            <div className="flex justify-between items-center mb-4" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48', margin: 0 }}>
+                <Store size={24} /> Registrar Nueva Isla GEDALUMA
+              </h3>
+              <button onClick={() => setShowAddIslaModal(false)} className="btn btn-ghost" style={{ padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateIsla} className="flex flex-col gap-4">
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700 }}>Nombre de la Isla *</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  placeholder="Ej. MALL DEL SOL, CEIBOS, VÍA SAMBORONDÓN..."
+                  value={newIslaName}
+                  onChange={e => setNewIslaName(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700 }}>Ubicación / Ciudad *</label>
+                <input 
+                  type="text" 
+                  className="form-control"
+                  placeholder="Ej. Guayaquil, Daule, Samborondón, Quito..."
+                  value={newIslaLocation}
+                  onChange={e => setNewIslaLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddIslaModal(false)} 
+                  className="btn btn-ghost"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  style={{ background: '#009C48', borderColor: '#009C48', padding: '10px 20px', fontWeight: 800 }}
+                >
+                  Guardar e Integrar Isla
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* VISTA GENERAL DE PERSONAL REGISTRADO (TABLA COMPLETA) */}
       {viewMode === 'employees' && (
@@ -562,7 +681,7 @@ export function Dashboard() {
             className="btn btn-primary mb-4 flex items-center gap-2"
             style={{ padding: '8px 16px', background: '#009C48', borderColor: '#009C48' }}
           >
-            <ArrowLeft size={20} /> Volver a Ver Todas las Islas ({mockIslas.length})
+            <ArrowLeft size={20} /> Volver a Ver Todas las Islas ({islands.length})
           </button>
 
           <div className="card mb-6" style={{ background: 'var(--surface-color)', border: '1px solid #009C48' }}>
@@ -603,7 +722,7 @@ export function Dashboard() {
               </thead>
               <tbody>
                 {employees.map((emp) => {
-                  const assignedIslands = mockIslas.filter(i => (islaEmployeeMap[i.id] || []).includes(emp.name));
+                  const assignedIslands = islands.filter(i => (islaEmployeeMap[i.id] || []).includes(emp.name));
                   
                   const empAudEvals = evaluations.filter(e => e.evaluator_role !== 'ghost' && e.evaluated_employee === emp.name);
                   const empAudAvg = empAudEvals.length > 0 
@@ -669,7 +788,7 @@ export function Dashboard() {
                             }}
                           >
                             <option value="" disabled>+ Asignar Isla...</option>
-                            {mockIslas.map(i => (
+                            {islands.map(i => (
                               <option key={i.id} value={i.id}>ISLA {i.name}</option>
                             ))}
                           </select>
@@ -696,66 +815,180 @@ export function Dashboard() {
       {/* VISTA 1: GRILLA INICIAL DE ISLAS */}
       {viewMode === 'islands' && !selectedIslaId && (
         <div>
-          {/* BANNER DE RESUMEN GLOBAL */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="card text-center flex flex-col items-center justify-between" style={{ padding: '16px 20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Total Islas Operativas</span>
-              <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>{mockIslas.length}</p>
-              <div style={{ height: '24px' }}></div>
+          {/* BANNER DE RESUMEN GLOBAL CON BOTONES Y FONDOS COLORIDOS DESTACADOS */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* KPI 1: TOTAL ISLAS OPERATIVAS & BOTÓN NUEVA ISLA */}
+            <div 
+              className="card flex flex-col justify-between" 
+              style={{ 
+                padding: '20px', 
+                background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.14) 0%, rgba(0, 156, 72, 0.04) 100%)', 
+                border: '2px solid #009C48',
+                borderRadius: '14px',
+                minHeight: '145px'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Total Islas Operativas
+                </span>
+                <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>
+                  {islands.length} Islas
+                </p>
+              </div>
+
+              <button 
+                onClick={() => setShowAddIslaModal(true)}
+                className="btn hover-lift"
+                style={{ 
+                  width: '100%', 
+                  height: '38px', 
+                  background: '#009C48', 
+                  borderColor: '#009C48', 
+                  color: '#ffffff', 
+                  fontWeight: 800, 
+                  fontSize: '0.85rem', 
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  marginTop: '10px'
+                }}
+              >
+                <Plus size={16} /> + Nueva Isla
+              </button>
             </div>
 
-            <div className="card text-center flex flex-col items-center justify-between hover-lift" style={{ padding: '16px 20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Auditorías Realizadas</span>
-              <p className="text-3xl font-bold" style={{ color: '#0284c7', margin: '4px 0' }}>{totalAudits}</p>
+            {/* KPI 2: AUDITORÍAS REALIZADAS */}
+            <div 
+              className="card flex flex-col justify-between" 
+              style={{ 
+                padding: '20px', 
+                background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.14) 0%, rgba(2, 132, 199, 0.04) 100%)', 
+                border: '2px solid #0284c7',
+                borderRadius: '14px',
+                minHeight: '145px'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Auditorías Realizadas
+                </span>
+                <p className="text-3xl font-bold" style={{ color: '#0284c7', margin: '4px 0' }}>
+                  {totalAudits}
+                </p>
+              </div>
+
               <Link 
                 to="/history" 
-                className="btn btn-outline" 
-                style={{ fontSize: '0.78rem', padding: '4px 12px', borderColor: '#0284c7', color: '#0284c7', borderRadius: '14px', fontWeight: 700, textDecoration: 'none' }}
+                className="btn hover-lift" 
+                style={{ 
+                  width: '100%', 
+                  height: '38px', 
+                  background: '#0284c7', 
+                  borderColor: '#0284c7', 
+                  color: '#ffffff', 
+                  fontWeight: 800, 
+                  fontSize: '0.85rem', 
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  marginTop: '10px'
+                }}
               >
                 Ver todas
               </Link>
             </div>
 
-            <div className="card text-center flex flex-col items-center justify-between hover-lift" style={{ padding: '16px 20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Visitas Cliente Fantasma</span>
-              <p className="text-3xl font-bold" style={{ color: '#f7b500', margin: '4px 0' }}>{totalGhostVisits}</p>
+            {/* KPI 3: VISITAS CLIENTE FANTASMA */}
+            <div 
+              className="card flex flex-col justify-between" 
+              style={{ 
+                padding: '20px', 
+                background: 'linear-gradient(135deg, rgba(247, 181, 0, 0.18) 0%, rgba(247, 181, 0, 0.06) 100%)', 
+                border: '2px solid #f7b500',
+                borderRadius: '14px',
+                minHeight: '145px'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#b48200', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Visitas Cliente Fantasma
+                </span>
+                <p className="text-3xl font-bold" style={{ color: '#b48200', margin: '4px 0' }}>
+                  {totalGhostVisits}
+                </p>
+              </div>
+
               <Link 
                 to="/history" 
-                className="btn btn-outline" 
-                style={{ fontSize: '0.78rem', padding: '4px 12px', borderColor: '#f7b500', color: '#b48200', borderRadius: '14px', fontWeight: 700, textDecoration: 'none' }}
+                className="btn hover-lift" 
+                style={{ 
+                  width: '100%', 
+                  height: '38px', 
+                  background: '#f7b500', 
+                  borderColor: '#f7b500', 
+                  color: '#000000', 
+                  fontWeight: 800, 
+                  fontSize: '0.85rem', 
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  marginTop: '10px'
+                }}
               >
                 Ver todas
               </Link>
             </div>
             
-            {/* CUADRO CLICABLE DE PERSONAL REGISTRADO CON BOTÓN VER TODOS */}
+            {/* KPI 4: PERSONAL REGISTRADO */}
             <div 
-              className="card text-center hover-lift" 
+              className="card flex flex-col justify-between hover-lift" 
               onClick={() => setViewMode('employees')}
               style={{ 
-                padding: '16px 20px', 
-                cursor: 'pointer', 
-                border: '2px solid #009C48',
-                background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'space-between'
+                padding: '20px', 
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0.04) 100%)', 
+                border: '2px solid #6366f1',
+                borderRadius: '14px',
+                minHeight: '145px'
               }}
               title="Haz clic para ver la tabla completa de empleadas"
             >
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Personal Registrado
-              </span>
-              <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>{employees.length}</p>
+              <div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Personal Registrado
+                </span>
+                <p className="text-3xl font-bold" style={{ color: '#6366f1', margin: '4px 0' }}>
+                  {employees.length} Empleadas
+                </p>
+              </div>
 
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   setViewMode('employees');
                 }}
-                className="btn btn-primary"
-                style={{ fontSize: '0.8rem', padding: '4px 14px', background: '#009C48', borderColor: '#009C48', borderRadius: '14px', fontWeight: 700 }}
+                className="btn hover-lift"
+                style={{ 
+                  width: '100%', 
+                  height: '38px', 
+                  background: '#6366f1', 
+                  borderColor: '#6366f1', 
+                  color: '#ffffff', 
+                  fontWeight: 800, 
+                  fontSize: '0.85rem', 
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: '10px'
+                }}
               >
                 Ver todos
               </button>
@@ -768,7 +1001,7 @@ export function Dashboard() {
           </h2>
 
           <div className="grid grid-cols-3 gap-6">
-            {mockIslas.map((isla) => {
+            {islands.map((isla) => {
               const stats = getIslaStats(isla.id);
               return (
                 <div 

@@ -6,7 +6,7 @@ export const mockUsers: User[] = [
   { id: '3', name: 'Cliente Fantasma', role: 'ghost', pin: '0000' },
 ];
 
-export const mockIslas: Isla[] = [
+export const initialMockIslas: Isla[] = [
   { id: '1', name: 'ALBAN', location: 'Guayaquil', manager: 'N/A' },
   { id: '2', name: 'JUAN TANCA', location: 'Guayaquil', manager: 'N/A' },
   { id: '3', name: 'CALIFORNIA', location: 'Guayaquil', manager: 'N/A' },
@@ -15,6 +15,22 @@ export const mockIslas: Isla[] = [
   { id: '6', name: 'SALINAS', location: 'Salinas', manager: 'N/A' },
   { id: '7', name: 'PUERTO AZUL', location: 'Guayaquil', manager: 'N/A' },
 ];
+
+export const getStoredIslas = (): Isla[] => {
+  const saved = localStorage.getItem('gedaluma_islas_v2');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {}
+  }
+  return initialMockIslas;
+};
+
+export const saveStoredIslas = (islas: Isla[]): void => {
+  localStorage.setItem('gedaluma_islas_v2', JSON.stringify(islas));
+};
+
+export const mockIslas: Isla[] = getStoredIslas();
 
 export const mockEmployees = [
   { id: 'e1', name: 'Gabriel Perero' },
