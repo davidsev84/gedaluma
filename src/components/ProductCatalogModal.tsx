@@ -171,60 +171,101 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
 
         {/* FORMULARIO AGREGAR NUEVO PRODUCTO (SI ESTÁ ACTIVO) */}
         {showAddForm && (
-          <form onSubmit={handleAddProduct} style={{ padding: '14px 24px', background: 'rgba(0, 156, 72, 0.05)', borderBottom: '1px solid #009C48' }} className="flex gap-3 items-center flex-wrap">
-            <div style={{ flex: 2, minWidth: '200px' }}>
-              <input 
-                type="text" 
-                placeholder="Nombre del nuevo producto..."
-                className="form-control"
-                style={{ fontSize: '0.85rem' }}
-                value={newProdName}
-                onChange={e => setNewProdName(e.target.value)}
-                required
-              />
-            </div>
+          <form 
+            onSubmit={handleAddProduct} 
+            style={{ 
+              padding: '16px 20px', 
+              background: 'rgba(0, 156, 72, 0.06)', 
+              borderBottom: '2px solid #009C48',
+              margin: '12px 16px',
+              borderRadius: '10px'
+            }}
+          >
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: 800, color: '#009C48', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Plus size={16} /> Registrar Nuevo Producto al Catálogo
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>
+                  Nombre del Producto *
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ej. Aceite Coco 500ml..."
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  value={newProdName}
+                  onChange={e => setNewProdName(e.target.value)}
+                  required
+                />
+              </div>
 
-            <div style={{ width: '130px' }}>
-              <select 
-                className="form-control"
-                style={{ fontSize: '0.85rem' }}
-                value={newProdCategory}
-                onChange={e => setNewProdCategory(e.target.value as any)}
-              >
-                <option value="COCOEXPRESS">COCOEXPRESS</option>
-                <option value="KELAO">KELAO</option>
-              </select>
-            </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>
+                  Categoría *
+                </label>
+                <select 
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  value={newProdCategory}
+                  onChange={e => setNewProdCategory(e.target.value as any)}
+                >
+                  <option value="COCOEXPRESS">COCOEXPRESS</option>
+                  <option value="KELAO">KELAO</option>
+                </select>
+              </div>
 
-            <div style={{ width: '90px' }}>
-              <select 
-                className="form-control"
-                style={{ fontSize: '0.85rem' }}
-                value={newProdUnit}
-                onChange={e => setNewProdUnit(e.target.value as any)}
-              >
-                <option value="UN">UN</option>
-                <option value="LT">LT</option>
-                <option value="GR">GR</option>
-              </select>
-            </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>
+                  Unidad (U/M) *
+                </label>
+                <select 
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  value={newProdUnit}
+                  onChange={e => setNewProdUnit(e.target.value as any)}
+                >
+                  <option value="UN">UN</option>
+                  <option value="LT">LT</option>
+                  <option value="GR">GR</option>
+                </select>
+              </div>
 
-            <div style={{ width: '110px' }}>
-              <input 
-                type="number" 
-                step="0.01" 
-                placeholder="Costo ($)"
-                className="form-control"
-                style={{ fontSize: '0.85rem' }}
-                value={newProdCost}
-                onChange={e => setNewProdCost(Number(e.target.value))}
-                required
-              />
-            </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>
+                  Costo PVP ($) *
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00"
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  value={newProdCost}
+                  onChange={e => setNewProdCost(Number(e.target.value))}
+                  required
+                />
+              </div>
 
-            <button type="submit" className="btn btn-primary" style={{ background: '#009C48', borderColor: '#009C48', padding: '6px 14px', fontSize: '0.85rem' }}>
-              Guardar Nuevo
-            </button>
+              <div style={{ gridColumn: 'span 3', display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddForm(false)} 
+                  className="btn btn-ghost" 
+                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ background: '#009C48', borderColor: '#009C48', padding: '6px 16px', fontSize: '0.85rem', fontWeight: 800 }}
+                >
+                  Guardar Producto
+                </button>
+              </div>
+            </div>
           </form>
         )}
 

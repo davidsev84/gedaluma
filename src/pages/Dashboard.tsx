@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  LogOut, BarChart3, TrendingUp, Users, Loader2, 
-  UserCheck, ShieldAlert, Plus, Trash2, ArrowLeft, Store, 
+  BarChart3, TrendingUp, Users, Loader2, 
+  UserCheck, ShieldAlert, Trash2, ArrowLeft, Store, 
   MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -525,29 +525,28 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
+             <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
           <button 
             onClick={() => setShowCatalogModal(true)} 
-            className="btn btn-outline flex items-center gap-2" 
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
+            className="btn btn-outline" 
+            style={{ padding: '8px 14px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
           >
-            <Tag size={16} /> 🏷️ Productos (Costos)
+            Productos (Costos)
           </button>
-          <Link to="/history" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
-            <FileText size={16} /> Ver Historial
+          <Link to="/history" className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            Ver Historial
           </Link>
-          <Link to="/evaluate" className="btn btn-primary flex items-center gap-1.5" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
-            <Plus size={16} /> 📋 Evaluación
+          <Link to="/evaluate" className="btn btn-primary" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            Evaluación
           </Link>
-          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-1.5" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
-            <UserCheck size={16} /> 🕵️ Cliente Fantasma
+          <Link to="/evaluate?mode=ghost" className="btn btn-primary" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            Cliente Fantasma
           </Link>
-          <Link to="/inventory/new" className="btn btn-outline flex items-center gap-1.5" style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}>
-            <Package size={16} /> 📦 Inventario
+          <Link to="/inventory/new" className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}>
+            Inventario
           </Link>
-          <button onClick={logout} className="btn btn-ghost flex items-center gap-1" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
-            <LogOut size={18} />
-            <span>Salir</span>
+          <button onClick={logout} className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
+            Salir
           </button>
         </div>
       </header>
@@ -629,54 +628,43 @@ export function Dashboard() {
                         <div className="flex flex-wrap gap-2 items-center">
                           {assignedIslands.map(isla => (
                             <span 
-                              key={isla.id}
+                              key={isla.id} 
                               style={{ 
-                                background: 'rgba(0, 156, 72, 0.12)', color: '#009C48', 
-                                border: '1px solid rgba(0, 156, 72, 0.2)', padding: '3px 10px', 
-                                borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700,
-                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                                background: '#009C48', 
+                                color: '#fff', 
+                                padding: '4px 10px', 
+                                borderRadius: '12px', 
+                                fontSize: '0.78rem',
+                                fontWeight: 700 
                               }}
                             >
-                              {isla.name}
-                              <button 
-                                onClick={() => handleRemoveEmployeeFromIsla(isla.id, emp.name)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 0, display: 'flex' }}
-                                title={`Quitar de Isla ${isla.name}`}
-                              >
-                                ×
-                              </button>
+                              ISLA {isla.name}
                             </span>
                           ))}
-                          {assignedIslands.length === 0 && (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                              Sin isla asignada
-                            </span>
-                          )}
                         </div>
                       </td>
 
                       <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: getScoreColor(empAudAvg) }}>
-                        {empAudAvg > 0 ? `${empAudAvg.toFixed(1)}%` : 'Sin eval.'}
+                        {empAudAvg > 0 ? `${empAudAvg.toFixed(1)}%` : 'Sin datos'}
                       </td>
 
                       <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: getScoreColor(empGhostAvg) }}>
-                        {empGhostAvg > 0 ? `${empGhostAvg.toFixed(1)}%` : 'Sin eval.'}
+                        {empGhostAvg > 0 ? `${empGhostAvg.toFixed(1)}%` : 'Sin datos'}
                       </td>
 
-                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 700, color: totalPenaltyAmount > 0 ? 'var(--danger)' : '#009C48' }}>
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 800, color: totalPenaltyAmount > 0 ? 'var(--danger)' : '#009C48' }}>
                         ${totalPenaltyAmount.toFixed(0)} ({empPenalties.length})
                       </td>
 
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex gap-2 justify-end items-center">
                           <select
                             className="form-control"
-                            style={{ width: 'auto', fontSize: '0.8rem', padding: '4px 8px' }}
-                            defaultValue=""
+                            style={{ fontSize: '0.78rem', padding: '4px 8px', width: 'auto' }}
+                            value=""
                             onChange={(e) => {
                               if (e.target.value) {
                                 handleAddEmployeeToIsla(e.target.value, emp.name);
-                                e.target.value = '';
                               }
                             }}
                           >
@@ -710,17 +698,34 @@ export function Dashboard() {
         <div>
           {/* BANNER DE RESUMEN GLOBAL */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="card text-center" style={{ padding: '20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem' }}>Total Islas Operativas</span>
-              <p className="text-3xl font-bold" style={{ color: '#009C48', marginTop: '4px' }}>{mockIslas.length}</p>
+            <div className="card text-center flex flex-col items-center justify-between" style={{ padding: '16px 20px' }}>
+              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Total Islas Operativas</span>
+              <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>{mockIslas.length}</p>
+              <div style={{ height: '24px' }}></div>
             </div>
-            <div className="card text-center" style={{ padding: '20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem' }}>Auditorías Realizadas</span>
-              <p className="text-3xl font-bold" style={{ color: '#0284c7', marginTop: '4px' }}>{totalAudits}</p>
+
+            <div className="card text-center flex flex-col items-center justify-between hover-lift" style={{ padding: '16px 20px' }}>
+              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Auditorías Realizadas</span>
+              <p className="text-3xl font-bold" style={{ color: '#0284c7', margin: '4px 0' }}>{totalAudits}</p>
+              <Link 
+                to="/history" 
+                className="btn btn-outline" 
+                style={{ fontSize: '0.78rem', padding: '4px 12px', borderColor: '#0284c7', color: '#0284c7', borderRadius: '14px', fontWeight: 700, textDecoration: 'none' }}
+              >
+                Ver todas
+              </Link>
             </div>
-            <div className="card text-center" style={{ padding: '20px' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem' }}>Visitas Cliente Fantasma</span>
-              <p className="text-3xl font-bold" style={{ color: '#f7b500', marginTop: '4px' }}>{totalGhostVisits}</p>
+
+            <div className="card text-center flex flex-col items-center justify-between hover-lift" style={{ padding: '16px 20px' }}>
+              <span className="text-muted" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Visitas Cliente Fantasma</span>
+              <p className="text-3xl font-bold" style={{ color: '#f7b500', margin: '4px 0' }}>{totalGhostVisits}</p>
+              <Link 
+                to="/history" 
+                className="btn btn-outline" 
+                style={{ fontSize: '0.78rem', padding: '4px 12px', borderColor: '#f7b500', color: '#b48200', borderRadius: '14px', fontWeight: 700, textDecoration: 'none' }}
+              >
+                Ver todas
+              </Link>
             </div>
             
             {/* CUADRO CLICABLE DE PERSONAL REGISTRADO CON BOTÓN VER TODOS */}

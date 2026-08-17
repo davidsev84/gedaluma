@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Package, ArrowLeft, LogOut, 
-  Search, FileCheck, Layers, Tag, Plus, UserCheck
+  Package, Search, FileCheck, Layers, Tag
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
@@ -240,35 +239,34 @@ export function NewInventory() {
           <button 
             type="button"
             onClick={() => setShowCatalogModal(true)} 
-            className="btn btn-outline flex items-center gap-1"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
+            className="btn btn-outline"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
           >
-            <Tag size={16} /> 🏷️ Productos (Costos)
+            Productos (Costos)
           </button>
 
           <Link 
             to="/evaluate" 
-            className="btn btn-outline flex items-center gap-1"
+            className="btn btn-outline"
             style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
           >
-            <Plus size={16} /> 📋 Evaluación
+            Evaluación
           </Link>
 
           <Link 
             to="/evaluate?mode=ghost" 
-            className="btn btn-outline flex items-center gap-1"
+            className="btn btn-outline"
             style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#f7b500', color: '#b48200', fontWeight: 700 }}
           >
-            <UserCheck size={16} /> 🕵️ Cliente Fantasma
+            Cliente Fantasma
           </Link>
 
           {user?.role === 'admin' && (
-            <Link to="/dashboard" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
-              <ArrowLeft size={18} /> Volver al Panel
+            <Link to="/dashboard" className="btn btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+              Volver al Panel
             </Link>
           )}
           <button onClick={logout} className="btn btn-ghost">
-            <LogOut size={18} />
             <span>Salir</span>
           </button>
         </div>

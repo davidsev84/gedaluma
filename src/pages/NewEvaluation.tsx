@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI, getStoredIslaEmployeeMap } from '../data/mock';
-import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft, Package, Tag, Plus, UserCheck } from 'lucide-react';
+import { Camera, ChevronRight, Check, Loader2, Award, Package, UserCheck } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
 import { generatePDF } from '../lib/pdfGenerator';
@@ -376,43 +376,42 @@ export function NewEvaluation() {
         <div className="flex gap-2 items-center header-actions-mobile" style={{ paddingRight: '90px' }}>
           <button 
             onClick={() => setShowCatalogModal(true)} 
-            className="btn btn-outline flex items-center gap-1"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
+            className="btn btn-outline"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
           >
-            <Tag size={16} /> 🏷️ Productos (Costos)
+            Productos (Costos)
           </button>
 
           <Link 
             to="/evaluate" 
-            className="btn btn-outline flex items-center gap-1"
+            className="btn btn-outline"
             style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
           >
-            <Plus size={16} /> 📋 Evaluación
+            Evaluación
           </Link>
 
           <Link 
             to="/evaluate?mode=ghost" 
-            className="btn btn-outline flex items-center gap-1"
+            className="btn btn-outline"
             style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#f7b500', color: '#b48200', fontWeight: 700 }}
           >
-            <UserCheck size={16} /> 🕵️ Cliente Fantasma
+            Cliente Fantasma
           </Link>
 
           <Link 
             to="/inventory/new" 
-            className="btn btn-outline flex items-center gap-1"
+            className="btn btn-outline"
             style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}
           >
-            <Package size={16} /> 📦 Inventario
+            Inventario
           </Link>
 
           {user?.role === 'admin' && (
-            <Link to="/dashboard" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
-              <ArrowLeft size={18} /> Volver al Panel
+            <Link to="/dashboard" className="btn btn-outline" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
+              Volver al Panel
             </Link>
           )}
           <button onClick={logout} className="btn btn-ghost">
-            <LogOut size={20} />
             <span>Salir</span>
           </button>
         </div>
