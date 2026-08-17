@@ -552,46 +552,46 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '110px' }}>
+        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '60px' }}>
           <button 
             onClick={() => setShowCatalogModal(true)} 
             className="btn" 
-            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.1)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.1)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
             Productos (Costos)
           </button>
           <Link 
             to="/history" 
             className="btn" 
-            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#6366f1', border: '1.5px solid #6366f1', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#6366f1', border: '1.5px solid #6366f1', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Ver Historial
           </Link>
           <Link 
             to="/evaluate" 
             className="btn" 
-            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Evaluación
           </Link>
           <Link 
             to="/evaluate?mode=ghost" 
             className="btn" 
-            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Cliente Fantasma
           </Link>
           <Link 
             to="/inventory/new" 
             className="btn" 
-            style={{ height: '40px', padding: '0 16px', fontSize: '0.88rem', fontWeight: 700, borderRadius: '8px', background: '#0284c7', border: '1.5px solid #0284c7', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#0284c7', border: '1.5px solid #0284c7', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
           >
             Nuevo Inventario
           </Link>
           <button 
             onClick={logout} 
             className="btn btn-ghost" 
-            style={{ height: '40px', padding: '0 14px', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)' }}
           >
             Salir
           </button>
