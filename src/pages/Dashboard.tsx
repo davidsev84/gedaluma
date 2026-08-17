@@ -815,8 +815,8 @@ export function Dashboard() {
       {/* VISTA 1: GRILLA INICIAL DE ISLAS */}
       {viewMode === 'islands' && !selectedIslaId && (
         <div>
-          {/* BANNER DE RESUMEN GLOBAL CON 2 FILAS DE 2 TARJETAS EN GRIDA ESPACIOSA (2x2) */}
-          <div className="kpi-grid-2x2">
+          {/* BANNER DE RESUMEN GLOBAL EN 1 FILA X 4 COLUMNAS (1x4) */}
+          <div className="kpi-grid-1x4">
             {/* KPI 1: TOTAL ISLAS OPERATIVAS & BOTÓN NUEVA ISLA */}
             <div 
               className="card flex flex-col justify-between" 

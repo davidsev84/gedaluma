@@ -229,11 +229,23 @@ button:active {
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 
-.kpi-grid-2x2 {
+.kpi-grid-1x4 {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: 20px !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 16px !important;
   margin-bottom: 28px !important;
+}
+
+@media (max-width: 992px) {
+  .kpi-grid-1x4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid-1x4 {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 768px) {
