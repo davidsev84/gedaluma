@@ -816,7 +816,7 @@ export function Dashboard() {
       {viewMode === 'islands' && !selectedIslaId && (
         <div>
           {/* BANNER DE RESUMEN GLOBAL CON 2 FILAS DE 2 TARJETAS EN GRIDA ESPACIOSA (2x2) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid mb-8" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '32px' }}>
             {/* KPI 1: TOTAL ISLAS OPERATIVAS & BOTÓN NUEVA ISLA */}
             <div 
               className="card flex flex-col justify-between" 
