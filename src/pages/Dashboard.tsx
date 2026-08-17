@@ -536,14 +536,14 @@ export function Dashboard() {
           <Link to="/history" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
             <FileText size={16} /> Ver Historial
           </Link>
-          <Link to="/evaluate" className="btn btn-primary flex items-center gap-2" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem' }}>
-            <Plus size={16} /> Nueva Evaluación
+          <Link to="/evaluate" className="btn btn-primary flex items-center gap-1.5" style={{ background: '#009C48', borderColor: '#009C48', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            <Plus size={16} /> 📋 Evaluación
           </Link>
-          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-2" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
-            <UserCheck size={16} /> Nueva Fantasma
+          <Link to="/evaluate?mode=ghost" className="btn btn-primary flex items-center gap-1.5" style={{ background: '#f7b500', borderColor: '#f7b500', color: '#000', padding: '8px 14px', fontSize: '0.85rem', fontWeight: 700 }}>
+            <UserCheck size={16} /> 🕵️ Cliente Fantasma
           </Link>
-          <Link to="/inventory/new" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}>
-            <Package size={16} /> Realizar Inventario
+          <Link to="/inventory/new" className="btn btn-outline flex items-center gap-1.5" style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}>
+            <Package size={16} /> 📦 Inventario
           </Link>
           <button onClick={logout} className="btn btn-ghost flex items-center gap-1" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
             <LogOut size={18} />
@@ -1382,7 +1382,7 @@ export function Dashboard() {
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted">Ajustes / Faltas:</span>
+                          <span className="text-muted">Bonos / Faltas:</span>
                           <p style={{ fontWeight: 700, fontSize: '0.95rem', color: totalPenaltyAmount > 0 ? 'var(--danger)' : '#009C48' }}>
                             ${totalPenaltyAmount.toFixed(0)} ({empPenalties.length})
                           </p>
@@ -1477,8 +1477,8 @@ export function Dashboard() {
                       <th style={{ padding: '12px 14px' }}>Fecha</th>
                       <th style={{ padding: '12px 14px' }}>Responsable / Auditor</th>
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Faltantes (-)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Cuadran (=)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Sobran (+)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Conformes (=)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Sobrantes (+)</th>
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado / Descuento</th>
                       <th style={{ padding: '12px 14px', textAlign: 'right' }}>Acciones & PDF</th>
                     </tr>

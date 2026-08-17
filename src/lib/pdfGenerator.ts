@@ -162,12 +162,12 @@ export const generateInventoryPDF = (
     doc.text(`Total Faltantes: ${missingUn} un. ($${missingDol})`, 25, 67);
 
     doc.setTextColor(2, 132, 199);
-    doc.text(`Total Cuadran: ${inventory.total_match || 0} prod.`, 110, 60);
+    doc.text(`Total Conformes: ${inventory.total_match || 0} prod.`, 110, 60);
 
     const surplusUn = inventory.total_surplus || 0;
     const surplusDol = Number(inventory.total_surplus_dollars || surplusUn * 1.00).toFixed(2);
     doc.setTextColor(247, 181, 0);
-    doc.text(`Total Sobran: +${surplusUn} un. (+$${surplusDol})`, 110, 67);
+    doc.text(`Total Sobrantes: +${surplusUn} un. (+$${surplusDol})`, 110, 67);
 
     let currentY = 86;
 
@@ -206,11 +206,11 @@ export const generateInventoryPDF = (
         const unitCost = Number(it.cost || 1.00);
         const diffDollars = diff * unitCost;
 
-        let diffText = 'Cuadra ($0)';
+        let diffText = 'Conforme ($0.00)';
         if (diff < 0) {
           diffText = `Falta (${diff} / -$${Math.abs(diffDollars).toFixed(2)})`;
         } else if (diff > 0) {
-          diffText = `Sobra (+${diff} / +$${diffDollars.toFixed(2)})`;
+          diffText = `Sobrante (+${diff} / +$${diffDollars.toFixed(2)})`;
         }
 
         // Draw row background for Faltantes

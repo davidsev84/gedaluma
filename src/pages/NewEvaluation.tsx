@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { mockIslas, mockEmployees, categories, ghostCategories, calculateGhostKPI, getStoredIslaEmployeeMap } from '../data/mock';
-import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft, Package, Tag } from 'lucide-react';
+import { LogOut, Camera, ChevronRight, Check, Loader2, Award, ArrowLeft, Package, Tag, Plus, UserCheck } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { supabase } from '../lib/supabase';
 import { generatePDF } from '../lib/pdfGenerator';
@@ -383,11 +383,27 @@ export function NewEvaluation() {
           </button>
 
           <Link 
+            to="/evaluate" 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
+          >
+            <Plus size={16} /> 📋 Evaluación
+          </Link>
+
+          <Link 
+            to="/evaluate?mode=ghost" 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#f7b500', color: '#b48200', fontWeight: 700 }}
+          >
+            <UserCheck size={16} /> 🕵️ Cliente Fantasma
+          </Link>
+
+          <Link 
             to="/inventory/new" 
             className="btn btn-outline flex items-center gap-1"
-            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7' }}
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#0284c7', color: '#0284c7', fontWeight: 700 }}
           >
-            <Package size={16} /> 📦 Realizar Inventario
+            <Package size={16} /> 📦 Inventario
           </Link>
 
           {user?.role === 'admin' && (
@@ -404,64 +420,89 @@ export function NewEvaluation() {
 
       {/* SELECCIÓN INICIAL DE PROCESO PARA EL EVALUADOR */}
       {step === 0 && entryMode === 'selection' && (
-        <div className="card" style={{ maxWidth: '650px', margin: '0 auto', textAlign: 'center', padding: '32px 24px' }}>
+        <div className="card" style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center', padding: '32px 20px' }}>
           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Portal del Evaluador Operativo GEDALUMA
+            Portal Operativo GEDALUMA
           </span>
           <h2 className="text-2xl font-bold mt-2 mb-2" style={{ color: 'var(--text-primary)' }}>
-            ¿Qué proceso deseas realizar hoy?
+            Selecciona la Gestión a Realizar
           </h2>
           <p className="text-muted mb-8" style={{ fontSize: '0.9rem' }}>
-            Escoge entre realizar la evaluación de auditoría/cliente fantasma o el conteo físico de inventario de isla:
+            Escoge entre Evaluación de Auditoría Interna, Evaluación de Cliente Fantasma o Conteo de Inventario:
           </p>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-3 gap-4">
             <button
               onClick={() => setEntryMode('form')}
-              className="btn"
+              className="btn hover-lift"
               style={{
-                padding: '24px 16px',
+                padding: '20px 12px',
                 borderRadius: '14px',
                 border: '2px solid #009C48',
                 background: 'rgba(0, 156, 72, 0.05)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '10px',
                 cursor: 'pointer',
                 textAlign: 'center'
               }}
             >
-              <Award size={44} style={{ color: '#009C48' }} />
+              <Award size={38} style={{ color: '#009C48' }} />
               <div>
-                <h3 className="font-bold text-lg" style={{ margin: 0, color: '#009C48' }}>📋 Realizar Evaluación</h3>
-                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '6px' }}>
-                  Auditoría interna de desempeño o evaluación de cliente fantasma
+                <h3 className="font-bold text-base" style={{ margin: 0, color: '#009C48' }}>📋 Evaluación</h3>
+                <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '4px' }}>
+                  Auditoría interna de desempeño e isla
                 </p>
               </div>
             </button>
 
             <Link
-              to="/inventory/new"
-              className="btn"
+              to="/evaluate?mode=ghost"
+              className="btn hover-lift"
               style={{
-                padding: '24px 16px',
+                padding: '20px 12px',
+                borderRadius: '14px',
+                border: '2px solid #f7b500',
+                background: 'rgba(247, 181, 0, 0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                textDecoration: 'none',
+                textAlign: 'center'
+              }}
+            >
+              <UserCheck size={38} style={{ color: '#b48200' }} />
+              <div>
+                <h3 className="font-bold text-base" style={{ margin: 0, color: '#b48200' }}>🕵️ Cliente Fantasma</h3>
+                <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '4px' }}>
+                  Evaluación de experiencia de compra y bonos
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/inventory/new"
+              className="btn hover-lift"
+              style={{
+                padding: '20px 12px',
                 borderRadius: '14px',
                 border: '2px solid #0284c7',
                 background: 'rgba(2, 132, 199, 0.05)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '10px',
                 textDecoration: 'none',
                 textAlign: 'center'
               }}
             >
-              <Package size={44} style={{ color: '#0284c7' }} />
+              <Package size={38} style={{ color: '#0284c7' }} />
               <div>
-                <h3 className="font-bold text-lg" style={{ margin: 0, color: '#0284c7' }}>📦 Realizar Inventario</h3>
-                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '6px' }}>
-                  Conteo físico vs sistema, faltantes en dólares ($) y reportes PDF
+                <h3 className="font-bold text-base" style={{ margin: 0, color: '#0284c7' }}>📦 Inventario</h3>
+                <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '4px' }}>
+                  Conteo físico vs sistema y montos PVP ($)
                 </p>
               </div>
             </Link>

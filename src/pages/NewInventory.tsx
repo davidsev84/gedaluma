@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Package, ArrowLeft, LogOut, 
-  Search, FileCheck, Layers, Tag
+  Search, FileCheck, Layers, Tag, Plus, UserCheck
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
@@ -246,6 +246,22 @@ export function NewInventory() {
             <Tag size={16} /> 🏷️ Productos (Costos)
           </button>
 
+          <Link 
+            to="/evaluate" 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48', fontWeight: 700 }}
+          >
+            <Plus size={16} /> 📋 Evaluación
+          </Link>
+
+          <Link 
+            to="/evaluate?mode=ghost" 
+            className="btn btn-outline flex items-center gap-1"
+            style={{ padding: '8px 12px', fontSize: '0.85rem', borderColor: '#f7b500', color: '#b48200', fontWeight: 700 }}
+          >
+            <UserCheck size={16} /> 🕵️ Cliente Fantasma
+          </Link>
+
           {user?.role === 'admin' && (
             <Link to="/dashboard" className="btn btn-outline flex items-center gap-2" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
               <ArrowLeft size={18} /> Volver al Panel
@@ -339,14 +355,14 @@ export function NewInventory() {
                 </div>
 
                 <div className="text-center text-success" style={{ padding: '6px 14px', background: 'rgba(0, 156, 72, 0.1)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#009C48', fontWeight: 700 }}>Cuadran</span>
+                  <span style={{ fontSize: '0.75rem', color: '#009C48', fontWeight: 700 }}>Conformes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: '#009C48', margin: 0 }}>
                     {totals.totalMatch} prod.
                   </p>
                 </div>
 
                 <div className="text-center" style={{ padding: '6px 14px', background: 'rgba(2, 132, 199, 0.1)', borderRadius: '10px' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>Sobran</span>
+                  <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>Sobrantes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', margin: 0 }}>
                     +{totals.totalSurplus} un. <span style={{ fontSize: '0.9rem' }}>(+${totals.totalSurplusDollars.toFixed(2)})</span>
                   </p>
@@ -413,18 +429,18 @@ export function NewInventory() {
             </div>
           </div>
 
-          {/* TABLA DE PRODUCTOS DE LA CATEGORÍA SELECCIONADA */}
+          {/* TABLA DE PRODUCTOS DE LA CATEGORÍA SELECCIONADA CON ANCHOS OPTIMIZADOS */}
           <div className="card table-responsive" style={{ padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 14px', width: '32%' }}>Producto</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>U/M</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '10%' }}>Costo Unit.</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '14%' }}>Sistema</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '14%' }}>Físico</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '14%' }}>Diferencia</th>
-                  <th style={{ padding: '12px 14px', width: '8%' }}>Obs.</th>
+                  <th style={{ padding: '12px 14px', width: '26%' }}>Producto</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '6%' }}>U/M</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Costo Unit.</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Sistema</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Físico</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '22%' }}>Diferencia</th>
+                  <th style={{ padding: '12px 14px', width: '19%' }}>Obs.</th>
                 </tr>
               </thead>
               <tbody>
@@ -455,42 +471,44 @@ export function NewInventory() {
                         ${unitCost.toFixed(2)}
                       </td>
 
-                      <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                      <td style={{ padding: '8px 4px', textAlign: 'center' }}>
                         <input 
                           type="number"
                           step="0.01"
                           className="form-control"
-                          style={{ textAlign: 'center', fontWeight: 700, padding: '6px' }}
+                          style={{ textAlign: 'center', fontWeight: 700, padding: '6px 4px', maxWidth: '75px', margin: '0 auto' }}
                           value={val.system}
                           onChange={e => handleItemChange(prod.id, 'system', e.target.value === '' ? '' : Number(e.target.value))}
                         />
                       </td>
 
-                      <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                      <td style={{ padding: '8px 4px', textAlign: 'center' }}>
                         <input 
                           type="number"
                           step="0.01"
                           className="form-control"
-                          style={{ textAlign: 'center', fontWeight: 800, padding: '6px', borderColor: '#009C48' }}
+                          style={{ textAlign: 'center', fontWeight: 800, padding: '6px 4px', borderColor: '#009C48', maxWidth: '75px', margin: '0 auto' }}
                           value={val.physical}
                           onChange={e => handleItemChange(prod.id, 'physical', e.target.value === '' ? '' : Number(e.target.value))}
                         />
                       </td>
 
-                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>
                         <span style={{ 
                           padding: '4px 10px', 
                           borderRadius: '12px', 
                           fontSize: '0.82rem', 
                           fontWeight: 800,
+                          display: 'inline-block',
+                          whiteSpace: 'nowrap',
                           background: diff < 0 ? 'rgba(239, 68, 68, 0.15)' : diff === 0 ? 'rgba(0, 156, 72, 0.15)' : 'rgba(2, 132, 199, 0.15)',
                           color: diff < 0 ? 'var(--danger)' : diff === 0 ? '#009C48' : '#0284c7'
                         }}>
                           {diff < 0 
                             ? `Falta (${diff} / -$${Math.abs(dollarImpact).toFixed(2)})` 
                             : diff === 0 
-                              ? 'Cuadra ($0.00)' 
-                              : `Sobra (+${diff} / +$${dollarImpact.toFixed(2)})`}
+                              ? 'Conforme ($0.00)' 
+                              : `Sobrante (+${diff} / +$${dollarImpact.toFixed(2)})`}
                         </span>
                       </td>
 
@@ -498,7 +516,7 @@ export function NewInventory() {
                         <input 
                           type="text" 
                           className="form-control"
-                          placeholder="Nota..."
+                          placeholder="Nota u observación..."
                           style={{ fontSize: '0.82rem', padding: '6px' }}
                           value={val.observation}
                           onChange={e => handleItemChange(prod.id, 'observation', e.target.value)}
