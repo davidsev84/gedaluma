@@ -819,20 +819,21 @@ export function Dashboard() {
           <div className="kpi-grid-1x4">
             {/* KPI 1: TOTAL ISLAS OPERATIVAS & BOTÓN NUEVA ISLA */}
             <div 
-              className="card flex flex-col justify-between" 
+              className="card flex flex-col justify-between items-center text-center" 
               style={{ 
                 padding: '20px', 
                 background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.14) 0%, rgba(0, 156, 72, 0.04) 100%)', 
                 border: '2px solid #009C48',
                 borderRadius: '14px',
-                minHeight: '145px'
+                minHeight: '145px',
+                textAlign: 'center'
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textAlign: 'center' }}>
                   Total Islas Operativas
                 </span>
-                <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0' }}>
+                <p className="text-3xl font-bold" style={{ color: '#009C48', margin: '4px 0', textAlign: 'center' }}>
                   {islands.length} Islas
                 </p>
               </div>
@@ -862,20 +863,21 @@ export function Dashboard() {
 
             {/* KPI 2: AUDITORÍAS REALIZADAS */}
             <div 
-              className="card flex flex-col justify-between" 
+              className="card flex flex-col justify-between items-center text-center" 
               style={{ 
                 padding: '20px', 
                 background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.14) 0%, rgba(2, 132, 199, 0.04) 100%)', 
                 border: '2px solid #0284c7',
                 borderRadius: '14px',
-                minHeight: '145px'
+                minHeight: '145px',
+                textAlign: 'center'
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textAlign: 'center' }}>
                   Auditorías Realizadas
                 </span>
-                <p className="text-3xl font-bold" style={{ color: '#0284c7', margin: '4px 0' }}>
+                <p className="text-3xl font-bold" style={{ color: '#0284c7', margin: '4px 0', textAlign: 'center' }}>
                   {totalAudits}
                 </p>
               </div>
@@ -905,20 +907,21 @@ export function Dashboard() {
 
             {/* KPI 3: VISITAS CLIENTE FANTASMA */}
             <div 
-              className="card flex flex-col justify-between" 
+              className="card flex flex-col justify-between items-center text-center" 
               style={{ 
                 padding: '20px', 
                 background: 'linear-gradient(135deg, rgba(247, 181, 0, 0.18) 0%, rgba(247, 181, 0, 0.06) 100%)', 
                 border: '2px solid #f7b500',
                 borderRadius: '14px',
-                minHeight: '145px'
+                minHeight: '145px',
+                textAlign: 'center'
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#b48200', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#b48200', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textAlign: 'center' }}>
                   Visitas Cliente Fantasma
                 </span>
-                <p className="text-3xl font-bold" style={{ color: '#b48200', margin: '4px 0' }}>
+                <p className="text-3xl font-bold" style={{ color: '#b48200', margin: '4px 0', textAlign: 'center' }}>
                   {totalGhostVisits}
                 </p>
               </div>
@@ -948,7 +951,7 @@ export function Dashboard() {
             
             {/* KPI 4: PERSONAL REGISTRADO */}
             <div 
-              className="card flex flex-col justify-between hover-lift" 
+              className="card flex flex-col justify-between items-center text-center hover-lift" 
               onClick={() => setViewMode('employees')}
               style={{ 
                 padding: '20px', 
@@ -956,15 +959,16 @@ export function Dashboard() {
                 background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0.04) 100%)', 
                 border: '2px solid #6366f1',
                 borderRadius: '14px',
-                minHeight: '145px'
+                minHeight: '145px',
+                textAlign: 'center'
               }}
               title="Haz clic para ver la tabla completa de empleadas"
             >
-              <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textAlign: 'center' }}>
                   Personal Registrado
                 </span>
-                <p className="text-3xl font-bold" style={{ color: '#6366f1', margin: '4px 0' }}>
+                <p className="text-3xl font-bold" style={{ color: '#6366f1', margin: '4px 0', textAlign: 'center' }}>
                   {employees.length} Empleadas
                 </p>
               </div>
