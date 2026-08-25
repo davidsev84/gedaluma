@@ -231,20 +231,15 @@ button:active {
 
 .kpi-grid-1x4 {
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
   margin-bottom: 28px !important;
+  width: 100% !important;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 500px) {
   .kpi-grid-1x4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-@media (max-width: 600px) {
-  .kpi-grid-1x4 {
-    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 }
 

@@ -852,7 +852,7 @@ export function Dashboard() {
       {viewMode === 'islands' && !selectedIslaId && (
         <div>
           {/* BANNER DE RESUMEN GLOBAL EN 1 FILA X 4 COLUMNAS (1x4) */}
-          <div className="kpi-grid-1x4">
+          <div className="kpi-grid-1x4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '14px', marginBottom: '28px' }}>
             {/* KPI 1: TOTAL ISLAS OPERATIVAS & BOTÓN NUEVA ISLA */}
             <div 
               className="card flex flex-col justify-between items-center text-center" 
