@@ -327,11 +327,38 @@ export function Dashboard() {
 
       setPenalties(combinedPenalties);
 
-      // Cargar inventarios
+      // Cargar inventarios (Supabase + Respaldo Local)
       let dbInventories: any[] = [];
       try {
-        const { data: invData } = await supabase.from('inventories').select('*').order('created_at', { ascending: false });
-        dbInventories = invData || [];
+        const { data: invData, error: invErr } = await supabase.from('inventories').select('*').order('created_at', { ascending: false });
+        if (!invErr && invData) {
+          dbInventories = invData;
+          
+          // Intentar auto-sincronizar inventarios guardados localmente si la tabla ya existe
+          const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
+          if (savedOfflineInventories) {
+            try {
+              const offlineArr: any[] = JSON.parse(savedOfflineInventories);
+              const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+              
+              for (const offInv of offlineArr) {
+                if (!dbInventories.some(d => d.id === offInv.id)) {
+                  const { data: syncedInv, error: syncErr } = await supabase.from('inventories').insert([offInv]).select().single();
+                  if (!syncErr && syncedInv) {
+                    const items = offlineItemsMap[offInv.id] || [];
+                    if (items.length > 0) {
+                      const itemsToInsert = items.map((it: any) => ({ inventory_id: syncedInv.id, ...it }));
+                      await supabase.from('inventory_items').insert(itemsToInsert);
+                    }
+                    dbInventories.unshift(syncedInv);
+                  }
+                }
+              }
+            } catch (syncE) {
+              console.warn('Auto-sync error:', syncE);
+            }
+          }
+        }
       } catch (e) {}
 
       const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
@@ -437,8 +464,17 @@ export function Dashboard() {
 
     // Helper to match island ID or name (unifying DAULE & PASEO DAULE under island id '4')
     const isMatchingIsla = (e: any) => {
-      if (e.isla_id === islaId) return true;
-      if (islaId === '4' && (e.isla_id === '5' || e.isla_name === 'DAULE' || e.isla_name === 'PASEO DAULE')) return true;
+      const eIslaIdStr = String(e.isla_id || '').trim();
+      const targetIslaIdStr = String(islaId || '').trim();
+      if (eIslaIdStr && eIslaIdStr === targetIslaIdStr) return true;
+
+      const eIslaName = String(e.isla_name || '').toUpperCase().trim();
+      const currentIslaObj = islands.find(i => String(i.id) === targetIslaIdStr);
+      const currentIslaName = String(currentIslaObj?.name || '').toUpperCase().trim();
+
+      if (eIslaName && currentIslaName && (eIslaName.includes(currentIslaName) || currentIslaName.includes(eIslaName))) return true;
+
+      if (islaId === '4' && (eIslaIdStr === '5' || eIslaName.includes('DAULE'))) return true;
       return false;
     };
 
