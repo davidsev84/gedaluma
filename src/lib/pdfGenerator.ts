@@ -61,10 +61,14 @@ export const generatePDF = (
     
     const activeCategories = isGhost ? ghostCategories : categories;
 
-    activeCategories.forEach((cat: any) => {
+    activeCategories.forEach((cat: any, catIdx: number) => {
       doc.setFontSize(11);
       doc.setTextColor(0, 156, 72);
-      doc.text(cat.name, 20, currentY);
+      
+      const catCode = cat.id ? `CAT-${cat.id}` : `CAT-${catIdx + 1}`;
+      const catHeader = `Categoría ${catIdx + 1} [${catCode}]: ${cat.name}`;
+      
+      doc.text(catHeader, 20, currentY);
       currentY += 7;
       
       doc.setFontSize(9.5);
@@ -73,7 +77,8 @@ export const generatePDF = (
         const answerVal = resp ? (resp.value || 'Sin respuesta') : 'Sin respuesta';
         const obsVal = resp ? resp.observation : null;
 
-        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${q.text}`, 170);
+        const qCode = q.code ? `[${q.code}] ` : (q.id ? `[${q.id.toUpperCase()}] ` : '');
+        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${qCode}${q.text}`, 170);
         doc.setTextColor(0, 0, 0);
         doc.text(splitTitle, 20, currentY);
         currentY += splitTitle.length * 4.5;
