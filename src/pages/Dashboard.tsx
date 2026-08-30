@@ -343,7 +343,24 @@ export function Dashboard() {
               
               for (const offInv of offlineArr) {
                 if (!dbInventories.some(d => d.id === offInv.id)) {
-                  const { data: syncedInv, error: syncErr } = await supabase.from('inventories').insert([offInv]).select().single();
+                  const payloadToSync = {
+                    id: offInv.id || `inv_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                    isla_id: String(offInv.isla_id || ''),
+                    isla_name: offInv.isla_name || 'Desconocida',
+                    evaluator_name: offInv.evaluator_name || 'Auditor',
+                    date: offInv.date || new Date().toISOString().split('T')[0],
+                    start_time: offInv.start_time || '00:00',
+                    end_time: offInv.end_time || '00:00',
+                    total_missing: Number(offInv.total_missing || 0),
+                    total_missing_dollars: Number(offInv.total_missing_dollars || 0),
+                    total_match: Number(offInv.total_match || 0),
+                    total_surplus: Number(offInv.total_surplus || 0),
+                    total_surplus_dollars: Number(offInv.total_surplus_dollars || 0),
+                    is_discounted: !!offInv.is_discounted,
+                    created_at: offInv.created_at || new Date().toISOString()
+                  };
+
+                  const { data: syncedInv, error: syncErr } = await supabase.from('inventories').insert([payloadToSync]).select().single();
                   if (!syncErr && syncedInv) {
                     const items = offlineItemsMap[offInv.id] || [];
                     if (items.length > 0) {

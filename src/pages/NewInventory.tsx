@@ -136,7 +136,10 @@ export function NewInventory() {
         };
       });
 
+      const generatedId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
       const inventoryPayload = {
+        id: generatedId,
         isla_id: selectedIsla,
         isla_name: islaObj?.name || 'Desconocida',
         evaluator_name: evaluatorName,
@@ -168,12 +171,11 @@ export function NewInventory() {
           }));
           await supabase.from('inventory_items').insert(itemsToInsert);
         } else {
-          throw invErr || new Error('Error al insertar en Supabase');
+          throw invErr || new Error((invErr as any)?.message || 'Error al insertar en Supabase');
         }
       } catch (dbErr: any) {
         console.warn('Fallback a almacenamiento local para inventario:', dbErr);
         savedInventory = {
-          id: `inv_off_${Date.now()}`,
           ...inventoryPayload
         };
         const existingOffline = JSON.parse(localStorage.getItem('gedaluma_offline_inventories') || '[]');
