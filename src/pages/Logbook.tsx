@@ -54,6 +54,26 @@ export const LOGBOOK_CATEGORIES = [
   }
 ];
 
+export const TIME_SLOTS = [
+  '06:00 AM', '06:15 AM', '06:30 AM', '06:45 AM',
+  '07:00 AM', '07:15 AM', '07:30 AM', '07:45 AM',
+  '08:00 AM', '08:15 AM', '08:30 AM', '08:45 AM',
+  '09:00 AM', '09:15 AM', '09:30 AM', '09:45 AM',
+  '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM',
+  '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM',
+  '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM',
+  '01:00 PM', '01:15 PM', '01:30 PM', '01:45 PM',
+  '02:00 PM', '02:15 PM', '02:30 PM', '02:45 PM',
+  '03:00 PM', '03:15 PM', '03:30 PM', '03:45 PM',
+  '04:00 PM', '04:15 PM', '04:30 PM', '04:45 PM',
+  '05:00 PM', '05:15 PM', '05:30 PM', '05:45 PM',
+  '06:00 PM', '06:15 PM', '06:30 PM', '06:45 PM',
+  '07:00 PM', '07:15 PM', '07:30 PM', '07:45 PM',
+  '08:00 PM', '08:15 PM', '08:30 PM', '08:45 PM',
+  '09:00 PM', '09:15 PM', '09:30 PM', '09:45 PM',
+  '10:00 PM'
+];
+
 export function Logbook() {
   const { user } = useAuth();
   const islands = getStoredIslas();
@@ -68,9 +88,12 @@ export function Logbook() {
   const [editingEntry, setEditingEntry] = useState<LogbookEntry | null>(null);
 
   const [formIsla, setFormIsla] = useState('');
+  const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [formCategory, setFormCategory] = useState(LOGBOOK_CATEGORIES[0].title);
   const [formSubtask, setFormSubtask] = useState(LOGBOOK_CATEGORIES[0].subtasks[0]);
   const [formDescription, setFormDescription] = useState('');
+  const [formStartTime, setFormStartTime] = useState<string>('09:00 AM');
+  const [formEndTime, setFormEndTime] = useState<string>('');
 
   const isAdmin = user?.role === 'admin';
 
@@ -104,8 +127,10 @@ export function Logbook() {
 
   const handleStartTask = async () => {
     if (!formIsla) return alert('Por favor selecciona una isla.');
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const islaObj = islands.find(i => i.id === formIsla || i.name === formIsla);
+
+    const startTimeToUse = formStartTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isCompleted = !!formEndTime;
 
     const newPayload: LogbookEntry = {
       id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -114,10 +139,10 @@ export function Logbook() {
       task_category: formCategory,
       task_subcategory: formSubtask,
       description: formDescription,
-      date: selectedDate,
-      start_time: nowTime,
-      end_time: '',
-      status: 'in_progress',
+      date: formDate || selectedDate,
+      start_time: startTimeToUse,
+      end_time: formEndTime || '',
+      status: isCompleted ? 'completed' : 'in_progress',
       created_by: user?.name || 'Supervisor',
       is_valid: true,
       created_at: new Date().toISOString()
@@ -140,7 +165,7 @@ export function Logbook() {
 
     setShowFormModal(false);
     resetForm();
-    alert('✅ Tarea iniciada exitosamente. Se ha registrado la hora de inicio.');
+    alert(isCompleted ? '✅ Tarea registrada como completada.' : '✅ Tarea iniciada exitosamente en el horario indicado.');
   };
 
   const handleFinishTask = async (entry: LogbookEntry) => {
@@ -165,14 +190,18 @@ export function Logbook() {
   const handleSaveEdit = async () => {
     if (!editingEntry) return;
 
-    // Rule: Supervisor can change task/activity/description but NOT date or delete
-    const updatedPayload = {
+    const isCompleted = !!formEndTime;
+    const updatedPayload: LogbookEntry = {
       ...editingEntry,
       task_category: formCategory,
       task_subcategory: formSubtask,
       description: formDescription,
       isla_id: formIsla,
-      isla_name: islands.find(i => i.id === formIsla)?.name || formIsla
+      isla_name: islands.find(i => i.id === formIsla)?.name || formIsla,
+      date: formDate,
+      start_time: formStartTime,
+      end_time: formEndTime || '',
+      status: isCompleted ? 'completed' : editingEntry.status
     };
 
     setEntries(prev => prev.map(e => e.id === editingEntry.id ? updatedPayload : e));
@@ -185,7 +214,11 @@ export function Logbook() {
           task_subcategory: formSubtask,
           description: formDescription,
           isla_id: formIsla,
-          isla_name: updatedPayload.isla_name
+          isla_name: updatedPayload.isla_name,
+          date: formDate,
+          start_time: formStartTime,
+          end_time: formEndTime || '',
+          status: isCompleted ? 'completed' : editingEntry.status
         })
         .eq('id', editingEntry.id);
 
@@ -223,17 +256,23 @@ export function Logbook() {
   const openEditModal = (entry: LogbookEntry) => {
     setEditingEntry(entry);
     setFormIsla(entry.isla_id || '');
+    setFormDate(entry.date || selectedDate);
     setFormCategory(entry.task_category || LOGBOOK_CATEGORIES[0].title);
     setFormSubtask(entry.task_subcategory || LOGBOOK_CATEGORIES[0].subtasks[0]);
     setFormDescription(entry.description || '');
+    setFormStartTime(entry.start_time || '09:00 AM');
+    setFormEndTime(entry.end_time || '');
     setShowFormModal(true);
   };
 
   const resetForm = () => {
     setFormIsla('');
+    setFormDate(selectedDate);
     setFormCategory(LOGBOOK_CATEGORIES[0].title);
     setFormSubtask(LOGBOOK_CATEGORIES[0].subtasks[0]);
     setFormDescription('');
+    setFormStartTime('09:00 AM');
+    setFormEndTime('');
     setEditingEntry(null);
   };
 
@@ -676,6 +715,47 @@ export function Logbook() {
               if (editingEntry) handleSaveEdit();
               else handleStartTask();
             }}>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>📅 Fecha de la Tarea:</label>
+                  <input 
+                    type="date"
+                    className="form-control"
+                    value={formDate}
+                    onChange={e => setFormDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>🕒 Hora Inicio (Desplegable):</label>
+                  <select 
+                    className="form-control"
+                    value={formStartTime}
+                    onChange={e => setFormStartTime(e.target.value)}
+                    required
+                  >
+                    {TIME_SLOTS.map(slot => (
+                      <option key={slot} value={slot}>{slot}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group mb-4">
+                <label className="form-label" style={{ fontWeight: 700 }}>🏁 Hora Finalización (Opcional si inicia ahora):</label>
+                <select 
+                  className="form-control"
+                  value={formEndTime}
+                  onChange={e => setFormEndTime(e.target.value)}
+                >
+                  <option value="">-- En Progreso (Se finaliza después) --</option>
+                  {TIME_SLOTS.map(slot => (
+                    <option key={`end_${slot}`} value={slot}>{slot}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group mb-4">
                 <label className="form-label" style={{ fontWeight: 700 }}>Isla donde se realiza la tarea:</label>
                 <select 
