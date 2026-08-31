@@ -630,7 +630,7 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap header-actions-mobile" style={{ paddingRight: '60px' }}>
+        <div className="flex items-center gap-2 flex-wrap header-actions-mobile">
           <button 
             onClick={() => setShowCatalogModal(true)} 
             className="btn" 

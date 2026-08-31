@@ -385,7 +385,7 @@ export function Logbook() {
             <CalendarIcon size={20} /> Cuadro Semanal de Novedades (Semana del {weekDays[0]} al {weekDays[6]})
           </h3>
           
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px', overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(115px, 1fr))', gap: '10px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '8px' }}>
             {weekDays.map((dayStr) => {
               const dayObj = new Date(dayStr + 'T12:00:00');
               const dayName = dayObj.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase();

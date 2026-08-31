@@ -373,7 +373,7 @@ export function NewEvaluation() {
           <h1 className="text-2xl">{isGhost ? 'Módulo Cliente Fantasma GEDALUMA' : 'Panel Operativo de Evaluaciones e Inventarios'}</h1>
           <p className="text-muted">Evaluador / Supervisor: {user?.name}</p>
         </div>
-        <div className="flex gap-2 items-center flex-wrap header-actions-mobile" style={{ paddingRight: '60px' }}>
+        <div className="flex gap-2 items-center flex-wrap header-actions-mobile">
           <button 
             onClick={() => setShowCatalogModal(true)} 
             className="btn"

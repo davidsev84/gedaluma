@@ -237,16 +237,24 @@ button:active {
   width: 100% !important;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 840px) {
   .kpi-grid-1x4 {
-    gap: 8px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
   }
 }
 
-@media (max-width: 768px) {
-  .grid-cols-2, .grid-cols-3, .grid-cols-4 {
-    grid-template-columns: 1fr;
+@media (max-width: 420px) {
+  .kpi-grid-1x4 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
+}
+
+/* Global Word Wrap to prevent text overlapping */
+h1, h2, h3, h4, h5, h6, p, span, label, td, th, div, button {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Animations & Premium UI */
@@ -345,13 +353,13 @@ html {
 
 @media (max-width: 768px) {
   .theme-toggle-container {
-    top: 14px;
-    right: 14px;
+    top: 10px;
+    right: 12px;
   }
   
   .btn-theme-toggle {
     padding: 6px 10px;
-    border-radius: 50%;
+    border-radius: 20px;
   }
   
   .theme-toggle-label {
@@ -368,6 +376,7 @@ html {
   
   .container {
     padding: 12px;
+    padding-top: 54px !important; /* Prevent header overlap with fixed theme toggle */
   }
 
   .card {
@@ -383,9 +392,17 @@ html {
   }
 
   .header-actions-mobile {
-    width: 100%;
+    width: 100% !important;
+    padding-right: 0 !important;
     justify-content: flex-start !important;
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .header-actions-mobile button,
+  .header-actions-mobile a {
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
   }
 
   /* Responsive Grids */
@@ -399,21 +416,6 @@ html {
     width: 95vw !important;
     max-height: 90vh !important;
     padding: 16px !important;
-  }
-
-  .mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-color);
-    z-index: 40;
-    padding: 80px 24px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    animation: fadeIn 0.3s ease;
   }
 }
 
