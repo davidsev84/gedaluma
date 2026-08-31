@@ -32,11 +32,28 @@ export function Login() {
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ padding: '16px', background: 'var(--bg-color)' }}>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '400px' }}>
         <div className="flex flex-col items-center gap-4 mb-6">
-          <div style={{ marginBottom: '16px' }}>
-            <img src="/logo.png" alt="Gedaluma Logo" style={{ height: '120px', width: 'auto' }} />
+          <div style={{ marginBottom: '12px' }}>
+            <img src="/logo.png" alt="Gedaluma Logo" style={{ height: '110px', width: 'auto' }} />
           </div>
-          <h1 className="text-2xl text-center">Acceso al Sistema</h1>
-          <p className="text-muted text-center">Inicia sesión con tus credenciales</p>
+          <h1 className="text-2xl text-center font-bold">Acceso al Sistema</h1>
+          <p className="text-muted text-center" style={{ fontSize: '0.88rem' }}>Inicia sesión con tus credenciales</p>
+          
+          <a 
+            href="/" 
+            className="btn btn-outline flex items-center gap-2 justify-center"
+            style={{ 
+              padding: '6px 14px', 
+              fontSize: '0.82rem', 
+              borderRadius: '8px', 
+              borderColor: '#009C48', 
+              color: '#009C48',
+              textDecoration: 'none',
+              fontWeight: 700,
+              width: '100%'
+            }}
+          >
+            ← Volver a la Página Principal (Inicio)
+          </a>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

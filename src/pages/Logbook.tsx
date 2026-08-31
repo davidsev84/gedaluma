@@ -411,20 +411,41 @@ export function Logbook() {
                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isToday ? '#009C48' : 'var(--text-secondary)' }}>
                       {dayName}
                     </span>
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: '1.1rem', color: isToday ? '#009C48' : 'var(--text-primary)' }}>
+                    <p style={{ margin: '2px 0 6px 0', fontWeight: 800, fontSize: '1.1rem', color: isToday ? '#009C48' : 'var(--text-primary)' }}>
                       {dayNum}
                     </p>
+                    <button
+                      onClick={() => {
+                        setSelectedDate(dayStr);
+                        resetForm();
+                        setShowFormModal(true);
+                      }}
+                      className="btn"
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        background: 'rgba(0, 156, 72, 0.12)',
+                        color: '#009C48',
+                        border: '1px solid rgba(0, 156, 72, 0.3)',
+                        borderRadius: '6px',
+                        width: '100%'
+                      }}
+                      title="Crear tarea para este día"
+                    >
+                      + Tarea Directa
+                    </button>
                   </div>
 
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
                     {dayEntries.map(entry => (
                       <div 
                         key={entry.id} 
                         style={{ 
-                          padding: '8px 10px', 
-                          border: '1px solid var(--border-color)', 
-                          borderRadius: '8px',
-                          background: entry.status === 'in_progress' ? 'rgba(247, 181, 0, 0.12)' : 'var(--bg-color)',
+                          padding: '10px', 
+                          border: `1px solid ${entry.status === 'in_progress' ? '#f7b500' : 'var(--border-color)'}`, 
+                          borderRadius: '10px',
+                          background: entry.status === 'in_progress' ? 'rgba(247, 181, 0, 0.08)' : 'var(--bg-color)',
                           fontSize: '0.78rem'
                         }}
                       >
@@ -432,43 +453,85 @@ export function Logbook() {
                           <span style={{ fontWeight: 800, color: '#009C48' }}>ISLA {entry.isla_name}</span>
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{entry.start_time}</span>
                         </div>
-                        <p style={{ margin: '2px 0', fontWeight: 600, fontSize: '0.76rem', color: 'var(--text-primary)' }}>
+                        <p style={{ margin: '2px 0 6px 0', fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-primary)' }}>
                           {entry.task_category}
                         </p>
-                        <div className="flex justify-between items-center mt-2">
-                          <span style={{ fontSize: '0.7rem', color: entry.status === 'completed' ? '#009C48' : '#f7b500', fontWeight: 700 }}>
-                            {entry.status === 'completed' ? `✓ ${entry.end_time || 'Fin'}` : '⏳ En Curso'}
-                          </span>
-                          
-                          <div className="flex gap-1">
-                            {entry.status === 'in_progress' && (
-                              <button 
-                                onClick={() => handleFinishTask(entry)}
-                                className="btn"
-                                style={{ padding: '2px 6px', fontSize: '0.68rem', background: '#009C48', color: '#fff', borderRadius: '4px' }}
-                                title="Finalizar tarea ahora"
-                              >
-                                Fin
-                              </button>
-                            )}
+
+                        {/* SI ESTÁ EN CURSO: BOTÓN GRANDE FINALIZAR TAREA */}
+                        {entry.status === 'in_progress' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
                             <button 
-                              onClick={() => openEditModal(entry)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0284c7' }}
-                              title="Modificar tarea"
+                              onClick={() => handleFinishTask(entry)}
+                              className="btn hover-lift"
+                              style={{ 
+                                padding: '8px 10px', 
+                                fontSize: '0.82rem', 
+                                fontWeight: 800, 
+                                background: '#009C48', 
+                                color: '#ffffff', 
+                                borderRadius: '8px',
+                                border: 'none',
+                                width: '100%',
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px'
+                              }}
+                              title="Haz clic para finalizar la tarea ahora"
                             >
-                              <Edit3 size={12} />
+                              <CheckCircle2 size={16} /> ✓ Finalizar Tarea
                             </button>
-                            {isAdmin && (
+
+                            {/* SIGUIENTE LÍNEA: BOTONES EDITAR Y BORRAR */}
+                            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
                               <button 
-                                onClick={() => handleDeleteTask(entry.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }}
-                                title="Eliminar tarea (Solo Admin)"
+                                onClick={() => openEditModal(entry)}
+                                className="btn"
+                                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                                title="Modificar tarea"
                               >
-                                <Trash2 size={12} />
+                                ✏️ Editar
                               </button>
-                            )}
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleDeleteTask(entry.id)}
+                                  className="btn"
+                                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                                  title="Eliminar tarea"
+                                >
+                                  🗑️ Borrar
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          /* TAREA YA COMPLETADA */
+                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span style={{ fontSize: '0.72rem', color: '#009C48', fontWeight: 800 }}>
+                                ✓ Fin: {entry.end_time || 'Completado'}
+                              </span>
+                            </div>
+                            {/* SIGUIENTE LÍNEA: EDITAR Y BORRAR */}
+                            <div className="flex justify-between items-center mt-1">
+                              <button 
+                                onClick={() => openEditModal(entry)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0284c7', fontSize: '0.72rem', fontWeight: 700 }}
+                              >
+                                ✏️ Editar
+                              </button>
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleDeleteTask(entry.id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.72rem', fontWeight: 700 }}
+                                >
+                                  🗑️ Borrar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
 
