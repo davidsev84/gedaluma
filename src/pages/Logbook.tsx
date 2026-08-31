@@ -4,7 +4,7 @@ import { getStoredIslas } from '../data/mock';
 import { supabase } from '../lib/supabase';
 import type { LogbookEntry } from '../types';
 import { 
-  Calendar as CalendarIcon, Plus, CheckCircle2, 
+  Calendar as CalendarIcon, Plus, CheckCircle2, PlayCircle,
   Trash2, Edit3
 } from 'lucide-react';
 
@@ -55,22 +55,22 @@ export const LOGBOOK_CATEGORIES = [
 ];
 
 export const TIME_SLOTS = [
-  '06:00 AM', '06:15 AM', '06:30 AM', '06:45 AM',
-  '07:00 AM', '07:15 AM', '07:30 AM', '07:45 AM',
-  '08:00 AM', '08:15 AM', '08:30 AM', '08:45 AM',
-  '09:00 AM', '09:15 AM', '09:30 AM', '09:45 AM',
-  '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM',
-  '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM',
-  '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM',
-  '01:00 PM', '01:15 PM', '01:30 PM', '01:45 PM',
-  '02:00 PM', '02:15 PM', '02:30 PM', '02:45 PM',
-  '03:00 PM', '03:15 PM', '03:30 PM', '03:45 PM',
-  '04:00 PM', '04:15 PM', '04:30 PM', '04:45 PM',
-  '05:00 PM', '05:15 PM', '05:30 PM', '05:45 PM',
-  '06:00 PM', '06:15 PM', '06:30 PM', '06:45 PM',
-  '07:00 PM', '07:15 PM', '07:30 PM', '07:45 PM',
-  '08:00 PM', '08:15 PM', '08:30 PM', '08:45 PM',
-  '09:00 PM', '09:15 PM', '09:30 PM', '09:45 PM',
+  '06:00 AM', '06:30 AM',
+  '07:00 AM', '07:30 AM',
+  '08:00 AM', '08:30 AM',
+  '09:00 AM', '09:30 AM',
+  '10:00 AM', '10:30 AM',
+  '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM',
+  '01:00 PM', '01:30 PM',
+  '02:00 PM', '02:30 PM',
+  '03:00 PM', '03:30 PM',
+  '04:00 PM', '04:30 PM',
+  '05:00 PM', '05:30 PM',
+  '06:00 PM', '06:30 PM',
+  '07:00 PM', '07:30 PM',
+  '08:00 PM', '08:30 PM',
+  '09:00 PM', '09:30 PM',
   '10:00 PM'
 ];
 
@@ -129,7 +129,7 @@ export function Logbook() {
     if (!formIsla) return alert('Por favor selecciona una isla.');
     const islaObj = islands.find(i => i.id === formIsla || i.name === formIsla);
 
-    const startTimeToUse = formStartTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const startTimeToUse = formStartTime || '09:00 AM';
     const isCompleted = !!formEndTime;
 
     const newPayload: LogbookEntry = {
@@ -142,7 +142,7 @@ export function Logbook() {
       date: formDate || selectedDate,
       start_time: startTimeToUse,
       end_time: formEndTime || '',
-      status: isCompleted ? 'completed' : 'in_progress',
+      status: isCompleted ? 'completed' : 'scheduled',
       created_by: user?.name || 'Supervisor',
       is_valid: true,
       created_at: new Date().toISOString()
@@ -165,7 +165,26 @@ export function Logbook() {
 
     setShowFormModal(false);
     resetForm();
-    alert(isCompleted ? '✅ Tarea registrada como completada.' : '✅ Tarea iniciada exitosamente en el horario indicado.');
+    alert(isCompleted ? '✅ Tarea agendada y completada.' : '✅ Tarea agendada exitosamente en la agenda.');
+  };
+
+  const handleStartScheduledTask = async (entry: LogbookEntry) => {
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, start_time: nowTime, status: 'in_progress' } : e));
+
+    try {
+      const { error } = await supabase
+        .from('logbook_entries')
+        .update({ start_time: nowTime, status: 'in_progress' })
+        .eq('id', entry.id);
+
+      if (error) throw error;
+    } catch (err) {
+      const offline = JSON.parse(localStorage.getItem('gedaluma_offline_logbook') || '[]');
+      const updated = offline.map((o: any) => o.id === entry.id ? { ...o, start_time: nowTime, status: 'in_progress' } : o);
+      localStorage.setItem('gedaluma_offline_logbook', JSON.stringify(updated));
+    }
   };
 
   const handleFinishTask = async (entry: LogbookEntry) => {
@@ -496,8 +515,56 @@ export function Logbook() {
                           {entry.task_category}
                         </p>
 
-                        {/* SI ESTÁ EN CURSO: BOTÓN GRANDE FINALIZAR TAREA */}
-                        {entry.status === 'in_progress' ? (
+                        {/* ESTADO 1: AGENDADA / PENDIENTE DE INICIAR */}
+                        {entry.status === 'scheduled' || (!entry.status && !entry.end_time) ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+                            <button 
+                              onClick={() => handleStartScheduledTask(entry)}
+                              className="btn hover-lift"
+                              style={{ 
+                                padding: '8px 10px', 
+                                fontSize: '0.82rem', 
+                                fontWeight: 800, 
+                                background: '#009C48', 
+                                color: '#ffffff', 
+                                borderRadius: '8px',
+                                border: 'none',
+                                width: '100%',
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px'
+                              }}
+                              title="Haz clic para iniciar la tarea ahora"
+                            >
+                              <PlayCircle size={16} /> ▶️ Iniciar Tarea
+                            </button>
+
+                            {/* SIGUIENTE LÍNEA: BOTONES EDITAR Y BORRAR */}
+                            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
+                              <button 
+                                onClick={() => openEditModal(entry)}
+                                className="btn"
+                                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                                title="Modificar tarea"
+                              >
+                                ✏️ Editar
+                              </button>
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleDeleteTask(entry.id)}
+                                  className="btn"
+                                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                                  title="Eliminar tarea"
+                                >
+                                  🗑️ Borrar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : entry.status === 'in_progress' ? (
+                          /* ESTADO 2: EN CURSO (INICIADA) */
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
                             <button 
                               onClick={() => handleFinishTask(entry)}
@@ -506,7 +573,7 @@ export function Logbook() {
                                 padding: '8px 10px', 
                                 fontSize: '0.82rem', 
                                 fontWeight: 800, 
-                                background: '#009C48', 
+                                background: '#0284c7', 
                                 color: '#ffffff', 
                                 borderRadius: '8px',
                                 border: 'none',
@@ -545,7 +612,7 @@ export function Logbook() {
                             </div>
                           </div>
                         ) : (
-                          /* TAREA YA COMPLETADA */
+                          /* ESTADO 3: COMPLETADA */
                           <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
                             <div className="flex justify-between items-center mb-1">
                               <span style={{ fontSize: '0.72rem', color: '#009C48', fontWeight: 800 }}>

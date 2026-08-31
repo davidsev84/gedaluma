@@ -83,7 +83,7 @@ export interface LogbookEntry {
   date: string;
   start_time: string;
   end_time?: string;
-  status: 'in_progress' | 'completed';
+  status: 'scheduled' | 'in_progress' | 'completed';
   created_by: string;
   is_valid?: boolean;
   created_at: string;
