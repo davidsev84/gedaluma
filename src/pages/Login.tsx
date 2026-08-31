@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User as UserIcon } from 'lucide-react';
+import { SYSTEM_VERSION } from '../config/version';
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -99,14 +100,14 @@ export function Login() {
             fontSize: '0.78rem' 
           }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#009C48', display: 'inline-block' }}></span>
-            Sistema Actualizado
+            {SYSTEM_VERSION.status}
           </span>
           <span style={{ fontWeight: 800, color: 'var(--text-primary)', background: 'var(--surface-color)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-            v2.5.0
+            {SYSTEM_VERSION.version}
           </span>
         </div>
         <p style={{ margin: 0, opacity: 0.9 }}>
-          Última actualización: <strong>30 de Agosto, 2026</strong>
+          Última actualización: <strong>{SYSTEM_VERSION.lastUpdateDate}</strong>
         </p>
         <p style={{ margin: '4px 0 0 0', opacity: 0.65, fontSize: '0.75rem' }}>
           © {new Date().getFullYear()} GEDALUMA. Todos los derechos reservados.

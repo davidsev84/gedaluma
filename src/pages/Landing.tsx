@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp, Menu, X, Award, CheckCircle2 } from 'lucide-react';
+import { SYSTEM_VERSION } from '../config/version';
 
 export function Landing() {
   const navigate = useNavigate();
@@ -190,13 +191,13 @@ export function Landing() {
             fontSize: '0.8rem' 
           }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#009C48', display: 'inline-block' }}></span>
-            Sistema Actualizado
+            {SYSTEM_VERSION.status}
           </span>
           <span style={{ fontWeight: 800, color: 'var(--text-primary)', background: 'var(--surface-color)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-            Versión v2.5.0
+            Versión {SYSTEM_VERSION.version}
           </span>
           <span style={{ color: 'var(--text-muted)' }}>|</span>
-          <span>Última actualización: <strong>30 de Agosto, 2026</strong></span>
+          <span>Última actualización: <strong>{SYSTEM_VERSION.lastUpdateDate}</strong></span>
         </div>
         <p>© {new Date().getFullYear()} GEDALUMA. Franquiciado Estratégico de Coco Express ®. Todos los derechos reservados.</p>
       </footer>
