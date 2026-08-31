@@ -467,6 +467,31 @@ export function Dashboard() {
     }
   };
 
+  const toggleInventoryValidation = async (invId: string, currentValidStatus: boolean) => {
+    const newValidStatus = !currentValidStatus;
+    
+    // Optimistic UI update
+    setInventories(prev => prev.map(inv => 
+      inv.id === invId ? { ...inv, is_valid: newValidStatus } : inv
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('inventories')
+        .update({ is_valid: newValidStatus })
+        .eq('id', invId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.warn("Error actualizando validez de inventario en Supabase:", err);
+      const offlineInventories = JSON.parse(localStorage.getItem('gedaluma_offline_inventories') || '[]');
+      const updatedOffline = offlineInventories.map((off: any) => 
+        off.id === invId ? { ...off, is_valid: newValidStatus } : off
+      );
+      localStorage.setItem('gedaluma_offline_inventories', JSON.stringify(updatedOffline));
+    }
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 90) return '#009C48';
     if (score >= 75) return '#0284c7';
@@ -533,10 +558,10 @@ export function Dashboard() {
     // Get inventories for this island
     const islaInventories = inventories.filter(inv => isMatchingIsla(inv));
     const pendingMissingUnits = islaInventories
-      .filter(inv => !inv.is_discounted)
+      .filter(inv => !inv.is_discounted && inv.is_valid !== false)
       .reduce((sum, inv) => sum + Number(inv.total_missing || 0), 0);
     const pendingMissingDollars = islaInventories
-      .filter(inv => !inv.is_discounted)
+      .filter(inv => !inv.is_discounted && inv.is_valid !== false)
       .reduce((sum, inv) => sum + Number(inv.total_missing_dollars || (inv.total_missing * 1.00) || 0), 0);
 
     return {
@@ -1774,18 +1799,24 @@ export function Dashboard() {
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Faltantes (-)</th>
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Conformes (=)</th>
                       <th style={{ padding: '12px 14px', textAlign: 'center' }}>Sobrantes (+)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado / Descuento</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado Descuento</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Validez</th>
                       <th style={{ padding: '12px 14px', textAlign: 'right' }}>Acciones & PDF</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedIslaStats.islaInventories.map((inv) => {
                       const isDiscounted = !!inv.is_discounted;
+                      const isValid = inv.is_valid !== false;
                       const missingUn = inv.total_missing || 0;
                       const missingDol = Number(inv.total_missing_dollars || missingUn * 1.00).toFixed(2);
 
                       return (
-                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)', background: isDiscounted ? 'rgba(0, 156, 72, 0.04)' : 'inherit' }}>
+                        <tr key={inv.id} style={{ 
+                          borderBottom: '1px solid var(--border-color)', 
+                          background: !isValid ? 'rgba(239, 68, 68, 0.06)' : isDiscounted ? 'rgba(0, 156, 72, 0.04)' : 'inherit',
+                          opacity: !isValid ? 0.65 : 1
+                        }}>
                           <td style={{ padding: '14px', fontWeight: 700 }}>
                             {new Date(inv.date || inv.created_at).toLocaleDateString()}
                           </td>
@@ -1794,15 +1825,15 @@ export function Dashboard() {
                             {inv.evaluator_name || 'Auditor Operativo'}
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: !isValid ? 'var(--text-secondary)' : missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
                             {missingUn} un. <span style={{ fontSize: '0.82rem' }}>(${missingDol})</span>
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#009C48' }}>
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: !isValid ? 'var(--text-secondary)' : '#009C48' }}>
                             {inv.total_match || 0} prod.
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: '#0284c7' }}>
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: !isValid ? 'var(--text-secondary)' : '#0284c7' }}>
                             +{inv.total_surplus || 0} un.
                           </td>
 
@@ -1810,18 +1841,38 @@ export function Dashboard() {
                             <button
                               onClick={() => toggleInventoryDiscount(inv.id, isDiscounted)}
                               className="btn"
+                              disabled={!isValid}
                               style={{
                                 padding: '6px 12px',
                                 fontSize: '0.8rem',
                                 fontWeight: 800,
                                 borderRadius: '20px',
-                                background: isDiscounted ? 'rgba(0, 156, 72, 0.15)' : 'rgba(239, 68, 68, 0.12)',
-                                color: isDiscounted ? '#009C48' : 'var(--danger)',
-                                border: `1px solid ${isDiscounted ? '#009C48' : 'var(--danger)'}`
+                                background: !isValid ? 'rgba(100, 100, 100, 0.1)' : isDiscounted ? 'rgba(0, 156, 72, 0.15)' : 'rgba(247, 181, 0, 0.15)',
+                                color: !isValid ? 'var(--text-secondary)' : isDiscounted ? '#009C48' : '#b48200',
+                                border: `1px solid ${!isValid ? 'var(--border-color)' : isDiscounted ? '#009C48' : '#f7b500'}`
                               }}
                               title="Haz clic para cambiar el visto de descuento a 0"
                             >
-                              {isDiscounted ? '✓ Descontado (0 Pendiente)' : '⚠️ Pendiente por Descontar'}
+                              {!isValid ? '🚫 No Aplica' : isDiscounted ? '✓ Descontado (0 Pendiente)' : '⚠️ Pendiente por Descontar'}
+                            </button>
+                          </td>
+
+                          <td style={{ padding: '14px', textAlign: 'center' }}>
+                            <button
+                              onClick={() => toggleInventoryValidation(inv.id, isValid)}
+                              className="btn"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                borderRadius: '16px',
+                                background: isValid ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 156, 72, 0.15)',
+                                color: isValid ? 'var(--danger)' : '#009C48',
+                                border: `1px solid ${isValid ? 'var(--danger)' : '#009C48'}`
+                              }}
+                              title={isValid ? "Anular inventario para no contabilizar sus faltantes" : "Reactivar validez del inventario"}
+                            >
+                              {isValid ? 'Anular Inventario' : '✓ Reactivar / Validar'}
                             </button>
                           </td>
 
@@ -1835,7 +1886,7 @@ export function Dashboard() {
                               className="btn btn-outline flex items-center gap-1"
                               style={{ padding: '6px 12px', fontSize: '0.8rem', marginLeft: 'auto' }}
                             >
-                              <FileText size={16} /> Descargar PDF
+                              <FileText size={16} /> PDF
                             </button>
                           </td>
                         </tr>
