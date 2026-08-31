@@ -406,6 +406,14 @@ export function NewEvaluation() {
             Nuevo Inventario
           </Link>
 
+          <Link 
+            to="/logbook" 
+            className="btn"
+            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.15)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
+            📌 Novedades & Bitácora
+          </Link>
+
           {user?.role === 'admin' && (
             <Link 
               to="/dashboard" 

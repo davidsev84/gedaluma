@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   BarChart3, TrendingUp, Users, Loader2, 
   UserCheck, ShieldAlert, Trash2, ArrowLeft, Store, 
-  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag, X, Plus
+  MapPin, CheckCircle2, ChevronRight, FileText, UserPlus, UserMinus, Gift, Package, Tag, X, Plus, Calendar as CalendarIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePenaltyAmount, getStoredIslas, saveStoredIslas } from '../data/mock';
@@ -1074,6 +1074,58 @@ export function Dashboard() {
               >
                 Ver todos
               </button>
+            </div>
+          </div>
+
+          {/* TARJETA DESTACADA DE NOVEDADES Y SOLICITUDES (BITÁCORA DIARIA & AGENDA) */}
+          <div 
+            className="card mb-6 hover-lift" 
+            style={{ 
+              padding: '24px', 
+              background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%)', 
+              border: '2px solid #009C48',
+              borderRadius: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}
+          >
+            <div style={{ flex: '1 1 300px' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <span style={{ padding: '3px 10px', background: 'rgba(0, 156, 72, 0.15)', color: '#009C48', fontWeight: 800, borderRadius: '12px', fontSize: '0.78rem' }}>
+                  NOVEDADES & SOLICITUDES
+                </span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  Informe Diario de Campo & Agenda de Supervisión
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)', marginTop: '4px' }}>
+                📌 Novedades y Solicitudes (Bitácora Diaria)
+              </h3>
+              <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '4px', margin: 0 }}>
+                Registro de visitas aleatorias, acompañamiento en islas, validación de inventarios, control logístico y agenda semanal.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link 
+                to="/logbook" 
+                className="btn hover-lift flex items-center gap-2" 
+                style={{ 
+                  padding: '12px 24px', 
+                  background: '#009C48', 
+                  borderColor: '#009C48', 
+                  color: '#ffffff', 
+                  fontWeight: 800, 
+                  fontSize: '0.92rem', 
+                  borderRadius: '12px',
+                  textDecoration: 'none'
+                }}
+              >
+                <CalendarIcon size={20} /> Abrir Bitácora & Calendario
+              </Link>
             </div>
           </div>
 

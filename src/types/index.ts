@@ -72,3 +72,19 @@ export interface Question {
   type?: 'rating' | 'choice' | 'text'; // Default to 'rating' if undefined
   options?: string[];
 }
+
+export interface LogbookEntry {
+  id: string;
+  isla_id: string;
+  isla_name: string;
+  task_category: string;
+  task_subcategory?: string;
+  description: string;
+  date: string;
+  start_time: string;
+  end_time?: string;
+  status: 'in_progress' | 'completed';
+  created_by: string;
+  is_valid?: boolean;
+  created_at: string;
+}
