@@ -192,13 +192,13 @@ export interface GhostQuestion {
 export const ghostCategories = [
   {
     id: 'GHOST_1',
-    name: 'Módulo Cliente Fantasma GEDALUMA (P1 - P12)',
+    name: 'Módulo Cliente Fantasma GEDALUMA (P1 - P10)',
     weight: 100,
     questions: [
       {
         id: 'p1',
         code: 'P1',
-        text: 'P1. ¿La vendedora se comunicó de forma respetuosa durante toda la interacción?',
+        text: 'P1. La vendedora se comunica de forma respetuosa durante toda la interacción',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí', points: 2 },
@@ -210,7 +210,7 @@ export const ghostCategories = [
       {
         id: 'p2',
         code: 'P2',
-        text: 'P2. ¿La vendedora te saludó o reconoció tu presencia al llegar?',
+        text: 'P2. La vendedora saluda y reconoce la presencia del cliente al llegar',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí por iniciativa propia', points: 2 },
@@ -222,7 +222,7 @@ export const ghostCategories = [
       {
         id: 'p3',
         code: 'P3',
-        text: 'P3. ¿La vendedora se mantuvo enfocada en la atención, sin distracciones personales o actividades irrelevantes?',
+        text: 'P3. La vendedora mantuvo enfocada la atención, sin distracciones personales o actividades irrelevantes',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí', points: 2 },
@@ -234,7 +234,7 @@ export const ghostCategories = [
       {
         id: 'p4',
         code: 'P4',
-        text: 'P4. ¿Explicó las opciones o características del producto de manera clara?',
+        text: 'P4. Explica las opciones o características del producto de manera clara',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí', points: 2 },
@@ -247,20 +247,7 @@ export const ghostCategories = [
       {
         id: 'p5',
         code: 'P5',
-        text: 'P5. ¿Recomendó un producto coherente con la necesidad expresada?',
-        type: 'ghost_choice',
-        ghostOptions: [
-          { label: 'Sí', points: 2 },
-          { label: 'Parcial', points: 1 },
-          { label: 'No', points: 0 },
-          { label: 'N/A: Pidió producto específico directamente', points: null },
-          { label: 'NE: Escenario no ejecutado', points: null }
-        ]
-      },
-      {
-        id: 'p6',
-        code: 'P6',
-        text: 'P6. ¿Ofreció espontáneamente un producto complementario específico y relacionado con la compra?',
+        text: 'P5. Ofrece espontáneamente un producto complementario específico y relacionado con la compra',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí', points: 2 },
@@ -270,9 +257,9 @@ export const ghostCategories = [
         ]
       },
       {
-        id: 'p7',
-        code: 'P7',
-        text: 'P7. Considerando toda la experiencia, ¿cómo calificarías la atención recibida?',
+        id: 'p6',
+        code: 'P6',
+        text: 'P6. Luego de al menos 10 observaciones en venta. Se evalúa la atención que brinda al cliente',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Excelente', points: 2 },
@@ -281,20 +268,21 @@ export const ghostCategories = [
         ]
       },
       {
-        id: 'p8',
-        code: 'P8',
-        text: 'P8. ¿Preguntó "Desea factura con datos o consumidor final"?',
+        id: 'p7',
+        code: 'P7',
+        text: 'P7. Pregunta si el cliente desea factura con datos o consumidor final y entrega el ticket o comprobante de venta impreso adecuadamente',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí', points: 2 },
+          { label: 'Parcial', points: 1 },
           { label: 'No', points: 0 },
           { label: 'NE: Pago no completado', points: null }
         ]
       },
       {
-        id: 'p9',
-        code: 'P9',
-        text: 'P9. ¿La vendedora confirmó y facilitó adecuadamente la forma de pago?',
+        id: 'p8',
+        code: 'P8',
+        text: 'P8. La vendedora confirma y facilita adecuadamente la forma de pago (tarjeta de crédito/débito, efectivo)',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí confirmó y procesó fluido', points: 2 },
@@ -304,31 +292,21 @@ export const ghostCategories = [
         ]
       },
       {
-        id: 'p10',
-        code: 'P10',
-        text: 'P10. ¿La vendedora te entregó el ticket o comprobante de venta impreso?',
-        type: 'ghost_choice',
-        ghostOptions: [
-          { label: 'Sí', points: 2 },
-          { label: 'No entregó/Dijo que no imprimía', points: 0 }
-        ]
-      },
-      {
-        id: 'p11',
-        code: 'P11',
-        text: 'P11. ¿El producto requerido estaba disponible o se ofreció alternativa adecuada proactivamente?',
+        id: 'p9',
+        code: 'P9',
+        text: 'P9. La vendedora ofrece una alternativa adecuada de manera proactiva cuando el producto solicitado/requerido no estaba disponible',
         type: 'ghost_choice',
         ghostOptions: [
           { label: 'Sí/Alternativa exitosa', points: 2 },
           { label: 'Parcial/Alternativa pasiva', points: 1 },
-          { label: 'No hay', points: 0 },
-          { label: 'N/A: No aplica', points: null }
+          { label: 'No ofreció alternativa', points: 0 },
+          { label: 'N/A: Producto sí disponible', points: null }
         ]
       },
       {
-        id: 'p12',
-        code: 'P12',
-        text: 'P12. Observaciones: Describe una conducta concreta que podría mejorar: qué hizo o dejó de hacer y qué habría sido preferible.',
+        id: 'p10',
+        code: 'P10',
+        text: 'P10. Describe una conducta concreta que podría mejorar: qué hizo o dejó de hacer y qué habría sido preferible. *(no se puntúa). Debe ser puesta como observaciones.',
         type: 'text'
       }
     ]

@@ -1368,7 +1368,7 @@ export function Dashboard() {
               <div className="card">
                 <h3 className="text-xl" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <UserCheck size={20} style={{ color: '#f7b500' }} />
-                  Éxito por Pregunta P1 a P11 (Isla {selectedIsla.name})
+                  Éxito por Pregunta P1 a P9 (Isla {selectedIsla.name})
                 </h3>
                 <div style={{ maxHeight: '480px', overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
