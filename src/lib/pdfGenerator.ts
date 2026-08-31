@@ -13,23 +13,27 @@ export const generatePDF = (
     // Header Title
     doc.setFontSize(18);
     doc.setTextColor(0, 156, 72); // Coco Express Green
-    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Auditoria - GEDALUMA', 20, 20);
+    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Auditoria - GEDALUMA', 20, 18);
     
-    doc.setFontSize(11);
+    // Subencabezado destacado con el nombre del empleado evaluado
+    const empName = evaluation.evaluated_employee || evaluation.employee_name || 'N/A';
+    doc.setFontSize(13);
+    doc.setTextColor(2, 132, 199); // Azul destacado
+    doc.text(`EMPLEADO EVALUADO: ${empName.toUpperCase()}`, 20, 27);
+
+    doc.setFontSize(10.5);
     doc.setTextColor(50, 50, 50);
-    doc.text(`Isla: ISLA ${evaluation.isla_name || 'Desconocida'}`, 20, 32);
+    doc.text(`Isla: ISLA ${evaluation.isla_name || 'Desconocida'}`, 20, 36);
 
     if (!isGhost) {
-      doc.text(`Empleado Evaluado: ${evaluation.evaluated_employee || 'N/A'}`, 20, 39);
-      doc.text(`Evaluador: ${evaluation.evaluator_name || 'N/A'}`, 20, 46);
-      doc.text(`Fecha: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 53);
-      doc.text(`Puntaje Final: ${Number(evaluation.total_score || 0).toFixed(2)}%`, 20, 60);
-      doc.text(`Estado: ${evaluation.status || 'Completado'}`, 20, 67);
+      doc.text(`Evaluador: ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
+      doc.text(`Fecha: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 50);
+      doc.text(`Puntaje Final: ${Number(evaluation.total_score || 0).toFixed(2)}%`, 20, 57);
+      doc.text(`Estado: ${evaluation.status || 'Completado'}`, 20, 64);
     } else {
-      doc.text(`Evaluada (Vendedora): ${evaluation.evaluated_employee || 'N/A'}`, 20, 39);
-      doc.text(`Evaluador (Cliente Fantasma): ${evaluation.evaluator_name || 'N/A'}`, 20, 46);
-      doc.text(`Fecha de la visita: ${evaluation.date || new Date(evaluation.created_at).toLocaleDateString()}`, 20, 53);
-      doc.text(`Horario de la visita: ${evaluation.start_time || ''} a ${evaluation.end_time || ''} (${evaluation.time_slot || 'N/A'})`, 20, 60);
+      doc.text(`Evaluador (Cliente Fantasma): ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
+      doc.text(`Fecha de la visita: ${evaluation.date || new Date(evaluation.created_at).toLocaleDateString()}`, 20, 50);
+      doc.text(`Horario de la visita: ${evaluation.start_time || ''} a ${evaluation.end_time || ''} (${evaluation.time_slot || 'N/A'})`, 20, 57);
       
       const score = Number(evaluation.total_score || 0);
       let bonoText = 'Califica 100% al bono de calidad';
