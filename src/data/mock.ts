@@ -162,16 +162,16 @@ export const categories: Category[] = [
     name: 'G. CICLO DE VENTA Y GENERACIÓN DE INGRESOS',
     weight: 20,
     questions: [
-      { id: 'g1', text: 'Saludo cordial y amable al cliente.' },
-      { id: 'g2', text: 'Contacto visual y sonrisa.' },
-      { id: 'g3', text: 'Explica opciones y tamaños.' },
-      { id: 'g4', text: 'Ofrece producto adicional.' },
-      { id: 'g5', text: 'Recomienda producto más vendido y/o promociones.' },
-      { id: 'g6', text: 'Despacho ágil.' },
-      { id: 'g7', text: 'Entrega producto correctamente.' },
-      { id: 'g8', text: 'Solicita datos para factura.' },
-      { id: 'g9', text: 'Entrega factura.' },
-      { id: 'g10', text: 'Cierre amable y despedida.' }
+      { id: 'g1', text: 'La vendedora se comunica de forma respetuosa durante toda la interacción.' },
+      { id: 'g2', text: 'La vendedora saluda y reconoce la presencia del cliente al llegar.' },
+      { id: 'g3', text: 'La vendedora mantuvo enfocada la atención, sin distracciones personales o actividades irrelevantes.' },
+      { id: 'g4', text: 'Explica las opciones o características del producto de manera clara.' },
+      { id: 'g5', text: 'Ofrece espontáneamente un producto complementario específico y relacionado con la compra.' },
+      { id: 'g6', text: 'Luego de al menos 10 observaciones en venta. Se evalúa la atención que brinda al cliente.' },
+      { id: 'g7', text: 'Pregunta si el cliente desea factura con datos o consumidor final y entrega el ticket o comprobante de venta impreso adecuadamente.' },
+      { id: 'g8', text: 'La vendedora confirma y facilita adecuadamente la forma de pago (tarjeta de crédito/débito, efectivo).' },
+      { id: 'g9', text: 'La vendedora ofrece una alternativa adecuada de manera proactiva cuando el producto solicitado/requerido no estaba disponible.' },
+      { id: 'g10', text: 'Describe una conducta concreta que podría mejorar: qué hizo o dejó de hacer y qué habría sido preferible. *(no se puntúa). Debe ser puesta como observaciones.', type: 'text' }
     ]
   }
 ];
