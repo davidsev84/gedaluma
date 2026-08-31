@@ -175,8 +175,30 @@ export function Landing() {
       </section>
       
       {/* Footer */}
-      <footer style={{ padding: '40px 20px', textAlign: 'center', borderTop: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-        <p>© {new Date().getFullYear()} GEDALUMA. Franquiciado Estratégico de Coco Express ®.</p>
+      <footer style={{ padding: '40px 20px', textAlign: 'center', borderTop: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          <span style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '6px', 
+            padding: '4px 12px', 
+            background: 'rgba(0, 156, 72, 0.12)', 
+            border: '1px solid rgba(0, 156, 72, 0.25)', 
+            borderRadius: '20px', 
+            color: '#009C48', 
+            fontWeight: 700, 
+            fontSize: '0.8rem' 
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#009C48', display: 'inline-block' }}></span>
+            Sistema Actualizado
+          </span>
+          <span style={{ fontWeight: 800, color: 'var(--text-primary)', background: 'var(--surface-color)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            Versión v2.5.0
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>|</span>
+          <span>Última actualización: <strong>30 de Agosto, 2026</strong></span>
+        </div>
+        <p>© {new Date().getFullYear()} GEDALUMA. Franquiciado Estratégico de Coco Express ®. Todos los derechos reservados.</p>
       </footer>
     </div>
   );

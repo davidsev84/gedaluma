@@ -80,11 +80,38 @@ export function Login() {
             {isLoading ? 'Verificando...' : 'Ingresar'}
           </button>
           
-          <button type="button" onClick={() => navigate('/')} className="btn btn-ghost btn-block" style={{ marginTop: '8px' }}>
-            Volver al Inicio
-          </button>
         </form>
       </div>
+
+      {/* Footer de Versión y Estado del Sistema */}
+      <footer style={{ marginTop: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px' }}>
+          <span style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '6px', 
+            padding: '3px 10px', 
+            background: 'rgba(0, 156, 72, 0.12)', 
+            border: '1px solid rgba(0, 156, 72, 0.25)', 
+            borderRadius: '12px', 
+            color: '#009C48', 
+            fontWeight: 700, 
+            fontSize: '0.78rem' 
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#009C48', display: 'inline-block' }}></span>
+            Sistema Actualizado
+          </span>
+          <span style={{ fontWeight: 800, color: 'var(--text-primary)', background: 'var(--surface-color)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            v2.5.0
+          </span>
+        </div>
+        <p style={{ margin: 0, opacity: 0.9 }}>
+          Última actualización: <strong>30 de Agosto, 2026</strong>
+        </p>
+        <p style={{ margin: '4px 0 0 0', opacity: 0.65, fontSize: '0.75rem' }}>
+          © {new Date().getFullYear()} GEDALUMA. Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
   );
 }
