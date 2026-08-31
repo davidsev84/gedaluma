@@ -9,6 +9,7 @@ import { NewInventory } from './pages/NewInventory';
 import { Logbook } from './pages/Logbook';
 import { Landing } from './pages/Landing';
 import { ThemeToggle } from './components/ThemeToggle';
+import { Navbar } from './components/Navbar';
 
 function PrivateRoute({ children, roles }: { children: React.ReactNode, roles?: string[] }) {
   const { user } = useAuth();
@@ -45,6 +46,7 @@ function App() {
         <div className="theme-toggle-container">
           <ThemeToggle />
         </div>
+        <Navbar />
         <Routes>
           {/* Public Landing Page */}
           <Route path="/" element={<Landing />} />
