@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   Package, Search, FileCheck, Layers, Tag
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { generateInventoryPDF } from '../lib/pdfGenerator';
 import { ProductCatalogModal } from '../components/ProductCatalogModal';
 
 export function NewInventory() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [islands] = useState(() => getStoredIslas());
@@ -237,49 +237,6 @@ export function NewInventory() {
           <p className="text-muted" style={{ fontSize: '0.88rem' }}>
             Comparativa Físico vs Sistema, Faltantes en Unidades (un.) y Dólares ($)
           </p>
-        </div>
-        <div className="flex gap-2 items-center flex-wrap header-actions-mobile" style={{ paddingRight: '60px' }}>
-          <button 
-            type="button"
-            onClick={() => setShowCatalogModal(true)} 
-            className="btn"
-            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: 'rgba(0, 156, 72, 0.1)', border: '1.5px solid #009C48', color: '#009C48', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            Productos (Costos)
-          </button>
-
-          <Link 
-            to="/evaluate" 
-            className="btn"
-            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#009C48', border: '1.5px solid #009C48', color: '#ffffff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-          >
-            Evaluación
-          </Link>
-
-          <Link 
-            to="/evaluate?mode=ghost" 
-            className="btn"
-            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: '#f7b500', border: '1.5px solid #f7b500', color: '#000000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-          >
-            Cliente Fantasma
-          </Link>
-
-          {user?.role === 'admin' && (
-            <Link 
-              to="/dashboard" 
-              className="btn" 
-              style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', background: 'var(--surface-color)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', whiteSpace: 'nowrap' }}
-            >
-              ← Volver al Panel
-            </Link>
-          )}
-          <button 
-            onClick={logout} 
-            className="btn btn-ghost"
-            style={{ height: '38px', padding: '0 12px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)' }}
-          >
-            Salir
-          </button>
         </div>
       </header>
 

@@ -210,26 +210,40 @@ export function Navbar() {
               </button>
             </div>
 
-            {/* BOTÓN MENÚ HAMBURGUESA PARA MÓVILES (< 768px) */}
+            {/* BOTÓN HAMBURGUESA ICONO PARA MÓVILES (< 768px) */}
             <div className="show-mobile flex items-center gap-2">
+              <button
+                onClick={handleSyncData}
+                disabled={isSyncing}
+                className="btn hover-lift"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '10px',
+                  background: pendingOffline ? '#ef4444' : 'rgba(2, 132, 199, 0.12)',
+                  color: pendingOffline ? '#ffffff' : '#0284c7',
+                  border: `1px solid ${pendingOffline ? '#ef4444' : '#0284c7'}`
+                }}
+                title="Sincronizar datos"
+              >
+                <RotateCw size={20} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
+              </button>
+
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="btn hover-lift"
                 style={{
-                  padding: '8px 14px',
+                  padding: '8px 12px',
                   background: '#009C48',
                   color: '#ffffff',
                   borderRadius: '10px',
                   border: 'none',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: 800,
-                  fontSize: '0.88rem'
+                  justifyContent: 'center'
                 }}
+                title="Navegación principal"
               >
-                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-                <span>Menú</span>
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
 
