@@ -11,6 +11,7 @@ import { mockIslas, mockEmployees, ghostCategories, penaltyCatalog, calculatePen
 import type { Isla } from '../types';
 import { generateInventoryPDF } from '../lib/pdfGenerator';
 import { ProductCatalogModal } from '../components/ProductCatalogModal';
+import { syncOfflineDataToSupabase } from '../lib/syncService';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -259,6 +260,7 @@ export function Dashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      await syncOfflineDataToSupabase();
       let dbEvals: any[] = [];
       let dbResp: any[] = [];
 

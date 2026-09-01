@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Menu, X, LayoutDashboard, FileCheck2, UserCheck, 
-  PackagePlus, Calendar, History, Tag, LogOut
+  PackagePlus, Calendar, History, Tag, LogOut, RotateCw
 } from 'lucide-react';
 import { ProductCatalogModal } from './ProductCatalogModal';
 import { SYSTEM_VERSION } from '../config/version';
+import { syncOfflineDataToSupabase, hasPendingOfflineData } from '../lib/syncService';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -15,6 +16,34 @@ export function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCatalogModal, setShowCatalogModal] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingOffline, setPendingOffline] = useState(false);
+
+  useEffect(() => {
+    setPendingOffline(hasPendingOfflineData());
+    const interval = setInterval(() => {
+      setPendingOffline(hasPendingOfflineData());
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncOfflineDataToSupabase();
+      setPendingOffline(hasPendingOfflineData());
+      if (res.totalSynced > 0) {
+        alert(`✅ Sincronización exitosa: ${res.totalSynced} registros enviados a la nube (Inventarios: ${res.inventoriesSynced}, Evaluaciones: ${res.evaluationsSynced}, Bitácora: ${res.logbookSynced}).`);
+        window.location.reload();
+      } else {
+        alert('ℹ️ Todos los datos ya se encuentran sincronizados en la base de datos de Supabase.');
+      }
+    } catch (err: any) {
+      alert(`⚠️ Error al sincronizar con Supabase: ${err.message || String(err)}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -137,6 +166,25 @@ export function Navbar() {
               })}
 
               <button
+                onClick={handleSyncData}
+                disabled={isSyncing}
+                className="btn hover-lift"
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  borderRadius: '8px',
+                  background: pendingOffline ? '#ef4444' : 'rgba(2, 132, 199, 0.1)',
+                  color: pendingOffline ? '#ffffff' : '#0284c7',
+                  border: `1px solid ${pendingOffline ? '#ef4444' : '#0284c7'}`
+                }}
+                title="Sincronizar inventarios y registros guardados localmente con Supabase"
+              >
+                <RotateCw size={16} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
+                {isSyncing ? 'Sincronizando...' : pendingOffline ? '⚠️ Sincronizar Pendientes' : 'Sincronizar Cloud'}
+              </button>
+
+              <button
                 onClick={() => setShowCatalogModal(true)}
                 className="btn"
                 style={{
@@ -246,6 +294,31 @@ export function Navbar() {
               </Link>
             );
           })}
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              handleSyncData();
+            }}
+            className="btn"
+            style={{
+              padding: '14px 18px',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              borderRadius: '12px',
+              background: pendingOffline ? '#ef4444' : 'rgba(2, 132, 199, 0.12)',
+              color: pendingOffline ? '#ffffff' : '#0284c7',
+              border: `1.5px solid ${pendingOffline ? '#ef4444' : '#0284c7'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              justifyContent: 'flex-start',
+              width: '100%'
+            }}
+          >
+            <RotateCw size={22} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
+            <span>{isSyncing ? 'Sincronizando...' : pendingOffline ? '⚠️ Sincronizar Pendientes' : '🔄 Sincronizar Datos a la Nube'}</span>
+          </button>
 
           <button
             onClick={() => {
