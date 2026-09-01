@@ -196,14 +196,14 @@ export const generateInventoryPDF = (
       doc.setFontSize(8.5);
       doc.setTextColor(255, 255, 255);
       doc.setFillColor(0, 156, 72);
-      doc.rect(20, currentY, 170, 7, 'F');
-      doc.text('Producto', 22, currentY + 5);
-      doc.text('U/M', 80, currentY + 5);
-      doc.text('Costo', 93, currentY + 5);
-      doc.text('Sistema', 110, currentY + 5);
-      doc.text('Fisico', 126, currentY + 5);
-      doc.text('Diferencia ($)', 142, currentY + 5);
-      doc.text('Obs.', 175, currentY + 5);
+      doc.rect(14, currentY, 184, 7, 'F');
+      doc.text('Producto', 16, currentY + 5);
+      doc.text('U/M', 72, currentY + 5);
+      doc.text('Costo', 84, currentY + 5);
+      doc.text('Sistema', 98, currentY + 5);
+      doc.text('Físico', 113, currentY + 5);
+      doc.text('Diferencia ($)', 128, currentY + 5);
+      doc.text('Observaciones Completa', 160, currentY + 5);
       currentY += 9;
 
       doc.setFontSize(8);
@@ -222,36 +222,40 @@ export const generateInventoryPDF = (
           diffText = `Sobrante (+${diff} / +$${diffDollars.toFixed(2)})`;
         }
 
+        const prodLines = doc.splitTextToSize(it.name || '', 52);
+        const obsLines = doc.splitTextToSize(it.observation || '-', 36);
+        const maxLines = Math.max(prodLines.length, obsLines.length, 1);
+        const rowHeight = Math.max(maxLines * 4.5, 6.5);
+
+        if (currentY + rowHeight > 275) {
+          doc.addPage();
+          currentY = 20;
+        }
+
         // Draw row background for Faltantes
         if (diff < 0) {
           doc.setFillColor(254, 242, 242);
-          doc.rect(20, currentY - 3, 170, 6, 'F');
+          doc.rect(14, currentY - 3, 184, rowHeight, 'F');
           doc.setTextColor(185, 28, 28);
         } else if (diff > 0) {
           doc.setFillColor(240, 249, 255);
-          doc.rect(20, currentY - 3, 170, 6, 'F');
+          doc.rect(14, currentY - 3, 184, rowHeight, 'F');
           doc.setTextColor(3, 105, 161);
         } else {
           doc.setTextColor(50, 50, 50);
         }
 
-        const prodNameTruncated = doc.splitTextToSize(it.name, 56);
-        doc.text(prodNameTruncated[0], 22, currentY);
-        doc.text(String(it.unit || 'UN'), 80, currentY);
-        doc.text(`$${unitCost.toFixed(2)}`, 93, currentY);
-        doc.text(String(sys), 112, currentY);
-        doc.text(String(phys), 128, currentY);
-        doc.text(diffText, 142, currentY);
+        doc.text(prodLines, 16, currentY);
+        doc.text(String(it.unit || 'UN'), 72, currentY);
+        doc.text(`$${unitCost.toFixed(2)}`, 84, currentY);
+        doc.text(String(sys), 100, currentY);
+        doc.text(String(phys), 115, currentY);
+        doc.text(diffText, 128, currentY);
         
-        const obsTrunc = doc.splitTextToSize(it.observation || '-', 15);
-        doc.text(obsTrunc[0], 175, currentY);
+        // Imprimir TODAS las líneas de observación sin truncar
+        doc.text(obsLines, 160, currentY);
 
-        currentY += 6;
-
-        if (currentY > 270) {
-          doc.addPage();
-          currentY = 20;
-        }
+        currentY += rowHeight + 1.5;
       });
 
       currentY += 6;

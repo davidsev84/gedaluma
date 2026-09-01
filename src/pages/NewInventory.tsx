@@ -395,18 +395,18 @@ export function NewInventory() {
             </div>
           </div>
 
-          {/* TABLA DE PRODUCTOS DE LA CATEGORÍA SELECCIONADA CON ANCHOS OPTIMIZADOS */}
+          {/* TABLA DE PRODUCTOS CON CAMPO AMPLIO DE OBSERVACIONES Y MIN-WIDTH RESPONSIVE */}
           <div className="card table-responsive" style={{ padding: 0 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 14px', width: '26%' }}>Producto</th>
+                  <th style={{ padding: '12px 14px', width: '22%' }}>Producto</th>
                   <th style={{ padding: '12px 14px', textAlign: 'center', width: '6%' }}>U/M</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Costo Unit.</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Sistema</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '9%' }}>Físico</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '22%' }}>Diferencia</th>
-                  <th style={{ padding: '12px 14px', width: '19%' }}>Obs.</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Costo Unit.</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Sistema</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Físico</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '18%' }}>Diferencia</th>
+                  <th style={{ padding: '12px 14px', width: '30%' }}>Observaciones Detalladas</th>
                 </tr>
               </thead>
               <tbody>
@@ -479,11 +479,11 @@ export function NewInventory() {
                       </td>
 
                       <td style={{ padding: '8px 10px' }}>
-                        <input 
-                          type="text" 
+                        <textarea 
                           className="form-control"
-                          placeholder="Nota u observación..."
-                          style={{ fontSize: '0.82rem', padding: '6px' }}
+                          rows={2}
+                          placeholder="Escribe aquí las observaciones detalladas del producto..."
+                          style={{ fontSize: '0.82rem', padding: '6px 8px', resize: 'vertical', minHeight: '40px', width: '100%' }}
                           value={val.observation}
                           onChange={e => handleItemChange(prod.id, 'observation', e.target.value)}
                         />
