@@ -1190,42 +1190,45 @@ export function Dashboard() {
           </button>
 
           <div className="card mb-6" style={{ background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.06) 0%, rgba(247, 181, 0, 0.06) 100%)', border: '1px solid #009C48' }}>
-            <div className="flex justify-between items-center">
-              <div>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div style={{ flex: '1 1 260px' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase', letterSpacing: '1px' }}>
                   Isla Seleccionada
                 </span>
-                <h2 className="text-3xl font-bold" style={{ marginTop: '2px' }}>ISLA {selectedIsla.name} ({selectedIsla.location})</h2>
-                <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '4px' }}>
+                <h2 className="text-2xl font-bold" style={{ marginTop: '2px', wordBreak: 'break-word', lineHeight: 1.2 }}>
+                  ISLA {selectedIsla.name} ({selectedIsla.location})
+                </h2>
+                <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: '4px' }}>
                   Personal asignado: {selectedIslaStats.islaEmployees.map(e => e.name).join(', ') || 'Sin personal asignado'}
                 </p>
               </div>
 
-              <div className="flex gap-4">
-                <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <span className="text-muted" style={{ fontSize: '0.78rem' }}>Promedio Auditoría</span>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: getScoreColor(selectedIslaStats.audAvg) }}>
+              {/* KPI PILLS CON RESPONSIVE GRID EN MÓVIL */}
+              <div className="grid grid-cols-4 gap-3" style={{ width: '100%', maxWidth: '640px' }}>
+                <div style={{ textAlign: 'center', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'block' }}>Prom. Auditoría</span>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: getScoreColor(selectedIslaStats.audAvg) }}>
                     {selectedIslaStats.audCount > 0 ? `${selectedIslaStats.audAvg.toFixed(1)}%` : 'N/A'}
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <span className="text-muted" style={{ fontSize: '0.78rem' }}>Promedio Cliente Fantasma</span>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: getScoreColor(selectedIslaStats.ghostAvg) }}>
+                <div style={{ textAlign: 'center', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'block' }}>Cliente Fantasma</span>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: getScoreColor(selectedIslaStats.ghostAvg) }}>
                     {selectedIslaStats.ghostCount > 0 ? `${selectedIslaStats.ghostAvg.toFixed(1)}%` : 'N/A'}
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <span className="text-muted" style={{ fontSize: '0.78rem' }}>Ajustes por Faltas</span>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: selectedIslaStats.totalAdjustments > 0 ? 'var(--danger)' : '#009C48' }}>
+                <div style={{ textAlign: 'center', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'block' }}>Ajustes Faltas</span>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: selectedIslaStats.totalAdjustments > 0 ? 'var(--danger)' : '#009C48' }}>
                     ${selectedIslaStats.totalAdjustments.toFixed(2)}
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', background: '#fff', padding: '12px 20px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                  <span className="text-muted" style={{ fontSize: '0.78rem' }}>Inventario Faltante</span>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: selectedIslaStats.pendingMissingUnits > 0 ? 'var(--danger)' : '#009C48' }}>
+                <div style={{ textAlign: 'center', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'block' }}>Inventario Faltante</span>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, color: selectedIslaStats.pendingMissingUnits > 0 ? 'var(--danger)' : '#009C48' }}>
                     {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un. ($${selectedIslaStats.pendingMissingDollars.toFixed(2)})` : 'Al día ($0)'}
                   </div>
                 </div>
@@ -1233,20 +1236,20 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* PESTAÑAS DE NAVEGACIÓN DENTRO DE LA ISLA */}
-          <div className="flex gap-2 mb-6 flex-wrap" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+          {/* PESTAÑAS DE NAVEGACIÓN DENTRO DE LA ISLA CON DESPLAZAMIENTO FLUIDO */}
+          <div className="flex gap-2 mb-6" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap' }}>
             <button 
               onClick={() => setIslaTab('auditoria')}
               className={`btn ${islaTab === 'auditoria' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ background: islaTab === 'auditoria' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+              style={{ background: islaTab === 'auditoria' ? '#009C48' : 'transparent', borderColor: '#009C48', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
             >
-              <BarChart3 size={18} /> Resultados de Auditoría ({selectedIslaStats.audCount})
+              <BarChart3 size={18} /> Auditorías ({selectedIslaStats.audCount})
             </button>
 
             <button 
               onClick={() => setIslaTab('fantasma')}
               className={`btn ${islaTab === 'fantasma' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ background: islaTab === 'fantasma' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+              style={{ background: islaTab === 'fantasma' ? '#009C48' : 'transparent', borderColor: '#009C48', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
             >
               <UserCheck size={18} /> Cliente Fantasma ({selectedIslaStats.ghostCount})
             </button>
@@ -1254,7 +1257,7 @@ export function Dashboard() {
             <button 
               onClick={() => setIslaTab('responsabilidad')}
               className={`btn ${islaTab === 'responsabilidad' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ background: islaTab === 'responsabilidad' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+              style={{ background: islaTab === 'responsabilidad' ? '#009C48' : 'transparent', borderColor: '#009C48', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
             >
               <Gift size={18} /> Faltas y Bonos (${selectedIslaStats.totalAdjustments.toFixed(0)})
             </button>
@@ -1262,17 +1265,17 @@ export function Dashboard() {
             <button 
               onClick={() => setIslaTab('inventario')}
               className={`btn ${islaTab === 'inventario' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ background: islaTab === 'inventario' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+              style={{ background: islaTab === 'inventario' ? '#009C48' : 'transparent', borderColor: '#009C48', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
             >
-              <Package size={18} /> Inventario ({selectedIslaStats.islaInventories.length})
+              <Package size={18} /> Inventarios ({selectedIslaStats.islaInventories.length})
             </button>
 
             <button 
               onClick={() => setIslaTab('personal')}
               className={`btn ${islaTab === 'personal' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ background: islaTab === 'personal' ? '#009C48' : 'transparent', borderColor: '#009C48' }}
+              style={{ background: islaTab === 'personal' ? '#009C48' : 'transparent', borderColor: '#009C48', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
             >
-              <Users size={18} /> Personal que Labora ({selectedIslaStats.islaEmployees.length})
+              <Users size={18} /> Personal ({selectedIslaStats.islaEmployees.length})
             </button>
           </div>
 
