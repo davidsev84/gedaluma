@@ -338,7 +338,12 @@ html {
   display: inline-block;
 }
 
-/* Mobile responsive utilities */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile & Tablet responsive utilities */
 .show-mobile {
   display: none !important;
 }
@@ -349,6 +354,16 @@ html {
   -webkit-overflow-scrolling: touch;
   margin-bottom: 16px;
   border-radius: 8px;
+}
+
+@media (max-width: 1080px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+  
+  .show-mobile {
+    display: flex !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -365,18 +380,10 @@ html {
   .theme-toggle-label {
     display: none;
   }
-
-  .hidden-mobile {
-    display: none !important;
-  }
-  
-  .show-mobile {
-    display: flex !important;
-  }
   
   .container {
     padding: 12px;
-    padding-top: 54px !important; /* Prevent header overlap with fixed theme toggle */
+    padding-top: 16px !important;
   }
 
   .card {

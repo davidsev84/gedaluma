@@ -99,6 +99,15 @@ export function Logbook() {
 
   useEffect(() => {
     fetchEntries();
+
+    const channel = supabase
+      .channel('realtime_logbook_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logbook_entries' }, () => fetchEntries())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchEntries = async () => {

@@ -255,6 +255,19 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchData();
+
+    // Suscripción en Tiempo Real a la Base de Datos Supabase
+    const channel = supabase
+      .channel('realtime_dashboard_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'evaluations' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventories' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logbook_entries' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'penalties' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {

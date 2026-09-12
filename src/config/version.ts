@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.7.8',
-  buildNumber: 278,
-  lastUpdateDate: '31 de Agosto, 2026',
+  version: 'v2.8.0',
+  buildNumber: 280,
+  lastUpdateDate: '12 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Menú de navegación unificado en todo el sistema y remoción de la palabra Menú en el botón hamburguesa.'
+  changelogSummary: 'Motor de Auto-Sincronización en Tiempo Real, actualización automática en Supabase y rediseño integral de la experiencia de navegación (Menú UX).'
 };
