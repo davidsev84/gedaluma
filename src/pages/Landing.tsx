@@ -1,107 +1,100 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp, Menu, X, Award, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Heart, Sparkles, TrendingUp, Award, CheckCircle2 } from 'lucide-react';
 import { SYSTEM_VERSION } from '../config/version';
+import { useAuth } from '../context/AuthContext';
 
 export function Landing() {
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    // Forzar siempre Modo Normal (Claro) en la página inicial (Home)
+    document.documentElement.setAttribute('data-theme', 'light');
+  }, []);
 
   return (
-    <div style={{ background: 'var(--bg-color)', minHeight: '100vh', overflowX: 'hidden' }}>
-      {/* Navbar */}
-      <nav className="glass-panel" style={{ 
-        position: 'fixed', top: 0, left: 0, right: 0, 
-        zIndex: 50, padding: '16px 24px', borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <img src="/logo-wide.png" alt="Gedaluma Logo" style={{ height: '45px', width: 'auto' }} />
-          <div style={{ height: '24px', width: '1px', background: 'var(--border-color)' }}></div>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#009C48', letterSpacing: '0.5px' }}>
-            COCO EXPRESS ®
-          </span>
-        </div>
-        
-        <div className="flex gap-4 items-center hidden-mobile" style={{ paddingRight: '160px' }}>
-          <a href="#proposito" className="btn btn-ghost" style={{ border: 'none' }}>Visión</a>
-          <a href="#adn" className="btn btn-ghost" style={{ border: 'none' }}>Valores</a>
-          <a href="#compromiso" className="btn btn-ghost" style={{ border: 'none' }}>Compromiso</a>
-          <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ marginLeft: '16px', background: '#009C48', borderColor: '#009C48' }}>
+    <div style={{ background: '#ffffff', color: '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
+      
+      {/* Encabezado limpio sólo si no hay sesión iniciada (evita menú duplicado) */}
+      {!user && (
+        <nav style={{ 
+          position: 'sticky', top: 0, left: 0, right: 0, 
+          zIndex: 50, padding: '12px 20px', background: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/logo.png" alt="Gedaluma Logo" style={{ height: '36px', width: 'auto' }} />
+            <div>
+              <span style={{ fontSize: '1rem', fontWeight: 900, color: '#009C48', display: 'block', lineHeight: 1.1 }}>
+                GEDALUMA
+              </span>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b' }}>
+                FRANQUICIADO COCO EXPRESS ®
+              </span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => navigate('/login')} 
+            className="btn btn-primary" 
+            style={{ padding: '8px 18px', fontSize: '0.88rem', fontWeight: 800, background: '#009C48', borderColor: '#009C48', borderRadius: '8px' }}
+          >
             Acceso al Sistema
           </button>
-        </div>
-        
-        {/* Mobile menu toggle */}
-        <div className="show-mobile" style={{ marginRight: '54px' }}>
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="btn btn-ghost" 
-            style={{ padding: '8px' }}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu-overlay show-mobile">
-          <a href="#proposito" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Visión</a>
-          <a href="#adn" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Valores</a>
-          <a href="#compromiso" className="btn btn-ghost" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.2rem', justifyContent: 'flex-start' }}>Compromiso</a>
-          <div style={{ marginTop: 'auto', marginBottom: '32px' }}>
-            <button onClick={() => navigate('/login')} className="btn btn-primary w-full" style={{ fontSize: '1.2rem', padding: '16px', background: '#009C48' }}>
-              Acceso al Sistema
-            </button>
-          </div>
-        </div>
+        </nav>
       )}
 
       {/* Hero Section */}
-      <section id="proposito" className="landing-section container fade-in-up" style={{ paddingTop: '130px' }}>
+      <section id="proposito" className="landing-section container fade-in-up" style={{ paddingTop: '32px' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
           
-          {/* Official Coco Express Banner Image */}
+          {/* Logo Oficial Banner Coco Express */}
           <div style={{ 
-            marginBottom: '32px', 
+            marginBottom: '28px', 
             display: 'inline-block',
-            padding: '20px 32px',
-            background: 'var(--surface-color)',
-            borderRadius: '24px',
+            padding: '16px 28px',
+            background: '#f8fafc',
+            borderRadius: '20px',
             border: '1px solid rgba(0, 156, 72, 0.25)',
-            boxShadow: '0 12px 32px rgba(0, 156, 72, 0.12)'
+            boxShadow: '0 8px 24px rgba(0, 156, 72, 0.08)'
           }}>
             <img 
               src="https://i0.wp.com/cocoexpress.com.ec/wp-content/uploads/2023/07/logoCocoExpress.png?fit=1000%2C438&ssl=1" 
               alt="Coco Express Banner Oficial" 
-              style={{ maxHeight: '110px', width: 'auto', objectFit: 'contain' }}
+              style={{ maxHeight: '90px', maxWidth: '100%', width: 'auto', objectFit: 'contain' }}
             />
           </div>
 
           <div>
             <span style={{ 
-              display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 18px', background: 'rgba(0, 156, 72, 0.12)', 
-              color: '#009C48', borderRadius: '30px', fontWeight: 700, marginBottom: '24px', fontSize: '0.95rem', border: '1px solid rgba(0, 156, 72, 0.25)'
+              display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 18px', background: 'rgba(0, 156, 72, 0.1)', 
+              color: '#009C48', borderRadius: '30px', fontWeight: 800, marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(0, 156, 72, 0.25)'
             }}>
               <Award size={18} /> Franquiciado Estratégico de Coco Express ®
             </span>
           </div>
 
-          <h1 className="text-3xl" style={{ fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)', lineHeight: 1.15, marginBottom: '24px', fontWeight: 800 }}>
-            Transformando la <span className="gradient-text">Excelencia Operativa</span> en cada detalle.
+          <h1 className="text-3xl" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)', lineHeight: 1.15, marginBottom: '20px', fontWeight: 800, color: '#0f172a' }}>
+            Transformando la <span style={{ color: '#009C48' }}>Excelencia Operativa</span> en cada detalle.
           </h1>
           
-          <p className="text-muted" style={{ fontSize: '1.2rem', marginBottom: '40px', lineHeight: 1.6, maxWidth: '760px', margin: '0 auto 40px auto' }}>
+          <p style={{ fontSize: '1.15rem', marginBottom: '32px', lineHeight: 1.6, maxWidth: '760px', margin: '0 auto 32px auto', color: '#475569' }}>
             Nuestra visión es garantizar la estandarización y calidad en todos nuestros puntos de venta, 
             asegurando que el cliente final experimente la promesa de marca de Coco Express en cada atención.
           </p>
 
           <div className="flex justify-center gap-4 flex-wrap">
-            <button onClick={() => navigate('/login')} className="btn btn-primary hover-lift" style={{ padding: '14px 32px', fontSize: '1.1rem', background: '#009C48', borderColor: '#009C48' }}>
-              Ingresar al Sistema <ArrowRight size={20} />
+            <button 
+              onClick={() => navigate(user ? '/dashboard' : '/login')} 
+              className="btn btn-primary hover-lift" 
+              style={{ padding: '14px 32px', fontSize: '1.05rem', fontWeight: 800, background: '#009C48', borderColor: '#009C48' }}
+            >
+              {user ? 'Ir al Panel de Control' : 'Ingresar al Sistema'} <ArrowRight size={20} />
             </button>
-            <a href="#adn" className="btn btn-ghost hover-lift" style={{ padding: '14px 28px', fontSize: '1.1rem' }}>
+            <a href="#adn" className="btn btn-ghost hover-lift" style={{ padding: '14px 28px', fontSize: '1.05rem', color: '#334155', fontWeight: 700 }}>
               Conoce nuestro ADN
             </a>
           </div>
@@ -110,45 +103,53 @@ export function Landing() {
 
       {/* ADN Section (Services/Values) */}
       <section id="adn" className="landing-section container">
-        <div className="fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ color: '#f7b500', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', fontSize: '0.9rem' }}>Nuestra Identidad</span>
-            <h2 className="text-3xl" style={{ marginTop: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>ADN GEDALUMA</h2>
-            <p className="text-muted" style={{ maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>
+        <div className="fade-in-up">
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span style={{ color: '#d97706', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', fontSize: '0.85rem' }}>Nuestra Identidad</span>
+            <h2 className="text-3xl" style={{ marginTop: '8px', marginBottom: '12px', color: '#0f172a', fontWeight: 800 }}>ADN GEDALUMA</h2>
+            <p style={{ maxWidth: '600px', margin: '0 auto', fontSize: '1.05rem', color: '#475569' }}>
               Nuestro éxito se fundamenta en cuatro pilares de gestión operativa, los cuales son de cumplimiento obligatorio en cada una de nuestras islas.
             </p>
           </div>
-          
-          <div className="grid grid-cols-2" style={{ gap: '24px' }}>
-            <div className="glass-panel hover-lift" style={{ borderLeft: '4px solid #009C48' }}>
-              <div style={{ color: '#009C48', marginBottom: '16px' }}><TrendingUp size={32} /></div>
-              <h3 className="text-xl" style={{ marginBottom: '12px' }}>Excelencia en Frescura</h3>
-              <p className="text-muted">
-                La calidad del producto no es negociable. La gestión de temperaturas, estiba y rotación (FEFO) es el primer indicador de nuestra rentabilidad.
+
+          <div className="grid grid-cols-4 gap-6">
+            <div className="card hover-lift" style={{ padding: '24px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(0, 156, 72, 0.1)', color: '#009C48', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <ShieldCheck size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>Standard y Calidad</h3>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.5 }}>
+                Monitoreo estricto del Manual Operativo para asegurar la inocuidad y excelencia en cada producto servido.
               </p>
             </div>
-            
-            <div className="glass-panel hover-lift" style={{ borderLeft: '4px solid #f7b500' }}>
-              <div style={{ color: '#f7b500', marginBottom: '16px' }}><Heart size={32} /></div>
-              <h3 className="text-xl" style={{ marginBottom: '12px' }}>Disciplina en el Servicio</h3>
-              <p className="text-muted">
-                La calidez en la atención es nuestro estándar. Cada cliente es un invitado y nuestro servicio debe reflejar el profesionalismo que nos define.
+
+            <div className="card hover-lift" style={{ padding: '24px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(2, 132, 199, 0.1)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <TrendingUp size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>Control Operativo</h3>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.5 }}>
+                Auditorías aleatorias semanales e inventarios comparativos físico vs. sistema sin margen de descuadre.
               </p>
             </div>
-            
-            <div className="glass-panel hover-lift" style={{ borderLeft: '4px solid #009C48' }}>
-              <div style={{ color: '#009C48', marginBottom: '16px' }}><ShieldCheck size={32} /></div>
-              <h3 className="text-xl" style={{ marginBottom: '12px' }}>Orden y Pulcritud (BPM)</h3>
-              <p className="text-muted">
-                La limpieza es un activo de la empresa. Una isla impecable es el primer indicativo de un proceso de gestión correcto.
+
+            <div className="card hover-lift" style={{ padding: '24px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(247, 181, 0, 0.15)', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <Sparkles size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>Cliente Fantasma</h3>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.5 }}>
+                Evaluación continua de la experiencia de compra, hospitalidad y técnicas de venta en punto de venta.
               </p>
             </div>
-            
-            <div className="glass-panel hover-lift" style={{ borderLeft: '4px solid #f7b500' }}>
-              <div style={{ color: '#f7b500', marginBottom: '16px' }}><Sparkles size={32} /></div>
-              <h3 className="text-xl" style={{ marginBottom: '12px' }}>Pertenencia y Actitud</h3>
-              <p className="text-muted">
-                Somos embajadores de la marca. La puntualidad, el uso correcto del uniforme y la proactividad en la venta son pilares fundamentales.
+
+            <div className="card hover-lift" style={{ padding: '24px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <Heart size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px', color: '#0f172a' }}>Desarrollo Humano</h3>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.5 }}>
+                Capacitación constante y acompañamiento presencial para el desarrollo de competencias de nuestro equipo.
               </p>
             </div>
           </div>
@@ -156,50 +157,32 @@ export function Landing() {
       </section>
 
       {/* Compromiso Section */}
-      <section id="compromiso" className="landing-section container">
-        <div className="glass-panel fade-in-up" style={{ 
-          animationDelay: '0.4s', 
-          background: 'linear-gradient(135deg, rgba(0, 156, 72, 0.08) 0%, rgba(247, 181, 0, 0.08) 100%)',
-          border: '1px solid rgba(0, 156, 72, 0.2)',
-          textAlign: 'center', padding: '64px 24px'
-        }}>
-          <div style={{ display: 'inline-flex', padding: '10px', background: 'rgba(0, 156, 72, 0.15)', borderRadius: '50%', color: '#009C48', marginBottom: '20px' }}>
-            <CheckCircle2 size={36} />
-          </div>
-          <h2 className="text-3xl gradient-text" style={{ marginBottom: '24px' }}>Crear valor en cada detalle</h2>
-          <p className="text-muted" style={{ maxWidth: '800px', margin: '0 auto 32px auto', fontSize: '1.2rem', lineHeight: 1.6 }}>
-            Nuestro propósito trasciende la transacción; buscamos la fidelización mediante un estándar de ejecución impecable. 
-            Cada proceso, desde el control de inventarios hasta el servicio de atención, está diseñado para maximizar la satisfacción del cliente. 
-            Convertir a un consumidor casual en un cliente recurrente es nuestra medida de éxito y el motor que impulsa el crecimiento de GEDALUMA.
+      <section id="compromiso" className="landing-section container" style={{ paddingBottom: '80px' }}>
+        <div className="card" style={{ padding: '40px', background: 'linear-gradient(135deg, #009C48 0%, #007a38 100%)', color: '#ffffff', borderRadius: '24px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '16px', color: '#ffffff' }}>
+            Compromiso con la Marca Coco Express ®
+          </h2>
+          <p style={{ fontSize: '1.1rem', maxWidth: '720px', margin: '0 auto 28px auto', opacity: 0.95, lineHeight: 1.6 }}>
+            En GEDALUMA trabajamos cada día para ser el franquiciado modelo, elevando los estándares de la red y garantizando la satisfacción total de nuestros clientes.
           </p>
+          <div className="flex justify-center gap-6 flex-wrap">
+            <span className="flex items-center gap-2" style={{ fontWeight: 700, fontSize: '0.95rem' }}><CheckCircle2 size={18} /> Auditorías Semanales</span>
+            <span className="flex items-center gap-2" style={{ fontWeight: 700, fontSize: '0.95rem' }}><CheckCircle2 size={18} /> Control de Cadena de Frío</span>
+            <span className="flex items-center gap-2" style={{ fontWeight: 700, fontSize: '0.95rem' }}><CheckCircle2 size={18} /> Re-entrenamiento en Campo</span>
+          </div>
         </div>
       </section>
-      
+
       {/* Footer */}
-      <footer style={{ padding: '40px 20px', textAlign: 'center', borderTop: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-          <span style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '6px', 
-            padding: '4px 12px', 
-            background: 'rgba(0, 156, 72, 0.12)', 
-            border: '1px solid rgba(0, 156, 72, 0.25)', 
-            borderRadius: '20px', 
-            color: '#009C48', 
-            fontWeight: 700, 
-            fontSize: '0.8rem' 
-          }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#009C48', display: 'inline-block' }}></span>
-            {SYSTEM_VERSION.status}
-          </span>
-          <span style={{ fontWeight: 800, color: 'var(--text-primary)', background: 'var(--surface-color)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-            Versión {SYSTEM_VERSION.version}
-          </span>
-          <span style={{ color: 'var(--text-muted)' }}>|</span>
-          <span>Última actualización: <strong>{SYSTEM_VERSION.lastUpdateDate}</strong></span>
+      <footer style={{ borderTop: '1px solid #e2e8f0', padding: '24px 0', background: '#f8fafc' }}>
+        <div className="container flex justify-between items-center flex-wrap gap-4" style={{ fontSize: '0.85rem', color: '#64748b' }}>
+          <div>
+            <strong>GEDALUMA</strong> - Sistema de Gestión Operativa {SYSTEM_VERSION.version}
+          </div>
+          <div>
+            © {new Date().getFullYear()} Coco Express ®. Todos los derechos reservados.
+          </div>
         </div>
-        <p>© {new Date().getFullYear()} GEDALUMA. Franquiciado Estratégico de Coco Express ®. Todos los derechos reservados.</p>
       </footer>
     </div>
   );
