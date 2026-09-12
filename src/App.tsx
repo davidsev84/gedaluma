@@ -8,7 +8,6 @@ import { NewEvaluation } from './pages/NewEvaluation';
 import { NewInventory } from './pages/NewInventory';
 import { Logbook } from './pages/Logbook';
 import { Landing } from './pages/Landing';
-import { ThemeToggle } from './components/ThemeToggle';
 import { Navbar } from './components/Navbar';
 
 function PrivateRoute({ children, roles }: { children: React.ReactNode, roles?: string[] }) {
@@ -43,9 +42,6 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="theme-toggle-container">
-          <ThemeToggle />
-        </div>
         <Navbar />
         <Routes>
           {/* Public Landing Page */}

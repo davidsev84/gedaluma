@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Menu, X, LayoutDashboard, FileCheck2, UserCheck, 
-  PackagePlus, Calendar, History, Tag, LogOut, RotateCw
+  Menu, X, LayoutDashboard, 
+  Calendar, History, Tag, LogOut, RotateCw
 } from 'lucide-react';
 import { ProductCatalogModal } from './ProductCatalogModal';
 import { ThemeToggle } from './ThemeToggle';
@@ -78,48 +78,27 @@ export function Navbar() {
   };
 
   const navItems = [
-    ...(isAdmin ? [{
+    {
       path: '/dashboard',
-      label: 'Panel Principal',
-      desc: 'Vista general de islas, KPIs y métricas',
+      label: 'Panel',
+      desc: 'Vista general de islas y métricas',
       icon: LayoutDashboard,
       color: '#009C48'
-    }] : []),
-    {
-      path: '/evaluate',
-      label: 'Evaluación',
-      desc: 'Auditoría interna operativa',
-      icon: FileCheck2,
-      color: '#009C48'
     },
     {
-      path: '/evaluate?mode=ghost',
-      label: 'Cliente Fantasma',
-      desc: 'Módulo de servicio y atención',
-      icon: UserCheck,
-      color: '#f7b500'
-    },
-    {
-      path: '/inventory/new',
-      label: 'Nuevo Inventario',
-      desc: 'Control de existencias e insumos',
-      icon: PackagePlus,
-      color: '#0284c7'
+      path: '/history',
+      label: 'Historial',
+      desc: 'Registros e informes PDF',
+      icon: History,
+      color: '#6366f1'
     },
     {
       path: '/logbook',
-      label: 'Novedades (Bitácora)',
-      desc: 'Agenda diaria de actividades en campo',
+      label: 'Bitácora',
+      desc: 'Novedades y agenda diaria',
       icon: Calendar,
       color: '#8b5cf6'
-    },
-    ...(isAdmin ? [{
-      path: '/history',
-      label: 'Historial',
-      desc: 'Registros anteriores y reportes PDF',
-      icon: History,
-      color: '#6366f1'
-    }] : [])
+    }
   ];
 
   const isCurrentPath = (path: string) => {

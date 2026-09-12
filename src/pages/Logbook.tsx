@@ -4,8 +4,7 @@ import { getStoredIslas } from '../data/mock';
 import { supabase } from '../lib/supabase';
 import type { LogbookEntry } from '../types';
 import { 
-  Calendar as CalendarIcon, Plus, CheckCircle2, PlayCircle,
-  Trash2, Edit3
+  Calendar as CalendarIcon, Plus, CheckCircle2, PlayCircle
 } from 'lucide-react';
 
 export const LOGBOOK_CATEGORIES = [
@@ -323,6 +322,150 @@ export function Logbook() {
 
   const weekDays = getWeekDays();
 
+  const renderTaskCard = (entry: LogbookEntry) => {
+    const isScheduled = entry.status === 'scheduled' || (!entry.status && !entry.end_time);
+    const isInProgress = entry.status === 'in_progress';
+
+    return (
+      <div 
+        key={entry.id} 
+        style={{ 
+          padding: '10px', 
+          border: `1px solid ${isInProgress ? '#f7b500' : 'var(--border-color)'}`, 
+          borderRadius: '10px',
+          background: isInProgress ? 'rgba(247, 181, 0, 0.08)' : 'var(--bg-color)',
+          fontSize: '0.78rem'
+        }}
+      >
+        <div className="flex justify-between items-center mb-1">
+          <span style={{ fontWeight: 800, color: '#009C48' }}>ISLA {entry.isla_name}</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{entry.start_time}</span>
+        </div>
+        <p style={{ margin: '2px 0 6px 0', fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-primary)' }}>
+          {entry.task_category}
+        </p>
+
+        {isScheduled ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <button 
+              onClick={() => handleStartScheduledTask(entry)}
+              className="btn hover-lift"
+              style={{ 
+                padding: '8px 10px', 
+                fontSize: '0.82rem', 
+                fontWeight: 800, 
+                background: '#009C48', 
+                color: '#ffffff', 
+                borderRadius: '8px',
+                border: 'none',
+                width: '100%',
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px'
+              }}
+              title="Haz clic para iniciar la tarea ahora"
+            >
+              <PlayCircle size={16} /> ▶️ Iniciar Tarea
+            </button>
+
+            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
+              <button 
+                onClick={() => openEditModal(entry)}
+                className="btn"
+                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                title="Modificar tarea"
+              >
+                ✏️ Editar
+              </button>
+              {isAdmin && (
+                <button 
+                  onClick={() => handleDeleteTask(entry.id)}
+                  className="btn"
+                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                  title="Eliminar tarea"
+                >
+                  🗑️ Borrar
+                </button>
+              )}
+            </div>
+          </div>
+        ) : isInProgress ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <button 
+              onClick={() => handleFinishTask(entry)}
+              className="btn hover-lift"
+              style={{ 
+                padding: '8px 10px', 
+                fontSize: '0.82rem', 
+                fontWeight: 800, 
+                background: '#0284c7', 
+                color: '#ffffff', 
+                borderRadius: '8px',
+                border: 'none',
+                width: '100%',
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px'
+              }}
+              title="Haz clic para finalizar la tarea ahora"
+            >
+              <CheckCircle2 size={16} /> ✓ Finalizar Tarea
+            </button>
+
+            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
+              <button 
+                onClick={() => openEditModal(entry)}
+                className="btn"
+                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                title="Modificar tarea"
+              >
+                ✏️ Editar
+              </button>
+              {isAdmin && (
+                <button 
+                  onClick={() => handleDeleteTask(entry.id)}
+                  className="btn"
+                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
+                  title="Eliminar tarea"
+                >
+                  🗑️ Borrar
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
+            <div className="flex justify-between items-center mb-1">
+              <span style={{ fontSize: '0.72rem', color: '#009C48', fontWeight: 800 }}>
+                ✓ Fin: {entry.end_time || 'Completado'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-1">
+              <button 
+                onClick={() => openEditModal(entry)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0284c7', fontSize: '0.72rem', fontWeight: 700 }}
+              >
+                ✏️ Editar
+              </button>
+              {isAdmin && (
+                <button 
+                  onClick={() => handleDeleteTask(entry.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.72rem', fontWeight: 700 }}
+                >
+                  🗑️ Borrar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="container" style={{ maxWidth: '1240px', paddingBottom: '60px' }}>
       {/* HEADER PRINCIPAL */}
@@ -505,150 +648,7 @@ export function Logbook() {
                   </div>
 
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
-                    {dayEntries.map(entry => (
-                      <div 
-                        key={entry.id} 
-                        style={{ 
-                          padding: '10px', 
-                          border: `1px solid ${entry.status === 'in_progress' ? '#f7b500' : 'var(--border-color)'}`, 
-                          borderRadius: '10px',
-                          background: entry.status === 'in_progress' ? 'rgba(247, 181, 0, 0.08)' : 'var(--bg-color)',
-                          fontSize: '0.78rem'
-                        }}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span style={{ fontWeight: 800, color: '#009C48' }}>ISLA {entry.isla_name}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{entry.start_time}</span>
-                        </div>
-                        <p style={{ margin: '2px 0 6px 0', fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-primary)' }}>
-                          {entry.task_category}
-                        </p>
-
-                        {/* ESTADO 1: AGENDADA / PENDIENTE DE INICIAR */}
-                        {entry.status === 'scheduled' || (!entry.status && !entry.end_time) ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
-                            <button 
-                              onClick={() => handleStartScheduledTask(entry)}
-                              className="btn hover-lift"
-                              style={{ 
-                                padding: '8px 10px', 
-                                fontSize: '0.82rem', 
-                                fontWeight: 800, 
-                                background: '#009C48', 
-                                color: '#ffffff', 
-                                borderRadius: '8px',
-                                border: 'none',
-                                width: '100%',
-                                textAlign: 'center',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '4px'
-                              }}
-                              title="Haz clic para iniciar la tarea ahora"
-                            >
-                              <PlayCircle size={16} /> ▶️ Iniciar Tarea
-                            </button>
-
-                            {/* SIGUIENTE LÍNEA: BOTONES EDITAR Y BORRAR */}
-                            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
-                              <button 
-                                onClick={() => openEditModal(entry)}
-                                className="btn"
-                                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
-                                title="Modificar tarea"
-                              >
-                                ✏️ Editar
-                              </button>
-                              {isAdmin && (
-                                <button 
-                                  onClick={() => handleDeleteTask(entry.id)}
-                                  className="btn"
-                                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
-                                  title="Eliminar tarea"
-                                >
-                                  🗑️ Borrar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ) : entry.status === 'in_progress' ? (
-                          /* ESTADO 2: EN CURSO (INICIADA) */
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
-                            <button 
-                              onClick={() => handleFinishTask(entry)}
-                              className="btn hover-lift"
-                              style={{ 
-                                padding: '8px 10px', 
-                                fontSize: '0.82rem', 
-                                fontWeight: 800, 
-                                background: '#0284c7', 
-                                color: '#ffffff', 
-                                borderRadius: '8px',
-                                border: 'none',
-                                width: '100%',
-                                textAlign: 'center',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '4px'
-                              }}
-                              title="Haz clic para finalizar la tarea ahora"
-                            >
-                              <CheckCircle2 size={16} /> ✓ Finalizar Tarea
-                            </button>
-
-                            {/* SIGUIENTE LÍNEA: BOTONES EDITAR Y BORRAR */}
-                            <div className="flex justify-between items-center pt-1" style={{ borderTop: '1px dashed var(--border-color)', marginTop: '4px' }}>
-                              <button 
-                                onClick={() => openEditModal(entry)}
-                                className="btn"
-                                style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: 'none', borderRadius: '6px', fontWeight: 700 }}
-                                title="Modificar tarea"
-                              >
-                                ✏️ Editar
-                              </button>
-                              {isAdmin && (
-                                <button 
-                                  onClick={() => handleDeleteTask(entry.id)}
-                                  className="btn"
-                                  style={{ padding: '3px 8px', fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.12)', color: 'var(--danger)', border: 'none', borderRadius: '6px', fontWeight: 700 }}
-                                  title="Eliminar tarea"
-                                >
-                                  🗑️ Borrar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          /* ESTADO 3: COMPLETADA */
-                          <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
-                            <div className="flex justify-between items-center mb-1">
-                              <span style={{ fontSize: '0.72rem', color: '#009C48', fontWeight: 800 }}>
-                                ✓ Fin: {entry.end_time || 'Completado'}
-                              </span>
-                            </div>
-                            {/* SIGUIENTE LÍNEA: EDITAR Y BORRAR */}
-                            <div className="flex justify-between items-center mt-1">
-                              <button 
-                                onClick={() => openEditModal(entry)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0284c7', fontSize: '0.72rem', fontWeight: 700 }}
-                              >
-                                ✏️ Editar
-                              </button>
-                              {isAdmin && (
-                                <button 
-                                  onClick={() => handleDeleteTask(entry.id)}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', fontSize: '0.72rem', fontWeight: 700 }}
-                                >
-                                  🗑️ Borrar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {dayEntries.map(entry => renderTaskCard(entry))}
 
                     {dayEntries.length === 0 && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', margin: 'auto' }}>
@@ -663,96 +663,67 @@ export function Logbook() {
         </div>
       )}
 
-      {/* VISTA 2: DIARIA (LISTA DETALLADA HORA A HORA) */}
+      {/* VISTA 2: DIARIA (ESTILO TARJETAS INTERACTIVAS COMO SEMANA) */}
       {viewMode === 'daily' && (
         <div className="card mb-6" style={{ padding: '24px' }}>
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: '#009C48' }}>
-            📅 Detalle de Actividades Diarias ({selectedDate})
-          </h3>
+          <div className="flex justify-between items-center flex-wrap gap-2 mb-4">
+            <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+              📅 Actividades y Novedades Diarias ({selectedDate})
+            </h3>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowFormModal(true);
+              }}
+              className="btn btn-primary flex items-center gap-2"
+              style={{ background: '#009C48', borderColor: '#009C48', padding: '6px 14px', fontSize: '0.85rem' }}
+            >
+              <Plus size={16} /> + Registrar Nueva Actividad
+            </button>
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {entries.filter(e => e.date === selectedDate).map(entry => (
-              <div key={entry.id} style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)' }}>
-                <div className="flex justify-between items-center flex-wrap gap-2 mb-2">
-                  <div className="flex items-center gap-3">
-                    <span style={{ padding: '4px 12px', background: 'rgba(0, 156, 72, 0.12)', color: '#009C48', fontWeight: 800, borderRadius: '8px', fontSize: '0.85rem' }}>
-                      ISLA {entry.isla_name}
-                    </span>
-                    <h4 className="text-lg font-bold" style={{ margin: 0 }}>{entry.task_category}</h4>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                      🕒 {entry.start_time} {entry.end_time ? `- ${entry.end_time}` : '(En progreso)'}
-                    </span>
-                    <button onClick={() => openEditModal(entry)} className="btn btn-ghost" style={{ padding: '4px 8px' }} title="Editar">
-                      <Edit3 size={16} />
-                    </button>
-                    {isAdmin && (
-                      <button onClick={() => handleDeleteTask(entry.id)} className="btn btn-ghost text-danger" style={{ padding: '4px 8px' }} title="Eliminar">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <p style={{ margin: '4px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                  📌 Subtarea: <strong>{entry.task_subcategory}</strong>
-                </p>
-
-                {entry.description && (
-                  <p style={{ margin: '8px 0 0 0', fontSize: '0.88rem', color: 'var(--text-secondary)', background: 'var(--bg-color)', padding: '10px', borderRadius: '8px' }}>
-                    📝 {entry.description}
-                  </p>
-                )}
-
-                <div className="flex justify-between items-center mt-3 pt-2" style={{ borderTop: '1px dashed var(--border-color)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  <span>Registrado por: <strong>{entry.created_by}</strong></span>
-                  {entry.status === 'in_progress' ? (
-                    <button onClick={() => handleFinishTask(entry)} className="btn btn-primary" style={{ padding: '4px 12px', fontSize: '0.78rem', background: '#009C48', borderColor: '#009C48' }}>
-                      <CheckCircle2 size={14} /> Finalizar Tarea
-                    </button>
-                  ) : (
-                    <span style={{ color: '#009C48', fontWeight: 800 }}>✓ Completada</span>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+            {entries.filter(e => e.date === selectedDate).map(entry => renderTaskCard(entry))}
 
             {entries.filter(e => e.date === selectedDate).length === 0 && (
-              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                No hay actividades o novedades registradas para la fecha seleccionada.
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', gridColumn: '1 / -1' }}>
+                No hay actividades registradas para la fecha seleccionada ({selectedDate}). Presiona "+ Registrar Nueva Actividad" para agendar una.
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* VISTA 3: MENSUAL */}
+      {/* VISTA 3: MENSUAL (ESTILO TARJETAS INTERACTIVAS COMO SEMANA) */}
       {viewMode === 'monthly' && (
         <div className="card mb-6" style={{ padding: '24px' }}>
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: '#009C48' }}>
-            📆 Resumen Mensual de Bitácoras
-          </h3>
-          <p className="text-muted" style={{ fontSize: '0.88rem', marginBottom: '16px' }}>
-            Total de tareas e informes diarios registrados por día durante el mes.
+          <div className="flex justify-between items-center flex-wrap gap-2 mb-2">
+            <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
+              📆 Cuadro Mensual de Novedades y Bitácora
+            </h3>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowFormModal(true);
+              }}
+              className="btn btn-primary flex items-center gap-2"
+              style={{ background: '#009C48', borderColor: '#009C48', padding: '6px 14px', fontSize: '0.85rem' }}
+            >
+              <Plus size={16} /> + Registrar Nueva Actividad
+            </button>
+          </div>
+          <p className="text-muted" style={{ fontSize: '0.88rem', marginBottom: '20px' }}>
+            Visualización general de todas las tareas agendadas, en curso y completadas del mes.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {entries.slice(0, 30).map(entry => (
-              <div key={entry.id} className="flex justify-between items-center" style={{ padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '10px', background: 'var(--surface-color)' }}>
-                <div>
-                  <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#009C48' }}>{entry.date} - ISLA {entry.isla_name}</span>
-                  <p style={{ margin: 0, fontSize: '0.85rem' }}>{entry.task_category} ({entry.task_subcategory})</p>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+            {entries.map(entry => renderTaskCard(entry))}
 
-                <div className="flex items-center gap-3">
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{entry.start_time} - {entry.end_time || 'En curso'}</span>
-                  <button onClick={() => openEditModal(entry)} className="btn btn-ghost" style={{ padding: '4px' }}><Edit3 size={16} /></button>
-                  {isAdmin && <button onClick={() => handleDeleteTask(entry.id)} className="btn btn-ghost text-danger" style={{ padding: '4px' }}><Trash2 size={16} /></button>}
-                </div>
+            {entries.length === 0 && (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', gridColumn: '1 / -1' }}>
+                No hay actividades registradas en el mes.
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
