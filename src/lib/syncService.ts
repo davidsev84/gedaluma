@@ -7,16 +7,50 @@ export interface SyncResult {
   totalSynced: number;
 }
 
+/**
+ * Purga de memoria local: Elimina claves vacías '[]' o nulas en localStorage
+ */
+export function cleanOfflineStorage(): void {
+  const keys = ['gedaluma_offline_inventories', 'gedaluma_offline_evaluations', 'gedaluma_offline_logbook'];
+  keys.forEach(key => {
+    const val = localStorage.getItem(key);
+    if (!val) return;
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed) || parsed.filter(Boolean).length === 0) {
+        localStorage.removeItem(key);
+      }
+    } catch (e) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  const itemsMap = localStorage.getItem('gedaluma_offline_inventory_items');
+  if (itemsMap) {
+    try {
+      const parsed = JSON.parse(itemsMap);
+      if (typeof parsed !== 'object' || !parsed || Object.keys(parsed).length === 0) {
+        localStorage.removeItem('gedaluma_offline_inventory_items');
+      }
+    } catch (e) {
+      localStorage.removeItem('gedaluma_offline_inventory_items');
+    }
+  }
+}
+
 export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
   let inventoriesSynced = 0;
   let evaluationsSynced = 0;
   let logbookSynced = 0;
 
+  // Sanitizar memoria previa
+  cleanOfflineStorage();
+
   // 1. Sincronizar Inventarios pendientes guardados localmente
   const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
   if (savedOfflineInventories) {
     try {
-      const offlineArr: any[] = JSON.parse(savedOfflineInventories);
+      const offlineArr: any[] = JSON.parse(savedOfflineInventories).filter(Boolean);
       const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
       const remainingOffline: any[] = [];
 
@@ -73,7 +107,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
   const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
   if (savedOfflineEvals) {
     try {
-      const offlineEvals: any[] = JSON.parse(savedOfflineEvals);
+      const offlineEvals: any[] = JSON.parse(savedOfflineEvals).filter(Boolean);
       const remainingEvals: any[] = [];
 
       for (const offEval of offlineEvals) {
@@ -99,7 +133,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
   const savedOfflineLogbook = localStorage.getItem('gedaluma_offline_logbook');
   if (savedOfflineLogbook) {
     try {
-      const offlineLogbook: any[] = JSON.parse(savedOfflineLogbook);
+      const offlineLogbook: any[] = JSON.parse(savedOfflineLogbook).filter(Boolean);
       const remainingLogbook: any[] = [];
 
       for (const entry of offlineLogbook) {
@@ -121,19 +155,24 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
+  // Sanitizar memoria final
+  cleanOfflineStorage();
+
   const totalSynced = inventoriesSynced + evaluationsSynced + logbookSynced;
   return { inventoriesSynced, evaluationsSynced, logbookSynced, totalSynced };
 }
 
 export function hasPendingOfflineData(): boolean {
+  cleanOfflineStorage();
+
   const invs = localStorage.getItem('gedaluma_offline_inventories');
   const evals = localStorage.getItem('gedaluma_offline_evaluations');
   const logs = localStorage.getItem('gedaluma_offline_logbook');
 
   try {
-    const hasInvs = !!(invs && JSON.parse(invs).length > 0);
-    const hasEvals = !!(evals && JSON.parse(evals).length > 0);
-    const hasLogs = !!(logs && JSON.parse(logs).length > 0);
+    const hasInvs = !!(invs && JSON.parse(invs).filter(Boolean).length > 0);
+    const hasEvals = !!(evals && JSON.parse(evals).filter(Boolean).length > 0);
+    const hasLogs = !!(logs && JSON.parse(logs).filter(Boolean).length > 0);
     return hasInvs || hasEvals || hasLogs;
   } catch (e) {
     return false;
