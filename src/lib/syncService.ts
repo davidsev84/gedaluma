@@ -4,21 +4,36 @@ export interface SyncResult {
   inventoriesSynced: number;
   evaluationsSynced: number;
   logbookSynced: number;
+  penaltiesSynced: number;
   totalSynced: number;
 }
 
 /**
- * Purga de memoria local: Elimina claves vacías '[]' o nulas en localStorage
+ * Purga de memoria local: Elimina claves vacías '[]', 'null' u objetos corrompidos en localStorage
  */
 export function cleanOfflineStorage(): void {
-  const keys = ['gedaluma_offline_inventories', 'gedaluma_offline_evaluations', 'gedaluma_offline_logbook'];
-  keys.forEach(key => {
+  const arrayKeys = [
+    'gedaluma_offline_inventories', 
+    'gedaluma_offline_evaluations', 
+    'gedaluma_offline_logbook',
+    'gedaluma_offline_penalties'
+  ];
+
+  arrayKeys.forEach(key => {
     const val = localStorage.getItem(key);
     if (!val) return;
     try {
       const parsed = JSON.parse(val);
-      if (!Array.isArray(parsed) || parsed.filter(Boolean).length === 0) {
+      if (!Array.isArray(parsed)) {
         localStorage.removeItem(key);
+        return;
+      }
+      // Filtrar elementos válidos (objetos no nulos y con al menos 1 propiedad)
+      const validItems = parsed.filter(item => item && typeof item === 'object' && Object.keys(item).length > 0);
+      if (validItems.length === 0) {
+        localStorage.removeItem(key);
+      } else if (validItems.length !== parsed.length) {
+        localStorage.setItem(key, JSON.stringify(validItems));
       }
     } catch (e) {
       localStorage.removeItem(key);
@@ -38,15 +53,35 @@ export function cleanOfflineStorage(): void {
   }
 }
 
+export function hasPendingOfflineData(): boolean {
+  cleanOfflineStorage();
+
+  const invs = localStorage.getItem('gedaluma_offline_inventories');
+  const evals = localStorage.getItem('gedaluma_offline_evaluations');
+  const logs = localStorage.getItem('gedaluma_offline_logbook');
+  const pens = localStorage.getItem('gedaluma_offline_penalties');
+
+  try {
+    const hasInvs = !!(invs && JSON.parse(invs).filter((i: any) => i && Object.keys(i).length > 0).length > 0);
+    const hasEvals = !!(evals && JSON.parse(evals).filter((e: any) => e && Object.keys(e).length > 0).length > 0);
+    const hasLogs = !!(logs && JSON.parse(logs).filter((l: any) => l && Object.keys(l).length > 0).length > 0);
+    const hasPens = !!(pens && JSON.parse(pens).filter((p: any) => p && Object.keys(p).length > 0).length > 0);
+    return hasInvs || hasEvals || hasLogs || hasPens;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
   let inventoriesSynced = 0;
   let evaluationsSynced = 0;
   let logbookSynced = 0;
+  let penaltiesSynced = 0;
 
-  // Sanitizar memoria previa
+  // 1. Sanitizar almacenamiento local previo
   cleanOfflineStorage();
 
-  // 1. Sincronizar Inventarios pendientes guardados localmente
+  // 2. SINCRONIZAR INVENTARIOS PENDIENTES
   const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
   if (savedOfflineInventories) {
     try {
@@ -55,7 +90,11 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
       const remainingOffline: any[] = [];
 
       for (const offInv of offlineArr) {
-        const payloadToSync = {
+        if (!offInv || !offInv.isla_id) {
+          continue;
+        }
+
+        const payloadToSync: any = {
           id: offInv.id || `inv_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
           isla_id: String(offInv.isla_id || ''),
           isla_name: offInv.isla_name || 'Desconocida',
@@ -72,6 +111,18 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           created_at: offInv.created_at || new Date().toISOString()
         };
 
+        // Comprobar si ya existe en Supabase por ID o coincidencia de datos principales
+        const { data: existingInv } = await supabase.from('inventories')
+          .select('id')
+          .or(`id.eq.${payloadToSync.id},and(isla_id.eq.${payloadToSync.isla_id},date.eq.${payloadToSync.date},evaluator_name.eq.${payloadToSync.evaluator_name})`)
+          .limit(1);
+
+        if (existingInv && existingInv.length > 0) {
+          delete offlineItemsMap[offInv.id];
+          inventoriesSynced++;
+          continue;
+        }
+
         const { data: syncedInv, error: syncErr } = await supabase
           .from('inventories')
           .insert([payloadToSync])
@@ -86,7 +137,11 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           }
           delete offlineItemsMap[offInv.id];
           inventoriesSynced++;
+        } else if (syncErr && (syncErr.code === '23505' || syncErr.message?.includes('duplicate key'))) {
+          delete offlineItemsMap[offInv.id];
+          inventoriesSynced++;
         } else {
+          console.warn('[Sync Inventarios Error]', syncErr);
           remainingOffline.push(offInv);
         }
       }
@@ -99,11 +154,11 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         localStorage.setItem('gedaluma_offline_inventory_items', JSON.stringify(offlineItemsMap));
       }
     } catch (e) {
-      console.warn('Error al sincronizar inventarios offline:', e);
+      console.warn('Error en sync inventarios offline:', e);
     }
   }
 
-  // 2. Sincronizar Evaluaciones pendientes
+  // 3. SINCRONIZAR EVALUACIONES PENDIENTES
   const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
   if (savedOfflineEvals) {
     try {
@@ -111,10 +166,65 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
       const remainingEvals: any[] = [];
 
       for (const offEval of offlineEvals) {
-        const { error } = await supabase.from('evaluations').insert([offEval]);
-        if (!error) {
+        if (!offEval || !offEval.isla_id) {
+          continue;
+        }
+
+        const isUuid = typeof offEval.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offEval.id);
+        
+        const evalPayload: any = {
+          isla_id: String(offEval.isla_id || ''),
+          isla_name: offEval.isla_name || 'Desconocida',
+          evaluator_name: offEval.evaluator_name || 'Auditor',
+          evaluator_role: offEval.evaluator_role || 'evaluator',
+          evaluated_employee: offEval.evaluated_employee || null,
+          total_score: Number(offEval.total_score || 0),
+          status: offEval.status || 'Completado',
+          date: offEval.date || new Date().toISOString().split('T')[0],
+          created_at: offEval.created_at || new Date().toISOString()
+        };
+
+        if (isUuid) {
+          evalPayload.id = offEval.id;
+        }
+        if (offEval.auditor_type) evalPayload.auditor_type = offEval.auditor_type;
+        if (offEval.time_slot) evalPayload.time_slot = offEval.time_slot;
+        if (offEval.start_time) evalPayload.start_time = offEval.start_time;
+        if (offEval.end_time) evalPayload.end_time = offEval.end_time;
+
+        // Comprobar si ya existe una evaluación equivalente en Supabase
+        const { data: existingEval } = await supabase.from('evaluations')
+          .select('id')
+          .eq('isla_id', evalPayload.isla_id)
+          .eq('date', evalPayload.date)
+          .eq('evaluator_name', evalPayload.evaluator_name)
+          .eq('total_score', evalPayload.total_score)
+          .limit(1);
+
+        if (existingEval && existingEval.length > 0) {
+          evaluationsSynced++;
+          continue;
+        }
+
+        const { data: syncedEval, error: evalErr } = await supabase
+          .from('evaluations')
+          .insert([evalPayload])
+          .select()
+          .single();
+
+        if (!evalErr && syncedEval) {
+          if (Array.isArray(offEval.responses) && offEval.responses.length > 0) {
+            const respToInsert = offEval.responses.map((r: any) => ({
+              ...r,
+              evaluation_id: syncedEval.id
+            }));
+            await supabase.from('responses').insert(respToInsert);
+          }
+          evaluationsSynced++;
+        } else if (evalErr && (evalErr.code === '23505' || evalErr.message?.includes('duplicate key'))) {
           evaluationsSynced++;
         } else {
+          console.warn('[Sync Evaluaciones Error]', evalErr);
           remainingEvals.push(offEval);
         }
       }
@@ -125,11 +235,11 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         localStorage.setItem('gedaluma_offline_evaluations', JSON.stringify(remainingEvals));
       }
     } catch (e) {
-      console.warn('Error al sincronizar evaluaciones offline:', e);
+      console.warn('Error en sync evaluaciones offline:', e);
     }
   }
 
-  // 3. Sincronizar Novedades de la Bitácora pendientes
+  // 4. SINCRONIZAR BITÁCORA PENDIENTE
   const savedOfflineLogbook = localStorage.getItem('gedaluma_offline_logbook');
   if (savedOfflineLogbook) {
     try {
@@ -137,11 +247,35 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
       const remainingLogbook: any[] = [];
 
       for (const entry of offlineLogbook) {
-        const { error } = await supabase.from('logbook_entries').insert([entry]);
-        if (!error) {
+        if (!entry || !entry.isla_id || !entry.description) {
+          continue;
+        }
+
+        const { data: existingLog } = await supabase.from('logbook_entries')
+          .select('id')
+          .eq('isla_id', String(entry.isla_id))
+          .eq('date', entry.date)
+          .eq('description', entry.description)
+          .limit(1);
+
+        if (existingLog && existingLog.length > 0) {
+          logbookSynced++;
+          continue;
+        }
+
+        const { error: logErr } = await supabase.from('logbook_entries').insert([entry]);
+
+        if (!logErr || logErr.code === '23505' || logErr.message?.includes('duplicate key')) {
           logbookSynced++;
         } else {
-          remainingLogbook.push(entry);
+          const { id, ...entryNoId } = entry;
+          const { error: retryErr } = await supabase.from('logbook_entries').insert([entryNoId]);
+          if (!retryErr || retryErr.code === '23505') {
+            logbookSynced++;
+          } else {
+            console.warn('[Sync Bitácora Error]', logErr);
+            remainingLogbook.push(entry);
+          }
         }
       }
 
@@ -151,30 +285,55 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         localStorage.setItem('gedaluma_offline_logbook', JSON.stringify(remainingLogbook));
       }
     } catch (e) {
-      console.warn('Error al sincronizar bitácora offline:', e);
+      console.warn('Error en sync bitácora offline:', e);
     }
   }
 
-  // Sanitizar memoria final
-  cleanOfflineStorage();
+  // 5. SINCRONIZAR FALTAS / PENALIZACIONES PENDIENTES
+  const savedOfflinePenalties = localStorage.getItem('gedaluma_offline_penalties');
+  if (savedOfflinePenalties) {
+    try {
+      const offlinePenalties: any[] = JSON.parse(savedOfflinePenalties).filter(Boolean);
+      const remainingPenalties: any[] = [];
 
-  const totalSynced = inventoriesSynced + evaluationsSynced + logbookSynced;
-  return { inventoriesSynced, evaluationsSynced, logbookSynced, totalSynced };
-}
+      for (const pen of offlinePenalties) {
+        if (!pen || !pen.employee_id) continue;
 
-export function hasPendingOfflineData(): boolean {
-  cleanOfflineStorage();
+        const isUuid = typeof pen.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pen.id);
+        const penPayload: any = {
+          employee_id: pen.employee_id,
+          severity: pen.severity || 'Leve',
+          reason: pen.reason || 'Sanción',
+          amount: Number(pen.amount || 0),
+          observation: pen.observation || '',
+          reported_by: pen.reported_by || 'Supervisor',
+          created_at: pen.created_at || new Date().toISOString()
+        };
+        if (isUuid) penPayload.id = pen.id;
 
-  const invs = localStorage.getItem('gedaluma_offline_inventories');
-  const evals = localStorage.getItem('gedaluma_offline_evaluations');
-  const logs = localStorage.getItem('gedaluma_offline_logbook');
+        const { error: penErr } = await supabase.from('penalties').insert([penPayload]);
 
-  try {
-    const hasInvs = !!(invs && JSON.parse(invs).filter(Boolean).length > 0);
-    const hasEvals = !!(evals && JSON.parse(evals).filter(Boolean).length > 0);
-    const hasLogs = !!(logs && JSON.parse(logs).filter(Boolean).length > 0);
-    return hasInvs || hasEvals || hasLogs;
-  } catch (e) {
-    return false;
+        if (!penErr || penErr.code === '23505' || penErr.message?.includes('duplicate key')) {
+          penaltiesSynced++;
+        } else {
+          console.warn('[Sync Penalties Error]', penErr);
+          remainingPenalties.push(pen);
+        }
+      }
+
+      if (remainingPenalties.length === 0) {
+        localStorage.removeItem('gedaluma_offline_penalties');
+      } else {
+        localStorage.setItem('gedaluma_offline_penalties', JSON.stringify(remainingPenalties));
+      }
+    } catch (e) {
+      console.warn('Error en sync penalizaciones offline:', e);
+    }
   }
+
+  // Sanitizar memoria local final
+  cleanOfflineStorage();
+
+  const totalSynced = inventoriesSynced + evaluationsSynced + logbookSynced + penaltiesSynced;
+  return { inventoriesSynced, evaluationsSynced, logbookSynced, penaltiesSynced, totalSynced };
 }

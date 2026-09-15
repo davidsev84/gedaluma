@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.5',
-  buildNumber: 285,
-  lastUpdateDate: '12 de Septiembre, 2026',
+  version: 'v2.8.6',
+  buildNumber: 286,
+  lastUpdateDate: '14 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Corrección de desbordamiento vertical de texto en la sección de islas (KPIs y pestañas responsivas en móvil).'
+  changelogSummary: 'Corrección integral del motor de sincronización offline: resolución de llaves duplicadas, sanitización de UUIDs y purga automática de advertencias pendientes.'
 };

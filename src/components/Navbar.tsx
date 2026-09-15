@@ -52,12 +52,28 @@ export function Navbar() {
     setIsSyncing(true);
     try {
       const res = await syncOfflineDataToSupabase();
-      setPendingOffline(hasPendingOfflineData());
+      const stillHasPending = hasPendingOfflineData();
+      setPendingOffline(stillHasPending);
+
       if (res.totalSynced > 0) {
-        alert(`✅ Sincronización exitosa: ${res.totalSynced} registros subidos a la nube en tiempo real.`);
+        alert(`✅ Sincronización exitosa: ${res.totalSynced} registros procesados y subidos a la nube.`);
         window.location.reload();
+      } else if (!stillHasPending) {
+        alert('🟢 Todos los registros del navegador están al día y sincronizados con Supabase.');
       } else {
-        alert('🟢 Todos los registros ya están actualizados en Supabase.');
+        const confirmPurge = window.confirm(
+          '⚠️ Se verificó la conexión pero persisten datos pendientes no sincronizables en la memoria del navegador.\n\n¿Deseas purgar la memoria local para desactivar la advertencia en rojo?'
+        );
+        if (confirmPurge) {
+          localStorage.removeItem('gedaluma_offline_inventories');
+          localStorage.removeItem('gedaluma_offline_inventory_items');
+          localStorage.removeItem('gedaluma_offline_evaluations');
+          localStorage.removeItem('gedaluma_offline_logbook');
+          localStorage.removeItem('gedaluma_offline_penalties');
+          setPendingOffline(false);
+          alert('🟢 Memoria local purgada con éxito.');
+          window.location.reload();
+        }
       }
     } catch (err: any) {
       alert(`⚠️ Error en la sincronización: ${err.message || String(err)}`);
