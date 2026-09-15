@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.6',
-  buildNumber: 286,
+  version: 'v2.8.7',
+  buildNumber: 287,
   lastUpdateDate: '14 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Corrección integral del motor de sincronización offline: resolución de llaves duplicadas, sanitización de UUIDs y purga automática de advertencias pendientes.'
+  changelogSummary: 'Integración completa de inventarios en el Historial: pestañas de filtrado, búsqueda por isla o evaluador, vista detallada y descarga directa de informes PDF.'
 };
