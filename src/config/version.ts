@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.14',
-  buildNumber: 294,
-  lastUpdateDate: '14 de Septiembre, 2026',
+  version: 'v2.8.15',
+  buildNumber: 295,
+  lastUpdateDate: '15 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Ajuste de desbordamiento de palabras en la tabla principal de historial, depuración de registros de prueba y función de eliminación permanente para administrador.'
+  changelogSummary: 'Restricción de acciones para rol evaluador (solo Ver y PDF en historial/inventarios) y optimización compacta de espacio para columnas Evaluador y Resultado.'
 };
