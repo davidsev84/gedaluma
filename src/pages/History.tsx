@@ -776,10 +776,12 @@ export function History() {
                               color: Number(item.total_missing || 0) > 0 ? '#ef4444' : '#009C48',
                               whiteSpace: 'nowrap'
                             }}>
-                              {Number(item.total_missing || 0) > 0 ? `Faltan: ${item.total_missing} un. ($${Number(item.total_missing_dollars || 0).toFixed(2)})` : '✓ 100% Conforme'}
+                              {Number(item.total_missing || 0) > 0 
+                                ? `Faltan: ${Number(item.total_missing || 0).toFixed(2)} un. ($${Number(item.total_missing_dollars || 0).toFixed(2)})` 
+                                : '✓ 100% Conforme'}
                             </span>
                             <span style={{ display: 'block', fontSize: '0.71rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                              OK: {item.total_match || 0} prod. | Sobrantes: +{item.total_surplus || 0}
+                              OK: {item.total_match || 0} prod. | Sobrantes: +${Number(item.total_surplus_dollars || 0).toFixed(2)} (+${Number(item.total_surplus || 0).toFixed(2)} un.)
                             </span>
                           </div>
                         ) : (
@@ -1071,7 +1073,7 @@ export function History() {
               <div>
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 700 }}>FALTANTES</span>
                 <span style={{ fontSize: '0.92rem', fontWeight: 900, color: Number(selectedInv.total_missing || 0) > 0 ? '#ef4444' : '#009C48' }}>
-                  {selectedInv.total_missing || 0} un. (${Number(selectedInv.total_missing_dollars || 0).toFixed(2)})
+                  {Number(selectedInv.total_missing || 0).toFixed(2)} un. (${Number(selectedInv.total_missing_dollars || 0).toFixed(2)})
                 </span>
               </div>
 
@@ -1085,7 +1087,7 @@ export function History() {
               <div>
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 700 }}>SOBRANTES</span>
                 <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#f59e0b' }}>
-                  +{selectedInv.total_surplus || 0} un. (+${Number(selectedInv.total_surplus_dollars || 0).toFixed(2)})
+                  +{Number(selectedInv.total_surplus || 0).toFixed(2)} un. (+${Number(selectedInv.total_surplus_dollars || 0).toFixed(2)})
                 </span>
               </div>
             </div>
@@ -1120,10 +1122,10 @@ export function History() {
                             {it.name}
                             {it.category && <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 400 }}>{it.category}</span>}
                           </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>{it.system_qty}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800 }}>{it.physical_qty}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>{Number(it.system_qty || 0).toFixed(2)}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800 }}>{Number(it.physical_qty || 0).toFixed(2)}</td>
                           <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: isMissing ? '#ef4444' : isSurplus ? '#f59e0b' : '#009C48' }}>
-                            {diff > 0 ? `+${diff}` : diff}
+                            {diff > 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2)}
                           </td>
                           <td style={{ padding: '10px 12px', textAlign: 'right' }}>${Number(it.cost || 0).toFixed(2)}</td>
                           <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: isMissing ? '#ef4444' : isSurplus ? '#f59e0b' : '#009C48' }}>

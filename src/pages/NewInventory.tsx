@@ -316,7 +316,7 @@ export function NewInventory() {
                 <div className="text-center" style={{ padding: '6px 14px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 700 }}>Total Faltantes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--danger)', margin: 0 }}>
-                    {totals.totalMissing} un. <span style={{ fontSize: '0.9rem' }}>(${totals.totalMissingDollars.toFixed(2)})</span>
+                    {totals.totalMissing.toFixed(2)} un. <span style={{ fontSize: '0.9rem' }}>(${totals.totalMissingDollars.toFixed(2)})</span>
                   </p>
                 </div>
 
@@ -330,7 +330,7 @@ export function NewInventory() {
                 <div className="text-center" style={{ padding: '6px 14px', background: 'rgba(2, 132, 199, 0.1)', borderRadius: '10px' }}>
                   <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>Sobrantes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', margin: 0 }}>
-                    +{totals.totalSurplus} un. <span style={{ fontSize: '0.9rem' }}>(+${totals.totalSurplusDollars.toFixed(2)})</span>
+                    +{totals.totalSurplus.toFixed(2)} un. <span style={{ fontSize: '0.9rem' }}>(+${totals.totalSurplusDollars.toFixed(2)})</span>
                   </p>
                 </div>
               </div>
@@ -471,10 +471,10 @@ export function NewInventory() {
                           color: diff < 0 ? 'var(--danger)' : diff === 0 ? '#009C48' : '#0284c7'
                         }}>
                           {diff < 0 
-                            ? `Falta (${diff} / -$${Math.abs(dollarImpact).toFixed(2)})` 
+                            ? `Falta (${diff.toFixed(2)} / -$${Math.abs(dollarImpact).toFixed(2)})` 
                             : diff === 0 
                               ? 'Conforme ($0.00)' 
-                              : `Sobrante (+${diff} / +$${dollarImpact.toFixed(2)})`}
+                              : `Sobrante (+${diff.toFixed(2)} / +$${dollarImpact.toFixed(2)})`}
                         </span>
                       </td>
 
