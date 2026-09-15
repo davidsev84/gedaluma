@@ -187,8 +187,7 @@ export function NewEvaluation() {
           evaluator_role: isGhost ? 'ghost' : user?.role,
           evaluated_employee: evaluatedName,
           total_score: finalScore,
-          status: interpretation.text,
-          date: visitDate || new Date().toISOString().split('T')[0]
+          status: interpretation.text
         };
 
         if (auditorType) insertPayload.auditor_type = auditorType;

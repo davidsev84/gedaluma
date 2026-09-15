@@ -93,7 +93,6 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           continue;
         }
 
-        // Comprobar si ya existe en Supabase antes de insertar
         let isAlreadyInDb = false;
         if (offInv.id) {
           const { data: byId } = await supabase.from('inventories')
@@ -119,7 +118,6 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           continue;
         }
 
-        // Estructurar el payload a insertar
         const payloadToSync: any = {
           isla_id: String(offInv.isla_id || ''),
           isla_name: String(offInv.isla_name || 'Desconocida'),
@@ -152,7 +150,6 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         if (!err1 && invData) {
           syncedInvRecord = invData;
         } else {
-          // Reintento sin ID por si el ID personalizado producía conflicto de llave o formato
           const { id, ...payloadNoId } = payloadToSync;
           const { data: retryData, error: err2 } = await supabase
             .from('inventories')
@@ -213,7 +210,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // 2. SINCRONIZACIÓN DE EVALUACIONES PENDIENTES
+  // 2. SINCRONIZACIÓN DE EVALUACIONES PENDIENTES (SIN COLUMNA 'date' PARA EVITAR ERROR PGRST204)
   const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
   if (savedOfflineEvals) {
     try {
@@ -236,12 +233,12 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           if (byId) isEvalInDb = true;
         }
 
-        if (!isEvalInDb && offEval.isla_id && offEval.date && offEval.evaluator_name) {
+        if (!isEvalInDb && offEval.isla_id && offEval.evaluator_name) {
           const { data: byDetails } = await supabase.from('evaluations')
             .select('id')
             .eq('isla_id', String(offEval.isla_id))
-            .eq('date', String(offEval.date))
             .eq('evaluator_name', String(offEval.evaluator_name))
+            .eq('total_score', Number(offEval.total_score || 0))
             .limit(1);
           if (byDetails && byDetails.length > 0) isEvalInDb = true;
         }
@@ -251,6 +248,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           continue;
         }
 
+        // NOTA IMPORTANTE: La tabla 'evaluations' NO posee columna 'date', utiliza 'created_at'.
         const evalPayload: any = {
           isla_id: String(offEval.isla_id || ''),
           isla_name: String(offEval.isla_name || 'Desconocida'),
@@ -259,8 +257,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           evaluated_employee: offEval.evaluated_employee ? String(offEval.evaluated_employee) : null,
           total_score: Number(offEval.total_score || 0),
           status: String(offEval.status || 'Completado'),
-          date: String(offEval.date || new Date().toISOString().split('T')[0]),
-          created_at: String(offEval.created_at || new Date().toISOString())
+          created_at: String(offEval.created_at || (offEval.date ? new Date(offEval.date).toISOString() : new Date().toISOString()))
         };
 
         if (isUuid) {

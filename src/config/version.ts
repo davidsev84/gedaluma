@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.8',
-  buildNumber: 288,
+  version: 'v2.8.9',
+  buildNumber: 289,
   lastUpdateDate: '14 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Protección absoluta de datos offline: motor de sincronización forzada para inventarios y evaluaciones sin riesgos de purga ni borrado local.'
+  changelogSummary: 'Corrección crítica de esquema de base de datos en el motor de sincronización: eliminación del parámetro date no existente en la tabla de evaluaciones.'
 };
