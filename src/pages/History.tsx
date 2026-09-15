@@ -343,11 +343,11 @@ export function History() {
 
     setEditingInv((prev: any) => ({
       ...prev,
-      total_missing: missingUn,
-      total_missing_dollars: missingDol,
+      total_missing: Number(missingUn.toFixed(2)),
+      total_missing_dollars: Number(missingDol.toFixed(2)),
       total_match: matchUn,
-      total_surplus: surplusUn,
-      total_surplus_dollars: surplusDol
+      total_surplus: Number(surplusUn.toFixed(2)),
+      total_surplus_dollars: Number(surplusDol.toFixed(2))
     }));
   };
 
@@ -1282,8 +1282,8 @@ export function History() {
                   type="number"
                   step="0.01"
                   className="form-control"
-                  value={editingInv.total_missing || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_missing: parseFloat(e.target.value) || 0 })}
+                  value={editingInv.total_missing ?? 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_missing: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1294,8 +1294,8 @@ export function History() {
                   type="number"
                   step="0.01"
                   className="form-control"
-                  value={editingInv.total_missing_dollars || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_missing_dollars: parseFloat(e.target.value) || 0 })}
+                  value={editingInv.total_missing_dollars ?? 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_missing_dollars: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1306,8 +1306,8 @@ export function History() {
                   type="number"
                   step="0.01"
                   className="form-control"
-                  value={editingInv.total_match || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_match: parseFloat(e.target.value) || 0 })}
+                  value={editingInv.total_match ?? 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_match: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1318,8 +1318,8 @@ export function History() {
                   type="number"
                   step="0.01"
                   className="form-control"
-                  value={editingInv.total_surplus_dollars || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_surplus_dollars: parseFloat(e.target.value) || 0 })}
+                  value={editingInv.total_surplus_dollars ?? 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_surplus_dollars: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1340,32 +1340,33 @@ export function History() {
                 </div>
 
                 <div style={{ overflowX: 'auto', maxHeight: '260px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                  <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ background: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)' }}>
-                        <th style={{ padding: '8px' }}>Producto</th>
-                        <th style={{ padding: '8px', width: '90px' }}>Sistema</th>
-                        <th style={{ padding: '8px', width: '90px' }}>Físico</th>
-                        <th style={{ padding: '8px', width: '90px' }}>Diferencia</th>
-                        <th style={{ padding: '8px', width: '90px' }}>Costo ($)</th>
-                        <th style={{ padding: '8px' }}>Observación</th>
+                        <th style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>Producto</th>
+                        <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Sistema</th>
+                        <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Físico</th>
+                        <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Diferencia</th>
+                        <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Costo ($)</th>
+                        <th style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>Observación</th>
                       </tr>
                     </thead>
                     <tbody>
                       {editingInvItems.map((item, idx) => {
-                        const diff = (Number(item.physical_qty || 0) - Number(item.system_qty || 0));
+                        const diff = Number((Number(item.physical_qty || 0) - Number(item.system_qty || 0)).toFixed(2));
                         return (
                           <tr key={item.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '6px 8px', fontWeight: 700 }}>{item.name}</td>
+                            <td style={{ padding: '6px 8px', fontWeight: 700, whiteSpace: 'nowrap' }}>{item.name}</td>
                             <td style={{ padding: '6px 8px' }}>
                               <input 
                                 type="number"
                                 step="0.01"
                                 className="form-control"
-                                value={item.system_qty || 0}
+                                value={item.system_qty ?? 0}
                                 onChange={(e) => {
                                   const updated = [...editingInvItems];
-                                  updated[idx].system_qty = parseFloat(e.target.value) || 0;
+                                  const val = e.target.value.replace(',', '.');
+                                  updated[idx].system_qty = val === '' ? 0 : parseFloat(val) || 0;
                                   setEditingInvItems(updated);
                                 }}
                                 style={{ fontSize: '0.8rem', height: '30px' }}
@@ -1376,16 +1377,17 @@ export function History() {
                                 type="number"
                                 step="0.01"
                                 className="form-control"
-                                value={item.physical_qty || 0}
+                                value={item.physical_qty ?? 0}
                                 onChange={(e) => {
                                   const updated = [...editingInvItems];
-                                  updated[idx].physical_qty = parseFloat(e.target.value) || 0;
+                                  const val = e.target.value.replace(',', '.');
+                                  updated[idx].physical_qty = val === '' ? 0 : parseFloat(val) || 0;
                                   setEditingInvItems(updated);
                                 }}
                                 style={{ fontSize: '0.8rem', height: '30px', fontWeight: 800 }}
                               />
                             </td>
-                            <td style={{ padding: '6px 8px', fontWeight: 900, textAlign: 'center', color: diff < 0 ? '#ef4444' : diff > 0 ? '#f59e0b' : '#009C48' }}>
+                            <td style={{ padding: '6px 8px', fontWeight: 900, textAlign: 'center', whiteSpace: 'nowrap', color: diff < 0 ? '#ef4444' : diff > 0 ? '#f59e0b' : '#009C48' }}>
                               {diff > 0 ? `+${diff}` : diff}
                             </td>
                             <td style={{ padding: '6px 8px' }}>
@@ -1393,10 +1395,11 @@ export function History() {
                                 type="number"
                                 step="0.01"
                                 className="form-control"
-                                value={item.cost || 0}
+                                value={item.cost ?? 0}
                                 onChange={(e) => {
                                   const updated = [...editingInvItems];
-                                  updated[idx].cost = parseFloat(e.target.value) || 0;
+                                  const val = e.target.value.replace(',', '.');
+                                  updated[idx].cost = val === '' ? 0 : parseFloat(val) || 0;
                                   setEditingInvItems(updated);
                                 }}
                                 style={{ fontSize: '0.8rem', height: '30px' }}
