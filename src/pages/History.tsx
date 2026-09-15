@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Eye, AlertCircle, CheckCircle, X, Download, Package, FileText, Search } from 'lucide-react';
+import { Eye, AlertCircle, CheckCircle, X, Download, Package, FileText, Search, Pencil, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatePDF, generateInventoryPDF } from '../lib/pdfGenerator';
 import { mockIslas } from '../data/mock';
+import { useAuth } from '../context/AuthContext';
 
 export function History() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [inventories, setInventories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Modales de detalle
+  // Modales de detalle (Ver)
   const [selectedEval, setSelectedEval] = useState<any>(null);
   const [evalResponses, setEvalResponses] = useState<any[]>([]);
   
@@ -18,6 +22,15 @@ export function History() {
   const [invItems, setInvItems] = useState<any[]>([]);
   
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Modales de edición (Solo Admin)
+  const [editingEval, setEditingEval] = useState<any>(null);
+  const [editingResponses, setEditingResponses] = useState<any[]>([]);
+  
+  const [editingInv, setEditingInv] = useState<any>(null);
+  const [editingInvItems, setEditingInvItems] = useState<any[]>([]);
+  
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Filtros
   const [activeTab, setActiveTab] = useState<'all' | 'evaluations' | 'inventories'>('all');
@@ -194,6 +207,228 @@ export function History() {
       console.error('Error cargando ítems de inventario:', err);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  // Abrir modal de edición de Evaluación (Solo Admin)
+  const openEditEvalModal = async (evaluation: any) => {
+    setEditingEval({ ...evaluation });
+    setLoadingDetails(true);
+    try {
+      const { data } = await supabase
+        .from('responses')
+        .select('*')
+        .eq('evaluation_id', evaluation.id);
+      setEditingResponses(data || []);
+    } catch (e) {
+      setEditingResponses([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Guardar cambios de Evaluación (Solo Admin)
+  const handleSaveEvaluationEdit = async () => {
+    if (!editingEval) return;
+    setSavingEdit(true);
+
+    try {
+      const payloadToUpdate = {
+        isla_id: String(editingEval.isla_id),
+        isla_name: editingEval.isla_name,
+        evaluator_name: editingEval.evaluator_name,
+        evaluator_role: editingEval.evaluator_role,
+        evaluated_employee: editingEval.evaluated_employee || null,
+        total_score: Number(editingEval.total_score || 0),
+        status: editingEval.status,
+        auditor_type: editingEval.auditor_type || null,
+        time_slot: editingEval.time_slot || null
+      };
+
+      // 1. Actualizar en Supabase si no es registro offline puro
+      const { error } = await supabase
+        .from('evaluations')
+        .update(payloadToUpdate)
+        .eq('id', editingEval.id);
+
+      if (error) {
+        console.warn("Supabase update error, actualizando estado local:", error);
+      }
+
+      // 2. Actualizar respuestas si fueron modificadas
+      if (editingResponses.length > 0) {
+        for (const resp of editingResponses) {
+          if (resp.id) {
+            await supabase
+              .from('responses')
+              .update({
+                value: resp.value,
+                observation: resp.observation || null
+              })
+              .eq('id', resp.id);
+          }
+        }
+      }
+
+      // 3. Actualizar estado local
+      setEvaluations(prev => prev.map(e => e.id === editingEval.id ? { ...e, ...payloadToUpdate } : e));
+
+      // 4. Actualizar respaldo local en localStorage si aplica
+      const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
+      if (savedOfflineEvals) {
+        try {
+          const offlineArr: any[] = JSON.parse(savedOfflineEvals);
+          const updated = offlineArr.map(o => o.id === editingEval.id ? { ...o, ...payloadToUpdate } : o);
+          localStorage.setItem('gedaluma_offline_evaluations', JSON.stringify(updated));
+        } catch(e){}
+      }
+
+      alert('✅ Evaluación modificada exitosamente.');
+      setEditingEval(null);
+    } catch (err: any) {
+      alert(`⚠️ Error al guardar cambios: ${err.message || String(err)}`);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  // Abrir modal de edición de Inventario (Solo Admin)
+  const openEditInvModal = async (inventory: any) => {
+    setEditingInv({ ...inventory });
+    setLoadingDetails(true);
+    try {
+      let items: any[] = [];
+      const { data } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('inventory_id', inventory.id);
+      if (data && data.length > 0) {
+        items = data;
+      } else {
+        const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+        items = offlineItemsMap[inventory.id] || [];
+      }
+      setEditingInvItems(items);
+    } catch (e) {
+      setEditingInvItems([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Recalcular totales del inventario en edición
+  const recalculateInvTotals = (items: any[]) => {
+    let missingUn = 0;
+    let missingDol = 0;
+    let matchUn = 0;
+    let surplusUn = 0;
+    let surplusDol = 0;
+
+    items.forEach(it => {
+      const sys = Number(it.system_qty || 0);
+      const phy = Number(it.physical_qty || 0);
+      const cost = Number(it.cost || 0);
+      const diff = phy - sys;
+
+      if (diff < 0) {
+        missingUn += Math.abs(diff);
+        missingDol += Math.abs(diff) * cost;
+      } else if (diff > 0) {
+        surplusUn += diff;
+        surplusDol += diff * cost;
+      } else {
+        matchUn += 1;
+      }
+    });
+
+    setEditingInv((prev: any) => ({
+      ...prev,
+      total_missing: missingUn,
+      total_missing_dollars: missingDol,
+      total_match: matchUn,
+      total_surplus: surplusUn,
+      total_surplus_dollars: surplusDol
+    }));
+  };
+
+  // Guardar cambios de Inventario (Solo Admin)
+  const handleSaveInventoryEdit = async () => {
+    if (!editingInv) return;
+    setSavingEdit(true);
+
+    try {
+      const payloadToUpdate = {
+        isla_id: String(editingInv.isla_id),
+        isla_name: editingInv.isla_name,
+        evaluator_name: editingInv.evaluator_name,
+        date: editingInv.date,
+        start_time: editingInv.start_time,
+        end_time: editingInv.end_time,
+        total_missing: Number(editingInv.total_missing || 0),
+        total_missing_dollars: Number(editingInv.total_missing_dollars || 0),
+        total_match: Number(editingInv.total_match || 0),
+        total_surplus: Number(editingInv.total_surplus || 0),
+        total_surplus_dollars: Number(editingInv.total_surplus_dollars || 0),
+        is_discounted: !!editingInv.is_discounted
+      };
+
+      // 1. Actualizar inventario principal en Supabase
+      const { error } = await supabase
+        .from('inventories')
+        .update(payloadToUpdate)
+        .eq('id', editingInv.id);
+
+      if (error) {
+        console.warn("Supabase update inventory warning:", error);
+      }
+
+      // 2. Actualizar cada ítem de inventario si posee ID en DB
+      if (editingInvItems.length > 0) {
+        for (const item of editingInvItems) {
+          const sys = Number(item.system_qty || 0);
+          const phy = Number(item.physical_qty || 0);
+          const diff = phy - sys;
+          const impact = diff * Number(item.cost || 0);
+
+          if (item.id) {
+            await supabase
+              .from('inventory_items')
+              .update({
+                system_qty: sys,
+                physical_qty: phy,
+                diff_qty: diff,
+                cost: Number(item.cost || 0),
+                total_cost_impact: impact,
+                observation: item.observation || ''
+              })
+              .eq('id', item.id);
+          }
+        }
+      }
+
+      // 3. Actualizar estado local
+      setInventories(prev => prev.map(i => i.id === editingInv.id ? { ...i, ...payloadToUpdate } : i));
+
+      // 4. Actualizar respaldo local en localStorage si aplica
+      const savedOfflineInvs = localStorage.getItem('gedaluma_offline_inventories');
+      if (savedOfflineInvs) {
+        try {
+          const offlineArr: any[] = JSON.parse(savedOfflineInvs);
+          const updated = offlineArr.map(o => o.id === editingInv.id ? { ...o, ...payloadToUpdate } : o);
+          localStorage.setItem('gedaluma_offline_inventories', JSON.stringify(updated));
+
+          const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+          offlineItemsMap[editingInv.id] = editingInvItems;
+          localStorage.setItem('gedaluma_offline_inventory_items', JSON.stringify(offlineItemsMap));
+        } catch(e){}
+      }
+
+      alert('✅ Inventario modificado exitosamente.');
+      setEditingInv(null);
+    } catch (err: any) {
+      alert(`⚠️ Error al guardar cambios de inventario: ${err.message || String(err)}`);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -525,7 +760,9 @@ export function History() {
 
                       {/* ACCIONES */}
                       <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                        <div className="flex gap-2 justify-end items-center">
+                        <div className="flex gap-2 justify-end items-center flex-wrap">
+                          
+                          {/* BOTÓN VER DETALLE */}
                           <button 
                             onClick={() => isInv ? viewInvDetails(item) : viewEvalDetails(item)} 
                             className="btn hover-lift" 
@@ -534,6 +771,19 @@ export function History() {
                             <Eye size={14} /> Ver
                           </button>
 
+                          {/* BOTÓN EDITAR VALORES (SOLO ROL ADMIN) */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => isInv ? openEditInvModal(item) : openEditEvalModal(item)}
+                              className="btn hover-lift"
+                              style={{ padding: '5px 10px', fontSize: '0.78rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', borderRadius: '6px' }}
+                              title="Editar valores de este registro (Exclusivo Administrador)"
+                            >
+                              <Pencil size={14} /> Editar
+                            </button>
+                          )}
+
+                          {/* BOTÓN INFORME PDF */}
                           <button 
                             onClick={() => isInv ? downloadInventoryPDFDirect(item) : viewEvalDetails(item)} 
                             className="btn hover-lift" 
@@ -543,6 +793,7 @@ export function History() {
                             <Download size={14} /> PDF
                           </button>
 
+                          {/* BOTÓN ANULAR / ACTIVAR */}
                           <button 
                             onClick={() => isInv ? toggleInvValidation(item.id, isValid) : toggleEvalValidation(item.id, isValid)} 
                             className="btn hover-lift"
@@ -575,7 +826,7 @@ export function History() {
         )}
       </div>
 
-      {/* MODAL DETALLE DE EVALUACIÓN */}
+      {/* MODAL VER DETALLE DE EVALUACIÓN */}
       {selectedEval && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -652,7 +903,7 @@ export function History() {
         </div>
       )}
 
-      {/* MODAL DETALLE DE INVENTARIO */}
+      {/* MODAL VER DETALLE DE INVENTARIO */}
       {selectedInv && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -777,6 +1028,416 @@ export function History() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDICIÓN DE EVALUACIÓN (SOLO ADMIN) */}
+      {editingEval && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1100,
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          padding: '20px'
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', borderRadius: '16px' }}>
+            <button 
+              onClick={() => setEditingEval(null)}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="text-xl mb-1" style={{ fontWeight: 800, color: '#0284c7', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Pencil size={20} /> Edición de Evaluación / Cliente Fantasma
+            </h2>
+            <p className="text-muted mb-4" style={{ fontSize: '0.82rem' }}>
+              Modificación de valores por Administrador (Cambios reflejados en tiempo real)
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Isla</label>
+                <select 
+                  className="form-control"
+                  value={editingEval.isla_name}
+                  onChange={(e) => {
+                    const found = mockIslas.find(i => i.name === e.target.value);
+                    setEditingEval({
+                      ...editingEval,
+                      isla_name: e.target.value,
+                      isla_id: found ? found.id : editingEval.isla_id
+                    });
+                  }}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  {mockIslas.map(i => (
+                    <option key={i.id} value={i.name}>Isla {i.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Evaluador / Auditor</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingEval.evaluator_name || ''}
+                  onChange={(e) => setEditingEval({ ...editingEval, evaluator_name: e.target.value })}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Empleado Evaluado</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingEval.evaluated_employee || ''}
+                  onChange={(e) => setEditingEval({ ...editingEval, evaluated_employee: e.target.value })}
+                  placeholder="Nombre del empleado"
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Puntaje Total (%)</label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  className="form-control"
+                  value={editingEval.total_score || 0}
+                  onChange={(e) => setEditingEval({ ...editingEval, total_score: parseFloat(e.target.value) || 0 })}
+                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Estado Ránking / Interpretación</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingEval.status || ''}
+                  onChange={(e) => setEditingEval({ ...editingEval, status: e.target.value })}
+                  placeholder="Ej. Excelente, Aceptable, Bajo"
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Rol de Evaluación</label>
+                <select 
+                  className="form-control"
+                  value={editingEval.evaluator_role || 'evaluator'}
+                  onChange={(e) => setEditingEval({ ...editingEval, evaluator_role: e.target.value })}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  <option value="evaluator">Auditoría Interna / Supervisor</option>
+                  <option value="ghost">Cliente Fantasma</option>
+                </select>
+              </div>
+            </div>
+
+            {/* PREGUNTAS EDITABLES DE LA EVALUACIÓN */}
+            {editingResponses.length > 0 && (
+              <div style={{ marginTop: '16px', marginBottom: '20px' }}>
+                <h3 className="text-md mb-2" style={{ fontWeight: 700 }}>Editar Respuestas de Preguntas</h3>
+                <div className="flex flex-col gap-3" style={{ maxHeight: '250px', overflowY: 'auto', paddingRight: '6px' }}>
+                  {editingResponses.map((r, index) => (
+                    <div key={r.id || index} style={{ padding: '10px', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>{index + 1}. {r.question_text}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Respuesta</label>
+                          <input 
+                            type="text"
+                            className="form-control"
+                            value={r.value || ''}
+                            onChange={(e) => {
+                              const updated = [...editingResponses];
+                              updated[index].value = e.target.value;
+                              setEditingResponses(updated);
+                            }}
+                            style={{ fontSize: '0.8rem' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Observación</label>
+                          <input 
+                            type="text"
+                            className="form-control"
+                            value={r.observation || ''}
+                            onChange={(e) => {
+                              const updated = [...editingResponses];
+                              updated[index].observation = e.target.value;
+                              setEditingResponses(updated);
+                            }}
+                            style={{ fontSize: '0.8rem' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button 
+                onClick={() => setEditingEval(null)}
+                className="btn btn-outline"
+                style={{ fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveEvaluationEdit}
+                disabled={savingEdit}
+                className="btn hover-lift"
+                style={{ background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Save size={16} />
+                {savingEdit ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDICIÓN DE INVENTARIO (SOLO ADMIN) */}
+      {editingInv && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1100,
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          padding: '20px'
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', borderRadius: '16px' }}>
+            <button 
+              onClick={() => setEditingInv(null)}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="text-xl mb-1" style={{ fontWeight: 800, color: '#0284c7', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Package size={22} /> Edición de Conteo de Inventario (Administrador)
+            </h2>
+            <p className="text-muted mb-4" style={{ fontSize: '0.82rem' }}>
+              Modificación de existencias, totales de faltantes ($) y visto de descuento en nómina
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Isla</label>
+                <select 
+                  className="form-control"
+                  value={editingInv.isla_name}
+                  onChange={(e) => {
+                    const found = mockIslas.find(i => i.name === e.target.value);
+                    setEditingInv({
+                      ...editingInv,
+                      isla_name: e.target.value,
+                      isla_id: found ? found.id : editingInv.isla_id
+                    });
+                  }}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  {mockIslas.map(i => (
+                    <option key={i.id} value={i.name}>Isla {i.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Evaluador / Auditor</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingInv.evaluator_name || ''}
+                  onChange={(e) => setEditingInv({ ...editingInv, evaluator_name: e.target.value })}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Fecha del Conteo</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingInv.date || ''}
+                  onChange={(e) => setEditingInv({ ...editingInv, date: e.target.value })}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
+
+            {/* CAMPOS KPI DEL INVENTARIO */}
+            <div className="grid grid-cols-4 gap-3 mb-4" style={{ background: 'var(--surface-color)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+              <div>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#ef4444' }}>Faltantes (Unid.)</label>
+                <input 
+                  type="number"
+                  className="form-control"
+                  value={editingInv.total_missing || 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_missing: parseInt(e.target.value) || 0 })}
+                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#ef4444' }}>Faltantes Total ($)</label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  className="form-control"
+                  value={editingInv.total_missing_dollars || 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_missing_dollars: parseFloat(e.target.value) || 0 })}
+                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0284c7' }}>Conformes (Prod.)</label>
+                <input 
+                  type="number"
+                  className="form-control"
+                  value={editingInv.total_match || 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_match: parseInt(e.target.value) || 0 })}
+                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#f59e0b' }}>Sobrantes ($)</label>
+                <input 
+                  type="number"
+                  step="0.01"
+                  className="form-control"
+                  value={editingInv.total_surplus_dollars || 0}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_surplus_dollars: parseFloat(e.target.value) || 0 })}
+                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
+                />
+              </div>
+            </div>
+
+            {/* TABLA DE PRODUCTOS DE INVENTARIO EDITABLES */}
+            {editingInvItems.length > 0 && (
+              <div style={{ marginTop: '16px', marginBottom: '20px' }}>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-md" style={{ fontWeight: 800 }}>Editar Conteo Físico por Producto</h3>
+                  <button 
+                    onClick={() => recalculateInvTotals(editingInvItems)}
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                  >
+                    🔄 Recalcular Totales
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto', maxHeight: '260px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)' }}>
+                        <th style={{ padding: '8px' }}>Producto</th>
+                        <th style={{ padding: '8px', width: '90px' }}>Sistema</th>
+                        <th style={{ padding: '8px', width: '90px' }}>Físico</th>
+                        <th style={{ padding: '8px', width: '90px' }}>Diferencia</th>
+                        <th style={{ padding: '8px', width: '90px' }}>Costo ($)</th>
+                        <th style={{ padding: '8px' }}>Observación</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editingInvItems.map((item, idx) => {
+                        const diff = (Number(item.physical_qty || 0) - Number(item.system_qty || 0));
+                        return (
+                          <tr key={item.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '6px 8px', fontWeight: 700 }}>{item.name}</td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input 
+                                type="number"
+                                className="form-control"
+                                value={item.system_qty || 0}
+                                onChange={(e) => {
+                                  const updated = [...editingInvItems];
+                                  updated[idx].system_qty = parseInt(e.target.value) || 0;
+                                  setEditingInvItems(updated);
+                                }}
+                                style={{ fontSize: '0.8rem', height: '30px' }}
+                              />
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input 
+                                type="number"
+                                className="form-control"
+                                value={item.physical_qty || 0}
+                                onChange={(e) => {
+                                  const updated = [...editingInvItems];
+                                  updated[idx].physical_qty = parseInt(e.target.value) || 0;
+                                  setEditingInvItems(updated);
+                                }}
+                                style={{ fontSize: '0.8rem', height: '30px', fontWeight: 800 }}
+                              />
+                            </td>
+                            <td style={{ padding: '6px 8px', fontWeight: 900, textAlign: 'center', color: diff < 0 ? '#ef4444' : diff > 0 ? '#f59e0b' : '#009C48' }}>
+                              {diff > 0 ? `+${diff}` : diff}
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input 
+                                type="number"
+                                step="0.01"
+                                className="form-control"
+                                value={item.cost || 0}
+                                onChange={(e) => {
+                                  const updated = [...editingInvItems];
+                                  updated[idx].cost = parseFloat(e.target.value) || 0;
+                                  setEditingInvItems(updated);
+                                }}
+                                style={{ fontSize: '0.8rem', height: '30px' }}
+                              />
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input 
+                                type="text"
+                                className="form-control"
+                                value={item.observation || ''}
+                                onChange={(e) => {
+                                  const updated = [...editingInvItems];
+                                  updated[idx].observation = e.target.value;
+                                  setEditingInvItems(updated);
+                                }}
+                                style={{ fontSize: '0.8rem', height: '30px' }}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button 
+                onClick={() => setEditingInv(null)}
+                className="btn btn-outline"
+                style={{ fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveInventoryEdit}
+                disabled={savingEdit}
+                className="btn hover-lift"
+                style={{ background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Save size={16} />
+                {savingEdit ? 'Guardando...' : 'Guardar Cambios de Inventario'}
+              </button>
+            </div>
           </div>
         </div>
       )}
