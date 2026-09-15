@@ -1280,9 +1280,10 @@ export function History() {
                 <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#ef4444' }}>Faltantes (Unid.)</label>
                 <input 
                   type="number"
+                  step="0.01"
                   className="form-control"
                   value={editingInv.total_missing || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_missing: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_missing: parseFloat(e.target.value) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1303,9 +1304,10 @@ export function History() {
                 <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0284c7' }}>Conformes (Prod.)</label>
                 <input 
                   type="number"
+                  step="0.01"
                   className="form-control"
                   value={editingInv.total_match || 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_match: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setEditingInv({ ...editingInv, total_match: parseFloat(e.target.value) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1358,11 +1360,12 @@ export function History() {
                             <td style={{ padding: '6px 8px' }}>
                               <input 
                                 type="number"
+                                step="0.01"
                                 className="form-control"
                                 value={item.system_qty || 0}
                                 onChange={(e) => {
                                   const updated = [...editingInvItems];
-                                  updated[idx].system_qty = parseInt(e.target.value) || 0;
+                                  updated[idx].system_qty = parseFloat(e.target.value) || 0;
                                   setEditingInvItems(updated);
                                 }}
                                 style={{ fontSize: '0.8rem', height: '30px' }}
@@ -1371,11 +1374,12 @@ export function History() {
                             <td style={{ padding: '6px 8px' }}>
                               <input 
                                 type="number"
+                                step="0.01"
                                 className="form-control"
                                 value={item.physical_qty || 0}
                                 onChange={(e) => {
                                   const updated = [...editingInvItems];
-                                  updated[idx].physical_qty = parseInt(e.target.value) || 0;
+                                  updated[idx].physical_qty = parseFloat(e.target.value) || 0;
                                   setEditingInvItems(updated);
                                 }}
                                 style={{ fontSize: '0.8rem', height: '30px', fontWeight: 800 }}
