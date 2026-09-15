@@ -210,7 +210,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // 2. SINCRONIZACIÓN DE EVALUACIONES PENDIENTES (SIN COLUMNA 'date' PARA EVITAR ERROR PGRST204)
+  // 2. SINCRONIZACIÓN DE EVALUACIONES PENDIENTES (COLUMNAS STRICTAMENTE VÁLIDAS EN SUPABASE)
   const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
   if (savedOfflineEvals) {
     try {
@@ -248,7 +248,9 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           continue;
         }
 
-        // NOTA IMPORTANTE: La tabla 'evaluations' NO posee columna 'date', utiliza 'created_at'.
+        // NOTA DE ESQUEMA DB: 'evaluations' SOLO posee las siguientes columnas exactas:
+        // id, isla_id, isla_name, evaluator_name, evaluator_role, auditor_type, time_slot, total_score, status, created_at, is_valid, evaluated_employee
+        // NO POSEE: 'date', 'start_time', 'end_time'
         const evalPayload: any = {
           isla_id: String(offEval.isla_id || ''),
           isla_name: String(offEval.isla_name || 'Desconocida'),
@@ -265,8 +267,6 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         }
         if (offEval.auditor_type) evalPayload.auditor_type = String(offEval.auditor_type);
         if (offEval.time_slot) evalPayload.time_slot = String(offEval.time_slot);
-        if (offEval.start_time) evalPayload.start_time = String(offEval.start_time);
-        if (offEval.end_time) evalPayload.end_time = String(offEval.end_time);
 
         let syncedEvalRecord: any = null;
         let evalErr: any = null;
