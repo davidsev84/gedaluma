@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.13',
-  buildNumber: 293,
+  version: 'v2.8.14',
+  buildNumber: 294,
   lastUpdateDate: '14 de Septiembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Corrección de desbordamiento de texto en modal de edición de inventarios y soporte mejorado de decimales (coma/punto).'
+  changelogSummary: 'Ajuste de desbordamiento de palabras en la tabla principal de historial, depuración de registros de prueba y función de eliminación permanente para administrador.'
 };

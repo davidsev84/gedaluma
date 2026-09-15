@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Eye, AlertCircle, CheckCircle, X, Download, Package, FileText, Search, Pencil, Save } from 'lucide-react';
+import { Eye, AlertCircle, CheckCircle, X, Download, Package, FileText, Search, Pencil, Save, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatePDF, generateInventoryPDF } from '../lib/pdfGenerator';
 import { mockIslas } from '../data/mock';
@@ -23,13 +23,11 @@ export function History() {
   
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Modales de edición (Solo Admin)
+  // Modales de edición (Editar - Solo Admin)
   const [editingEval, setEditingEval] = useState<any>(null);
   const [editingResponses, setEditingResponses] = useState<any[]>([]);
-  
   const [editingInv, setEditingInv] = useState<any>(null);
   const [editingInvItems, setEditingInvItems] = useState<any[]>([]);
-  
   const [savingEdit, setSavingEdit] = useState(false);
 
   // Filtros
@@ -161,6 +159,72 @@ export function History() {
       }
     } catch (err) {
       console.error('Error al actualizar estado de descuento:', err);
+    }
+  };
+
+  // Eliminar Evaluación (Solo Admin)
+  const handleDeleteEvaluation = async (id: string, islaName: string) => {
+    if (!window.confirm(`⚠️ ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE esta evaluación de la Isla ${islaName}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setEvaluations(prev => prev.filter(e => e.id !== id));
+
+    try {
+      await supabase.from('responses').delete().eq('evaluation_id', id);
+      const { error } = await supabase.from('evaluations').delete().eq('id', id);
+
+      if (error) {
+        console.warn('Error al eliminar en Supabase, removiendo de caché local:', error);
+      }
+
+      try {
+        const savedOffline = localStorage.getItem('gedaluma_offline_evaluations');
+        if (savedOffline) {
+          const arr: any[] = JSON.parse(savedOffline);
+          const filtered = arr.filter(o => o.id !== id);
+          localStorage.setItem('gedaluma_offline_evaluations', JSON.stringify(filtered));
+        }
+      } catch (e) {}
+
+      alert('✅ Evaluación eliminada correctamente.');
+    } catch (err: any) {
+      alert(`⚠️ Error al eliminar evaluación: ${err.message || String(err)}`);
+    }
+  };
+
+  // Eliminar Inventario (Solo Admin)
+  const handleDeleteInventory = async (id: string, islaName: string) => {
+    if (!window.confirm(`⚠️ ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE este inventario de la Isla ${islaName}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setInventories(prev => prev.filter(i => i.id !== id));
+
+    try {
+      await supabase.from('inventory_items').delete().eq('inventory_id', id);
+      const { error } = await supabase.from('inventories').delete().eq('id', id);
+
+      if (error) {
+        console.warn('Error al eliminar en Supabase, removiendo de caché local:', error);
+      }
+
+      try {
+        const savedOfflineInv = localStorage.getItem('gedaluma_offline_inventories');
+        if (savedOfflineInv) {
+          const arr: any[] = JSON.parse(savedOfflineInv);
+          const filtered = arr.filter(o => o.id !== id);
+          localStorage.setItem('gedaluma_offline_inventories', JSON.stringify(filtered));
+        }
+
+        const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+        delete offlineItemsMap[id];
+        localStorage.setItem('gedaluma_offline_inventory_items', JSON.stringify(offlineItemsMap));
+      } catch (e) {}
+
+      alert('✅ Inventario eliminado correctamente.');
+    } catch (err: any) {
+      alert(`⚠️ Error al eliminar inventario: ${err.message || String(err)}`);
     }
   };
 
@@ -626,16 +690,16 @@ export function History() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <table style={{ width: '100%', minWidth: '960px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ background: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)' }}>
-                  <th style={{ padding: '12px 14px' }}>Tipo</th>
-                  <th style={{ padding: '12px 14px' }}>Fecha</th>
-                  <th style={{ padding: '12px 14px' }}>Isla</th>
-                  <th style={{ padding: '12px 14px' }}>Evaluador / Auditor</th>
-                  <th style={{ padding: '12px 14px' }}>Resultado / Métrica</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado RLS</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Acciones</th>
+                  <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Tipo</th>
+                  <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Fecha</th>
+                  <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Isla</th>
+                  <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Evaluador / Auditor</th>
+                  <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Resultado / Métrica</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Estado RLS</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -654,12 +718,12 @@ export function History() {
                       }}
                     >
                       {/* TIPO */}
-                      <td style={{ padding: '12px 14px' }}>
+                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                         {isInv ? (
                           <span style={{ 
                             padding: '4px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800,
                             background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)',
-                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                           }}>
                             <Package size={13} /> Inventario
                           </span>
@@ -667,7 +731,7 @@ export function History() {
                           <span style={{ 
                             padding: '4px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800,
                             background: 'rgba(247, 181, 0, 0.15)', color: '#b45309', border: '1px solid rgba(247, 181, 0, 0.4)',
-                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                           }}>
                             👻 Fantasma
                           </span>
@@ -675,7 +739,7 @@ export function History() {
                           <span style={{ 
                             padding: '4px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800,
                             background: 'rgba(0, 156, 72, 0.1)', color: '#009C48', border: '1px solid rgba(0, 156, 72, 0.3)',
-                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                           }}>
                             📝 Auditoría
                           </span>
@@ -688,38 +752,40 @@ export function History() {
                       </td>
 
                       {/* ISLA */}
-                      <td style={{ padding: '12px 14px', fontWeight: 800, color: '#009C48' }}>
+                      <td style={{ padding: '12px 14px', fontWeight: 800, color: '#009C48', whiteSpace: 'nowrap' }}>
                         ISLA {item.isla_name}
                       </td>
 
                       {/* EVALUADOR */}
                       <td style={{ padding: '12px 14px' }}>
-                        <span style={{ fontWeight: 700, display: 'block' }}>{item.evaluator_name}</span>
+                        <span style={{ fontWeight: 700, display: 'block', whiteSpace: 'nowrap' }}>{item.evaluator_name}</span>
                         {item.evaluated_employee && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap' }}>
                             Evaluado: {item.evaluated_employee}
                           </span>
                         )}
                       </td>
 
                       {/* RESULTADO / MÉTRICA */}
-                      <td style={{ padding: '12px 14px' }}>
+                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                         {isInv ? (
                           <div>
                             <span style={{ 
                               fontWeight: 800, 
-                              color: Number(item.total_missing || 0) > 0 ? '#ef4444' : '#009C48' 
+                              color: Number(item.total_missing || 0) > 0 ? '#ef4444' : '#009C48',
+                              whiteSpace: 'nowrap'
                             }}>
                               {Number(item.total_missing || 0) > 0 ? `Faltantes: ${item.total_missing} un. ($${Number(item.total_missing_dollars || 0).toFixed(2)})` : '✓ 100% Conforme'}
                             </span>
-                            <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                            <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                               OK: {item.total_match || 0} prod. | Sobrantes: +{item.total_surplus || 0}
                             </span>
                           </div>
                         ) : (
                           <span style={{ 
                             fontWeight: 900, fontSize: '0.95rem',
-                            color: Number(item.total_score || 0) >= 85 ? '#009C48' : Number(item.total_score || 0) >= 70 ? '#f59e0b' : '#ef4444'
+                            color: Number(item.total_score || 0) >= 85 ? '#009C48' : Number(item.total_score || 0) >= 70 ? '#f59e0b' : '#ef4444',
+                            whiteSpace: 'nowrap'
                           }}>
                             {Number(item.total_score || 0).toFixed(2)}%
                           </span>
@@ -727,13 +793,13 @@ export function History() {
                       </td>
 
                       {/* ESTADO VALIDACIÓN RLS */}
-                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                      <td style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isValid ? (
-                          <span className="text-success flex items-center justify-center gap-1" style={{ fontWeight: 700, fontSize: '0.78rem' }}>
+                          <span className="text-success flex items-center justify-center gap-1" style={{ fontWeight: 700, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                             <CheckCircle size={14}/> Válido
                           </span>
                         ) : (
-                          <span className="text-danger flex items-center justify-center gap-1" style={{ fontWeight: 700, fontSize: '0.78rem' }}>
+                          <span className="text-danger flex items-center justify-center gap-1" style={{ fontWeight: 700, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                             <AlertCircle size={14}/> Anulado
                           </span>
                         )}
@@ -750,7 +816,8 @@ export function History() {
                               background: item.is_discounted ? 'rgba(0, 156, 72, 0.15)' : 'rgba(247, 181, 0, 0.15)',
                               color: item.is_discounted ? '#009C48' : '#b45309',
                               border: 'none',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             {item.is_discounted ? '✓ Descontado' : '⚠️ Pendiente'}
@@ -760,13 +827,13 @@ export function History() {
 
                       {/* ACCIONES */}
                       <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                        <div className="flex gap-2 justify-end items-center flex-wrap">
+                        <div className="flex gap-1.5 justify-end items-center" style={{ flexWrap: 'nowrap' }}>
                           
                           {/* BOTÓN VER DETALLE */}
                           <button 
                             onClick={() => isInv ? viewInvDetails(item) : viewEvalDetails(item)} 
                             className="btn hover-lift" 
-                            style={{ padding: '5px 10px', fontSize: '0.78rem', background: 'rgba(0, 156, 72, 0.08)', color: '#009C48', border: '1px solid rgba(0, 156, 72, 0.2)', borderRadius: '6px' }}
+                            style={{ padding: '5px 8px', fontSize: '0.78rem', background: 'rgba(0, 156, 72, 0.08)', color: '#009C48', border: '1px solid rgba(0, 156, 72, 0.2)', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           >
                             <Eye size={14} /> Ver
                           </button>
@@ -776,7 +843,7 @@ export function History() {
                             <button
                               onClick={() => isInv ? openEditInvModal(item) : openEditEvalModal(item)}
                               className="btn hover-lift"
-                              style={{ padding: '5px 10px', fontSize: '0.78rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', borderRadius: '6px' }}
+                              style={{ padding: '5px 8px', fontSize: '0.78rem', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                               title="Editar valores de este registro (Exclusivo Administrador)"
                             >
                               <Pencil size={14} /> Editar
@@ -787,7 +854,7 @@ export function History() {
                           <button 
                             onClick={() => isInv ? downloadInventoryPDFDirect(item) : viewEvalDetails(item)} 
                             className="btn hover-lift" 
-                            style={{ padding: '5px 10px', fontSize: '0.78rem', background: 'var(--surface-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                            style={{ padding: '5px 8px', fontSize: '0.78rem', background: 'var(--surface-color)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             title="Descargar Informe PDF"
                           >
                             <Download size={14} /> PDF
@@ -801,11 +868,36 @@ export function History() {
                               padding: '5px 8px', fontSize: '0.75rem', fontWeight: 700, borderRadius: '6px',
                               color: isValid ? 'var(--danger)' : '#009C48', 
                               border: `1px solid ${isValid ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0, 156, 72, 0.3)'}`,
-                              background: 'transparent'
+                              background: 'transparent',
+                              whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
                           >
                             {isValid ? 'Anular' : 'Activar'}
                           </button>
+
+                          {/* BOTÓN ELIMINAR (SOLO ADMIN) */}
+                          {isAdmin && (
+                            <button 
+                              onClick={() => isInv ? handleDeleteInventory(item.id, item.isla_name) : handleDeleteEvaluation(item.id, item.isla_name)} 
+                              className="btn hover-lift"
+                              style={{ 
+                                padding: '5px 8px', fontSize: '0.75rem', fontWeight: 700, borderRadius: '6px',
+                                color: '#ef4444', 
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                background: 'rgba(239, 68, 68, 0.08)',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                              title="Eliminar registro permanentemente (Administrador)"
+                            >
+                              <Trash2 size={13} /> Eliminar
+                            </button>
+                          )}
                         </div>
                       </td>
 
