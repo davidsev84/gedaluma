@@ -9,7 +9,7 @@ export interface SyncResult {
 }
 
 /**
- * Purga de memoria local: Elimina claves vacías '[]', 'null' u objetos corrompidos en localStorage
+ * Sanitización de memoria local: Elimina claves vacías '[]' o nulas en localStorage
  */
 export function cleanOfflineStorage(): void {
   const arrayKeys = [
@@ -28,7 +28,6 @@ export function cleanOfflineStorage(): void {
         localStorage.removeItem(key);
         return;
       }
-      // Filtrar elementos válidos (objetos no nulos y con al menos 1 propiedad)
       const validItems = parsed.filter(item => item && typeof item === 'object' && Object.keys(item).length > 0);
       if (validItems.length === 0) {
         localStorage.removeItem(key);
@@ -78,10 +77,10 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
   let logbookSynced = 0;
   let penaltiesSynced = 0;
 
-  // 1. Sanitizar almacenamiento local previo
+  // Sanitizar llaves vacías
   cleanOfflineStorage();
 
-  // 2. SINCRONIZAR INVENTARIOS PENDIENTES
+  // 1. SINCRONIZACIÓN DE INVENTARIOS PENDIENTES
   const savedOfflineInventories = localStorage.getItem('gedaluma_offline_inventories');
   if (savedOfflineInventories) {
     try {
@@ -90,58 +89,114 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
       const remainingOffline: any[] = [];
 
       for (const offInv of offlineArr) {
-        if (!offInv || !offInv.isla_id) {
+        if (!offInv || (!offInv.isla_id && !offInv.isla_name)) {
           continue;
         }
 
+        // Comprobar si ya existe en Supabase antes de insertar
+        let isAlreadyInDb = false;
+        if (offInv.id) {
+          const { data: byId } = await supabase.from('inventories')
+            .select('id')
+            .eq('id', String(offInv.id))
+            .maybeSingle();
+          if (byId) isAlreadyInDb = true;
+        }
+
+        if (!isAlreadyInDb && offInv.isla_id && offInv.date && offInv.evaluator_name) {
+          const { data: byDetails } = await supabase.from('inventories')
+            .select('id')
+            .eq('isla_id', String(offInv.isla_id))
+            .eq('date', String(offInv.date))
+            .eq('evaluator_name', String(offInv.evaluator_name))
+            .limit(1);
+          if (byDetails && byDetails.length > 0) isAlreadyInDb = true;
+        }
+
+        if (isAlreadyInDb) {
+          delete offlineItemsMap[offInv.id];
+          inventoriesSynced++;
+          continue;
+        }
+
+        // Estructurar el payload a insertar
         const payloadToSync: any = {
-          id: offInv.id || `inv_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
           isla_id: String(offInv.isla_id || ''),
-          isla_name: offInv.isla_name || 'Desconocida',
-          evaluator_name: offInv.evaluator_name || 'Auditor',
-          date: offInv.date || new Date().toISOString().split('T')[0],
-          start_time: offInv.start_time || '00:00',
-          end_time: offInv.end_time || '00:00',
+          isla_name: String(offInv.isla_name || 'Desconocida'),
+          evaluator_name: String(offInv.evaluator_name || 'Auditor'),
+          date: String(offInv.date || new Date().toISOString().split('T')[0]),
+          start_time: String(offInv.start_time || '00:00'),
+          end_time: String(offInv.end_time || '00:00'),
           total_missing: Number(offInv.total_missing || 0),
           total_missing_dollars: Number(offInv.total_missing_dollars || 0),
           total_match: Number(offInv.total_match || 0),
           total_surplus: Number(offInv.total_surplus || 0),
           total_surplus_dollars: Number(offInv.total_surplus_dollars || 0),
           is_discounted: !!offInv.is_discounted,
-          created_at: offInv.created_at || new Date().toISOString()
+          created_at: String(offInv.created_at || new Date().toISOString())
         };
 
-        // Comprobar si ya existe en Supabase por ID o coincidencia de datos principales
-        const { data: existingInv } = await supabase.from('inventories')
-          .select('id')
-          .or(`id.eq.${payloadToSync.id},and(isla_id.eq.${payloadToSync.isla_id},date.eq.${payloadToSync.date},evaluator_name.eq.${payloadToSync.evaluator_name})`)
-          .limit(1);
-
-        if (existingInv && existingInv.length > 0) {
-          delete offlineItemsMap[offInv.id];
-          inventoriesSynced++;
-          continue;
+        if (offInv.id) {
+          payloadToSync.id = String(offInv.id);
         }
 
-        const { data: syncedInv, error: syncErr } = await supabase
+        let syncedInvRecord: any = null;
+        let insertErr: any = null;
+
+        const { data: invData, error: err1 } = await supabase
           .from('inventories')
           .insert([payloadToSync])
           .select()
           .single();
 
-        if (!syncErr && syncedInv) {
-          const items = offlineItemsMap[offInv.id] || [];
-          if (items.length > 0) {
-            const itemsToInsert = items.map((it: any) => ({ inventory_id: syncedInv.id, ...it }));
-            await supabase.from('inventory_items').insert(itemsToInsert);
+        if (!err1 && invData) {
+          syncedInvRecord = invData;
+        } else {
+          // Reintento sin ID por si el ID personalizado producía conflicto de llave o formato
+          const { id, ...payloadNoId } = payloadToSync;
+          const { data: retryData, error: err2 } = await supabase
+            .from('inventories')
+            .insert([payloadNoId])
+            .select()
+            .single();
+
+          if (!err2 && retryData) {
+            syncedInvRecord = retryData;
+          } else {
+            insertErr = err2 || err1;
+          }
+        }
+
+        if (syncedInvRecord) {
+          const items = offlineItemsMap[offInv.id] || offInv.items || [];
+          if (Array.isArray(items) && items.length > 0) {
+            const itemsToInsert = items.map((it: any) => ({
+              inventory_id: syncedInvRecord.id,
+              product_id: String(it.product_id || it.id || ''),
+              category: String(it.category || 'GENERAL'),
+              name: String(it.name || 'Producto'),
+              unit: String(it.unit || 'UN'),
+              cost: Number(it.cost || 0),
+              system_qty: Number(it.system_qty || 0),
+              physical_qty: Number(it.physical_qty || 0),
+              diff_qty: Number(it.diff_qty || (Number(it.physical_qty || 0) - Number(it.system_qty || 0))),
+              total_cost_impact: Number(it.total_cost_impact || 0),
+              observation: String(it.observation || '')
+            }));
+
+            try {
+              await supabase.from('inventory_items').insert(itemsToInsert);
+            } catch (e) {
+              console.warn('[Sync Inventory Items Error]', e);
+            }
           }
           delete offlineItemsMap[offInv.id];
           inventoriesSynced++;
-        } else if (syncErr && (syncErr.code === '23505' || syncErr.message?.includes('duplicate key'))) {
+        } else if (insertErr && (insertErr.code === '23505' || insertErr.message?.includes('duplicate key'))) {
           delete offlineItemsMap[offInv.id];
           inventoriesSynced++;
         } else {
-          console.warn('[Sync Inventarios Error]', syncErr);
+          console.error('[Sync Inventario Falló]', offInv, insertErr);
           remainingOffline.push(offInv);
         }
       }
@@ -158,7 +213,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // 3. SINCRONIZAR EVALUACIONES PENDIENTES
+  // 2. SINCRONIZACIÓN DE EVALUACIONES PENDIENTES
   const savedOfflineEvals = localStorage.getItem('gedaluma_offline_evaluations');
   if (savedOfflineEvals) {
     try {
@@ -166,65 +221,103 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
       const remainingEvals: any[] = [];
 
       for (const offEval of offlineEvals) {
-        if (!offEval || !offEval.isla_id) {
+        if (!offEval || (!offEval.isla_id && !offEval.isla_name)) {
           continue;
         }
 
         const isUuid = typeof offEval.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(offEval.id);
         
+        let isEvalInDb = false;
+        if (isUuid) {
+          const { data: byId } = await supabase.from('evaluations')
+            .select('id')
+            .eq('id', offEval.id)
+            .maybeSingle();
+          if (byId) isEvalInDb = true;
+        }
+
+        if (!isEvalInDb && offEval.isla_id && offEval.date && offEval.evaluator_name) {
+          const { data: byDetails } = await supabase.from('evaluations')
+            .select('id')
+            .eq('isla_id', String(offEval.isla_id))
+            .eq('date', String(offEval.date))
+            .eq('evaluator_name', String(offEval.evaluator_name))
+            .limit(1);
+          if (byDetails && byDetails.length > 0) isEvalInDb = true;
+        }
+
+        if (isEvalInDb) {
+          evaluationsSynced++;
+          continue;
+        }
+
         const evalPayload: any = {
           isla_id: String(offEval.isla_id || ''),
-          isla_name: offEval.isla_name || 'Desconocida',
-          evaluator_name: offEval.evaluator_name || 'Auditor',
-          evaluator_role: offEval.evaluator_role || 'evaluator',
-          evaluated_employee: offEval.evaluated_employee || null,
+          isla_name: String(offEval.isla_name || 'Desconocida'),
+          evaluator_name: String(offEval.evaluator_name || 'Auditor'),
+          evaluator_role: String(offEval.evaluator_role || 'evaluator'),
+          evaluated_employee: offEval.evaluated_employee ? String(offEval.evaluated_employee) : null,
           total_score: Number(offEval.total_score || 0),
-          status: offEval.status || 'Completado',
-          date: offEval.date || new Date().toISOString().split('T')[0],
-          created_at: offEval.created_at || new Date().toISOString()
+          status: String(offEval.status || 'Completado'),
+          date: String(offEval.date || new Date().toISOString().split('T')[0]),
+          created_at: String(offEval.created_at || new Date().toISOString())
         };
 
         if (isUuid) {
           evalPayload.id = offEval.id;
         }
-        if (offEval.auditor_type) evalPayload.auditor_type = offEval.auditor_type;
-        if (offEval.time_slot) evalPayload.time_slot = offEval.time_slot;
-        if (offEval.start_time) evalPayload.start_time = offEval.start_time;
-        if (offEval.end_time) evalPayload.end_time = offEval.end_time;
+        if (offEval.auditor_type) evalPayload.auditor_type = String(offEval.auditor_type);
+        if (offEval.time_slot) evalPayload.time_slot = String(offEval.time_slot);
+        if (offEval.start_time) evalPayload.start_time = String(offEval.start_time);
+        if (offEval.end_time) evalPayload.end_time = String(offEval.end_time);
 
-        // Comprobar si ya existe una evaluación equivalente en Supabase
-        const { data: existingEval } = await supabase.from('evaluations')
-          .select('id')
-          .eq('isla_id', evalPayload.isla_id)
-          .eq('date', evalPayload.date)
-          .eq('evaluator_name', evalPayload.evaluator_name)
-          .eq('total_score', evalPayload.total_score)
-          .limit(1);
+        let syncedEvalRecord: any = null;
+        let evalErr: any = null;
 
-        if (existingEval && existingEval.length > 0) {
-          evaluationsSynced++;
-          continue;
-        }
-
-        const { data: syncedEval, error: evalErr } = await supabase
+        const { data: eData, error: eErr1 } = await supabase
           .from('evaluations')
           .insert([evalPayload])
           .select()
           .single();
 
-        if (!evalErr && syncedEval) {
+        if (!eErr1 && eData) {
+          syncedEvalRecord = eData;
+        } else {
+          const { id, ...evalPayloadNoId } = evalPayload;
+          const { data: retryEData, error: eErr2 } = await supabase
+            .from('evaluations')
+            .insert([evalPayloadNoId])
+            .select()
+            .single();
+
+          if (!eErr2 && retryEData) {
+            syncedEvalRecord = retryEData;
+          } else {
+            evalErr = eErr2 || eErr1;
+          }
+        }
+
+        if (syncedEvalRecord) {
           if (Array.isArray(offEval.responses) && offEval.responses.length > 0) {
             const respToInsert = offEval.responses.map((r: any) => ({
-              ...r,
-              evaluation_id: syncedEval.id
+              evaluation_id: syncedEvalRecord.id,
+              question_id: String(r.question_id || ''),
+              question_text: String(r.question_text || ''),
+              value: String(r.value || ''),
+              observation: r.observation ? String(r.observation) : null,
+              photo_data: r.photo_data ? String(r.photo_data) : null
             }));
-            await supabase.from('responses').insert(respToInsert);
+            try {
+              await supabase.from('responses').insert(respToInsert);
+            } catch (e) {
+              console.warn('[Sync Responses Error]', e);
+            }
           }
           evaluationsSynced++;
         } else if (evalErr && (evalErr.code === '23505' || evalErr.message?.includes('duplicate key'))) {
           evaluationsSynced++;
         } else {
-          console.warn('[Sync Evaluaciones Error]', evalErr);
+          console.error('[Sync Evaluación Falló]', offEval, evalErr);
           remainingEvals.push(offEval);
         }
       }
@@ -239,7 +332,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // 4. SINCRONIZAR BITÁCORA PENDIENTE
+  // 3. SINCRONIZACIÓN DE BITÁCORA PENDIENTE
   const savedOfflineLogbook = localStorage.getItem('gedaluma_offline_logbook');
   if (savedOfflineLogbook) {
     try {
@@ -254,8 +347,8 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         const { data: existingLog } = await supabase.from('logbook_entries')
           .select('id')
           .eq('isla_id', String(entry.isla_id))
-          .eq('date', entry.date)
-          .eq('description', entry.description)
+          .eq('date', String(entry.date))
+          .eq('description', String(entry.description))
           .limit(1);
 
         if (existingLog && existingLog.length > 0) {
@@ -273,7 +366,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
           if (!retryErr || retryErr.code === '23505') {
             logbookSynced++;
           } else {
-            console.warn('[Sync Bitácora Error]', logErr);
+            console.error('[Sync Bitácora Falló]', logErr);
             remainingLogbook.push(entry);
           }
         }
@@ -289,7 +382,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // 5. SINCRONIZAR FALTAS / PENALIZACIONES PENDIENTES
+  // 4. SINCRONIZACIÓN DE FALTAS / PENALIZACIONES PENDIENTES
   const savedOfflinePenalties = localStorage.getItem('gedaluma_offline_penalties');
   if (savedOfflinePenalties) {
     try {
@@ -316,7 +409,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
         if (!penErr || penErr.code === '23505' || penErr.message?.includes('duplicate key')) {
           penaltiesSynced++;
         } else {
-          console.warn('[Sync Penalties Error]', penErr);
+          console.error('[Sync Penalties Falló]', penErr);
           remainingPenalties.push(pen);
         }
       }
@@ -331,7 +424,7 @@ export async function syncOfflineDataToSupabase(): Promise<SyncResult> {
     }
   }
 
-  // Sanitizar memoria local final
+  // Sanitizar almacenamiento local final
   cleanOfflineStorage();
 
   const totalSynced = inventoriesSynced + evaluationsSynced + logbookSynced + penaltiesSynced;
