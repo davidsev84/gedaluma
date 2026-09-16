@@ -138,7 +138,6 @@ export function Logbook() {
     const islaObj = islands.find(i => i.id === formIsla || i.name === formIsla);
 
     const startTimeToUse = formStartTime || '09:00 AM';
-    const isCompleted = !!formEndTime;
 
     const newPayload: LogbookEntry = {
       id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -149,8 +148,8 @@ export function Logbook() {
       description: formDescription,
       date: formDate || selectedDate,
       start_time: startTimeToUse,
-      end_time: formEndTime || '',
-      status: isCompleted ? 'completed' : 'scheduled',
+      end_time: '',
+      status: 'scheduled',
       created_by: user?.name || 'Supervisor',
       is_valid: true,
       created_at: new Date().toISOString()
@@ -173,7 +172,7 @@ export function Logbook() {
 
     setShowFormModal(false);
     resetForm();
-    alert(isCompleted ? '✅ Tarea agendada y completada.' : '✅ Tarea agendada exitosamente en la agenda.');
+    alert('✅ Tarea creada exitosamente. Para dar inicio a la tarea, presiona el botón "▶️ Iniciar Tarea".');
   };
 
   const handleStartScheduledTask = async (entry: LogbookEntry) => {
@@ -789,19 +788,21 @@ export function Logbook() {
                 </div>
               </div>
 
-              <div className="form-group mb-4">
-                <label className="form-label" style={{ fontWeight: 700 }}>🏁 Hora Finalización (Opcional si inicia ahora):</label>
-                <select 
-                  className="form-control"
-                  value={formEndTime}
-                  onChange={e => setFormEndTime(e.target.value)}
-                >
-                  <option value="">-- En Progreso (Se finaliza después) --</option>
-                  {TIME_SLOTS.map(slot => (
-                    <option key={`end_${slot}`} value={slot}>{slot}</option>
-                  ))}
-                </select>
-              </div>
+              {editingEntry && (
+                <div className="form-group mb-4">
+                  <label className="form-label" style={{ fontWeight: 700 }}>🏁 Hora Finalización (Opcional):</label>
+                  <select 
+                    className="form-control"
+                    value={formEndTime}
+                    onChange={e => setFormEndTime(e.target.value)}
+                  >
+                    <option value="">-- En Progreso / Pendiente --</option>
+                    {TIME_SLOTS.map(slot => (
+                      <option key={`end_${slot}`} value={slot}>{slot}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="form-group mb-4">
                 <label className="form-label" style={{ fontWeight: 700 }}>Isla donde se realiza la tarea:</label>
@@ -868,7 +869,7 @@ export function Logbook() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ background: '#009C48', borderColor: '#009C48' }}>
-                  {editingEntry ? 'Guardar Cambios' : '▶️ Iniciar Tarea'}
+                  {editingEntry ? 'Guardar Cambios' : '➕ Crear Tarea (Pendiente de Iniciar)'}
                 </button>
               </div>
             </form>
