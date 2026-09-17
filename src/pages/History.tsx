@@ -777,11 +777,11 @@ export function History() {
                               whiteSpace: 'nowrap'
                             }}>
                               {Number(item.total_missing || 0) > 0 
-                                ? `Faltan: ${Number(item.total_missing || 0).toFixed(2)} un. ($${Number(item.total_missing_dollars || 0).toFixed(2)})` 
+                                ? `Faltan: ${Number(item.total_missing || 0).toFixed(2)} un.` 
                                 : '✓ 100% Conforme'}
                             </span>
                             <span style={{ display: 'block', fontSize: '0.71rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                              OK: {item.total_match || 0} prod. | Sobrantes: +${Number(item.total_surplus_dollars || 0).toFixed(2)} (+${Number(item.total_surplus || 0).toFixed(2)} un.)
+                              OK: {item.total_match || 0} prod. | Sobrantes: +{Number(item.total_surplus || 0).toFixed(2)} un.
                             </span>
                           </div>
                         ) : (
@@ -1073,7 +1073,7 @@ export function History() {
               <div>
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 700 }}>FALTANTES</span>
                 <span style={{ fontSize: '0.92rem', fontWeight: 900, color: Number(selectedInv.total_missing || 0) > 0 ? '#ef4444' : '#009C48' }}>
-                  {Number(selectedInv.total_missing || 0).toFixed(2)} un. (${Number(selectedInv.total_missing_dollars || 0).toFixed(2)})
+                  {Number(selectedInv.total_missing || 0).toFixed(2)} un.
                 </span>
               </div>
 
@@ -1087,7 +1087,7 @@ export function History() {
               <div>
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 700 }}>SOBRANTES</span>
                 <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#f59e0b' }}>
-                  +{Number(selectedInv.total_surplus || 0).toFixed(2)} un. (+${Number(selectedInv.total_surplus_dollars || 0).toFixed(2)})
+                  +{Number(selectedInv.total_surplus || 0).toFixed(2)} un.
                 </span>
               </div>
             </div>
