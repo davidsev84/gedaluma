@@ -156,29 +156,37 @@ export const generateInventoryPDF = (
     doc.setTextColor(50, 50, 50);
     doc.text(`Isla: ISLA ${inventory.isla_name || 'Desconocida'}`, 20, 32);
     doc.text(`Responsable / Evaluador: ${inventory.evaluator_name || 'N/A'}`, 20, 39);
-    doc.text(`Fecha y Hora: ${inventory.date || new Date().toLocaleDateString()} (${inventory.start_time || ''} - ${inventory.end_time || ''})`, 20, 46);
+
+    let boxY = 52;
+    if (inventory.evaluated_employee) {
+      doc.text(`Evaluado: ${inventory.evaluated_employee}`, 20, 46);
+      doc.text(`Fecha y Hora: ${inventory.date || new Date().toLocaleDateString()} (${inventory.start_time || ''} - ${inventory.end_time || ''})`, 20, 53);
+      boxY = 59;
+    } else {
+      doc.text(`Fecha y Hora: ${inventory.date || new Date().toLocaleDateString()} (${inventory.start_time || ''} - ${inventory.end_time || ''})`, 20, 46);
+    }
 
     // Summary Card Box
     doc.setFillColor(244, 248, 245);
-    doc.rect(20, 52, 170, 26, 'F');
+    doc.rect(20, boxY, 170, 26, 'F');
     doc.setFontSize(9.5);
     doc.setTextColor(0, 156, 72);
-    doc.text(`Total Productos Evaluados: ${items.length}`, 25, 60);
+    doc.text(`Total Productos Evaluados: ${items.length}`, 25, boxY + 8);
 
     const missingUn = Number(inventory.total_missing || 0).toFixed(2);
     const missingDol = Number(inventory.total_missing_dollars || (Number(inventory.total_missing || 0) * 1.00)).toFixed(2);
     doc.setTextColor(239, 68, 68);
-    doc.text(`Total Faltantes: ${missingUn} un. ($${missingDol})`, 25, 67);
+    doc.text(`Total Faltantes: ${missingUn} un. ($${missingDol})`, 25, boxY + 15);
 
     doc.setTextColor(2, 132, 199);
-    doc.text(`Total Conformes: ${Number(inventory.total_match || 0).toFixed(2)} prod.`, 110, 60);
+    doc.text(`Total Conformes: ${Number(inventory.total_match || 0).toFixed(2)} prod.`, 110, boxY + 8);
 
     const surplusUn = Number(inventory.total_surplus || 0).toFixed(2);
     const surplusDol = Number(inventory.total_surplus_dollars || (Number(inventory.total_surplus || 0) * 1.00)).toFixed(2);
     doc.setTextColor(247, 181, 0);
-    doc.text(`Total Sobrantes: +${surplusUn} un. (+$${surplusDol})`, 110, 67);
+    doc.text(`Total Sobrantes: +${surplusUn} un. (+$${surplusDol})`, 110, boxY + 15);
 
-    let currentY = 86;
+    let currentY = boxY + 34;
 
     // Group items dynamically by Category
     const categoryMap: Record<string, any[]> = {};

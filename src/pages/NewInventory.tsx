@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useAuth } from '../context/AuthContext';
-import { getStoredIslas, getStoredInventoryProducts } from '../data/mock';
+import { getStoredIslas, getStoredInventoryProducts, mockEmployees } from '../data/mock';
 import type { InventoryProduct } from '../data/mock';
 import { supabase } from '../lib/supabase';
 import { generateInventoryPDF } from '../lib/pdfGenerator';
@@ -22,6 +22,7 @@ export function NewInventory() {
   const [step, setStep] = useState(0);
   const [selectedIsla, setSelectedIsla] = useState(initialIslaId);
   const [evaluatorName, setEvaluatorName] = useState(user?.name || 'Supervisor Operativo');
+  const [evaluatedEmployee, setEvaluatedEmployee] = useState('');
   const [inventoryDate, setInventoryDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -143,6 +144,7 @@ export function NewInventory() {
         isla_id: selectedIsla,
         isla_name: islaObj?.name || 'Desconocida',
         evaluator_name: evaluatorName,
+        evaluated_employee: evaluatedEmployee.trim() || null,
         date: inventoryDate,
         start_time: startTime,
         end_time: endTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -273,6 +275,23 @@ export function NewInventory() {
                 required
                 placeholder="Nombre de la persona que realiza el conteo..."
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Empleado Evaluado / Vendedora (Opcional)</label>
+              <input 
+                type="text" 
+                className="form-control"
+                value={evaluatedEmployee}
+                onChange={e => setEvaluatedEmployee(e.target.value)}
+                placeholder="Nombre de la vendedora / empleada evaluada..."
+                list="inventory-emp-list"
+              />
+              <datalist id="inventory-emp-list">
+                {mockEmployees.map(emp => (
+                  <option key={emp.id} value={emp.name} />
+                ))}
+              </datalist>
             </div>
 
             <div className="form-group">

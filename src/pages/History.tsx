@@ -425,6 +425,7 @@ export function History() {
         isla_id: String(editingInv.isla_id),
         isla_name: editingInv.isla_name,
         evaluator_name: editingInv.evaluator_name,
+        evaluated_employee: editingInv.evaluated_employee || null,
         date: editingInv.date,
         start_time: editingInv.start_time,
         end_time: editingInv.end_time,
@@ -1068,6 +1069,11 @@ export function History() {
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 700 }}>ISLA & EVALUADOR</span>
                 <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#009C48' }}>ISLA {selectedInv.isla_name}</span>
                 <span style={{ fontSize: '0.78rem', display: 'block', color: 'var(--text-primary)' }}>{selectedInv.evaluator_name}</span>
+                {selectedInv.evaluated_employee && (
+                  <span style={{ fontSize: '0.75rem', display: 'block', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                    Evaluado: {selectedInv.evaluated_employee}
+                  </span>
+                )}
               </div>
 
               <div>
@@ -1347,7 +1353,7 @@ export function History() {
               Modificación de existencias, totales de faltantes ($) y visto de descuento en nómina
             </p>
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-4 gap-3 mb-4">
               <div className="form-group">
                 <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Isla</label>
                 <select 
@@ -1376,6 +1382,18 @@ export function History() {
                   className="form-control"
                   value={editingInv.evaluator_name || ''}
                   onChange={(e) => setEditingInv({ ...editingInv, evaluator_name: e.target.value })}
+                  style={{ fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.8rem' }}>Empleado Evaluado</label>
+                <input 
+                  type="text"
+                  className="form-control"
+                  value={editingInv.evaluated_employee || ''}
+                  onChange={(e) => setEditingInv({ ...editingInv, evaluated_employee: e.target.value })}
+                  placeholder="Nombre vendedora..."
                   style={{ fontSize: '0.85rem' }}
                 />
               </div>

@@ -1869,7 +1869,12 @@ export function Dashboard() {
                           </td>
 
                           <td style={{ padding: '14px' }}>
-                            {inv.evaluator_name || 'Auditor Operativo'}
+                            <span style={{ fontWeight: 700, display: 'block' }}>{inv.evaluator_name || 'Auditor Operativo'}</span>
+                            {inv.evaluated_employee && (
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
+                                Evaluado: {inv.evaluated_employee}
+                              </span>
+                            )}
                           </td>
 
                           <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: !isValid ? 'var(--text-secondary)' : missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
