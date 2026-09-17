@@ -507,6 +507,28 @@ export function Dashboard() {
     }
   };
 
+  const downloadInventoryPDFDirect = async (inventory: any) => {
+    let items: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('inventory_id', inventory.id);
+
+      if (!error && data && data.length > 0) {
+        items = data;
+      } else {
+        const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+        items = offlineItemsMap[inventory.id] || [];
+      }
+    } catch (e) {
+      const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
+      items = offlineItemsMap[inventory.id] || [];
+    }
+
+    generateInventoryPDF(inventory, items);
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 90) return '#009C48';
     if (score >= 75) return '#0284c7';
@@ -1903,11 +1925,7 @@ export function Dashboard() {
 
                           <td style={{ padding: '14px', textAlign: 'right' }}>
                             <button
-                              onClick={() => {
-                                const offlineItemsMap = JSON.parse(localStorage.getItem('gedaluma_offline_inventory_items') || '{}');
-                                const items = offlineItemsMap[inv.id] || [];
-                                generateInventoryPDF(inv, items);
-                              }}
+                              onClick={() => downloadInventoryPDFDirect(inv)}
                               className="btn btn-outline flex items-center gap-1"
                               style={{ padding: '6px 12px', fontSize: '0.8rem', marginLeft: 'auto' }}
                             >

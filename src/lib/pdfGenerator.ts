@@ -165,105 +165,120 @@ export const generateInventoryPDF = (
     doc.setTextColor(0, 156, 72);
     doc.text(`Total Productos Evaluados: ${items.length}`, 25, 60);
 
-    const missingUn = inventory.total_missing || 0;
-    const missingDol = Number(inventory.total_missing_dollars || missingUn * 1.00).toFixed(2);
+    const missingUn = Number(inventory.total_missing || 0).toFixed(2);
+    const missingDol = Number(inventory.total_missing_dollars || (Number(inventory.total_missing || 0) * 1.00)).toFixed(2);
     doc.setTextColor(239, 68, 68);
     doc.text(`Total Faltantes: ${missingUn} un. ($${missingDol})`, 25, 67);
 
     doc.setTextColor(2, 132, 199);
-    doc.text(`Total Conformes: ${inventory.total_match || 0} prod.`, 110, 60);
+    doc.text(`Total Conformes: ${Number(inventory.total_match || 0).toFixed(2)} prod.`, 110, 60);
 
-    const surplusUn = inventory.total_surplus || 0;
-    const surplusDol = Number(inventory.total_surplus_dollars || surplusUn * 1.00).toFixed(2);
+    const surplusUn = Number(inventory.total_surplus || 0).toFixed(2);
+    const surplusDol = Number(inventory.total_surplus_dollars || (Number(inventory.total_surplus || 0) * 1.00)).toFixed(2);
     doc.setTextColor(247, 181, 0);
     doc.text(`Total Sobrantes: +${surplusUn} un. (+$${surplusDol})`, 110, 67);
 
     let currentY = 86;
 
-    // Separate items by Category
-    const categoriesList = ['COCOEXPRESS', 'KELAO'];
+    // Group items dynamically by Category
+    const categoryMap: Record<string, any[]> = {};
+    if (items && items.length > 0) {
+      items.forEach((it: any) => {
+        const cat = String(it.category || 'GENERAL').toUpperCase().trim();
+        if (!categoryMap[cat]) categoryMap[cat] = [];
+        categoryMap[cat].push(it);
+      });
+    }
 
-    categoriesList.forEach((catName) => {
-      const catItems = items.filter(it => it.category === catName);
-      if (catItems.length === 0) return;
+    const categoryKeys = Object.keys(categoryMap);
 
-      doc.setFontSize(11.5);
-      doc.setTextColor(0, 156, 72);
-      doc.text(`CATEGORIA: ${catName}`, 20, currentY);
-      currentY += 8;
+    if (categoryKeys.length === 0) {
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 100);
+      doc.text('No hay productos registrados en este inventario.', 20, currentY);
+    } else {
+      categoryKeys.forEach((catName) => {
+        const catItems = categoryMap[catName];
+        if (!catItems || catItems.length === 0) return;
 
-      // Table Header
-      doc.setFontSize(8.5);
-      doc.setTextColor(255, 255, 255);
-      doc.setFillColor(0, 156, 72);
-      doc.rect(14, currentY, 184, 7, 'F');
-      doc.text('Producto', 16, currentY + 5);
-      doc.text('U/M', 72, currentY + 5);
-      doc.text('Costo', 84, currentY + 5);
-      doc.text('Sistema', 98, currentY + 5);
-      doc.text('Físico', 113, currentY + 5);
-      doc.text('Diferencia ($)', 128, currentY + 5);
-      doc.text('Observaciones Completa', 160, currentY + 5);
-      currentY += 9;
+        doc.setFontSize(11.5);
+        doc.setTextColor(0, 156, 72);
+        doc.text(`CATEGORIA: ${catName}`, 20, currentY);
+        currentY += 8;
 
-      doc.setFontSize(8);
+        // Table Header
+        doc.setFontSize(8.5);
+        doc.setTextColor(255, 255, 255);
+        doc.setFillColor(0, 156, 72);
+        doc.rect(14, currentY, 184, 7, 'F');
+        doc.text('Producto', 16, currentY + 5);
+        doc.text('U/M', 72, currentY + 5);
+        doc.text('Costo', 84, currentY + 5);
+        doc.text('Sistema', 98, currentY + 5);
+        doc.text('Físico', 113, currentY + 5);
+        doc.text('Diferencia ($)', 128, currentY + 5);
+        doc.text('Observaciones Completa', 160, currentY + 5);
+        currentY += 9;
 
-      catItems.forEach((it: any) => {
-        const sys = Number(it.system_qty || 0);
-        const phys = Number(it.physical_qty || 0);
-        const diff = phys - sys;
-        const unitCost = Number(it.cost || 1.00);
-        const diffDollars = diff * unitCost;
+        doc.setFontSize(8);
 
-        let diffText = 'Conforme ($0.00)';
-        if (diff < 0) {
-          diffText = `Falta (${diff} / -$${Math.abs(diffDollars).toFixed(2)})`;
-        } else if (diff > 0) {
-          diffText = `Sobrante (+${diff} / +$${diffDollars.toFixed(2)})`;
-        }
+        catItems.forEach((it: any) => {
+          const sys = Number(it.system_qty || 0);
+          const phys = Number(it.physical_qty || 0);
+          const diff = phys - sys;
+          const unitCost = Number(it.cost || 0);
+          const diffDollars = diff * unitCost;
 
-        const prodLines = doc.splitTextToSize(it.name || '', 52);
-        const obsLines = doc.splitTextToSize(it.observation || '-', 36);
-        const maxLines = Math.max(prodLines.length, obsLines.length, 1);
-        const rowHeight = Math.max(maxLines * 4.5, 6.5);
+          let diffText = 'Conforme ($0.00)';
+          if (diff < 0) {
+            diffText = `Falta (${diff.toFixed(2)} / -$${Math.abs(diffDollars).toFixed(2)})`;
+          } else if (diff > 0) {
+            diffText = `Sobrante (+${diff.toFixed(2)} / +$${diffDollars.toFixed(2)})`;
+          }
 
-        if (currentY + rowHeight > 275) {
+          const prodLines = doc.splitTextToSize(it.name || '', 52);
+          const obsLines = doc.splitTextToSize(it.observation || '-', 36);
+          const maxLines = Math.max(prodLines.length, obsLines.length, 1);
+          const rowHeight = Math.max(maxLines * 4.5, 6.5);
+
+          if (currentY + rowHeight > 275) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          // Draw row background for Faltantes
+          if (diff < 0) {
+            doc.setFillColor(254, 242, 242);
+            doc.rect(14, currentY - 3, 184, rowHeight, 'F');
+            doc.setTextColor(185, 28, 28);
+          } else if (diff > 0) {
+            doc.setFillColor(240, 249, 255);
+            doc.rect(14, currentY - 3, 184, rowHeight, 'F');
+            doc.setTextColor(3, 105, 161);
+          } else {
+            doc.setTextColor(50, 50, 50);
+          }
+
+          doc.text(prodLines, 16, currentY);
+          doc.text(String(it.unit || 'UN'), 72, currentY);
+          doc.text(`$${unitCost.toFixed(2)}`, 84, currentY);
+          doc.text(sys.toFixed(2), 98, currentY);
+          doc.text(phys.toFixed(2), 113, currentY);
+          doc.text(diffText, 128, currentY);
+          
+          // Imprimir TODAS las líneas de observación sin truncar
+          doc.text(obsLines, 160, currentY);
+
+          currentY += rowHeight + 1.5;
+        });
+
+        currentY += 6;
+        if (currentY > 270) {
           doc.addPage();
           currentY = 20;
         }
-
-        // Draw row background for Faltantes
-        if (diff < 0) {
-          doc.setFillColor(254, 242, 242);
-          doc.rect(14, currentY - 3, 184, rowHeight, 'F');
-          doc.setTextColor(185, 28, 28);
-        } else if (diff > 0) {
-          doc.setFillColor(240, 249, 255);
-          doc.rect(14, currentY - 3, 184, rowHeight, 'F');
-          doc.setTextColor(3, 105, 161);
-        } else {
-          doc.setTextColor(50, 50, 50);
-        }
-
-        doc.text(prodLines, 16, currentY);
-        doc.text(String(it.unit || 'UN'), 72, currentY);
-        doc.text(`$${unitCost.toFixed(2)}`, 84, currentY);
-        doc.text(String(sys), 100, currentY);
-        doc.text(String(phys), 115, currentY);
-        doc.text(diffText, 128, currentY);
-        
-        // Imprimir TODAS las líneas de observación sin truncar
-        doc.text(obsLines, 160, currentY);
-
-        currentY += rowHeight + 1.5;
       });
-
-      currentY += 6;
-      if (currentY > 270) {
-        doc.addPage();
-        currentY = 20;
-      }
-    });
+    }
 
     // Signature Block
     if (evaluatorSignature) {
