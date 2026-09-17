@@ -24,13 +24,8 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
   const [newProdName, setNewProdName] = useState('');
   const [newProdCategory, setNewProdCategory] = useState<'COCOEXPRESS' | 'KELAO'>('COCOEXPRESS');
   const [newProdUnit, setNewProdUnit] = useState<'UN' | 'LT' | 'GR'>('UN');
-  const [newProdCost, setNewProdCost] = useState<number>(1.00);
 
   if (!isOpen) return null;
-
-  const handleCostChange = (id: string, newCost: number) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, cost: Math.max(0, newCost) } : p));
-  };
 
   const handleNameChange = (id: string, newName: string) => {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
@@ -47,11 +42,15 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
     if (onSave) onSave();
   };
 
-  const handleResetDefaults = () => {
-    if (window.confirm('¿Deseas restaurar los costos y nombres de productos al valor por defecto ($1.00 cada uno)?')) {
-      setProducts(inventoryProductsCatalog);
-      saveStoredInventoryProducts(inventoryProductsCatalog);
-      if (onSave) onSave();
+  const handleResetDefaults = async () => {
+    if (window.confirm('¿Deseas restaurar los productos al catálogo por defecto?')) {
+      try {
+        setProducts(inventoryProductsCatalog);
+        saveStoredInventoryProducts(inventoryProductsCatalog);
+        if (onSave) onSave();
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
@@ -64,7 +63,7 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
       category: newProdCategory,
       name: newProdName.trim(),
       unit: newProdUnit,
-      cost: Number(newProdCost) || 1.00
+      cost: 1.00
     };
 
     const updated = [...products, newProd];
@@ -117,9 +116,9 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
           <div className="flex items-center gap-2">
             <Tag style={{ color: '#009C48' }} size={24} />
             <div>
-              <h3 className="text-xl font-bold" style={{ margin: 0 }}>Catálogo y Costos de Productos de Inventario</h3>
+              <h3 className="text-xl font-bold" style={{ margin: 0 }}>Catálogo de Productos de Inventario</h3>
               <p className="text-muted" style={{ fontSize: '0.8rem', margin: 0 }}>
-                Modifica el costo unitario ($), nombre y unidad de medida (U/M) para estadísticas y reportes
+                Gestión de nombres y unidades de medida (U/M) para inventarios
               </p>
             </div>
           </div>
@@ -232,23 +231,7 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
                 </select>
               </div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-primary)' }}>
-                  Costo PVP ($) *
-                </label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="0.00"
-                  className="form-control"
-                  style={{ fontSize: '0.85rem' }}
-                  value={newProdCost}
-                  onChange={e => setNewProdCost(Number(e.target.value))}
-                  required
-                />
-              </div>
-
-              <div style={{ gridColumn: 'span 3', display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
+              <div style={{ gridColumn: 'span 4', display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
                 <button 
                   type="button" 
                   onClick={() => setShowAddForm(false)} 
@@ -274,10 +257,9 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
             <thead>
               <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
-                <th style={{ padding: '10px 16px', width: '45%' }}>Nombre del Producto</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', width: '20%' }}>U/M</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', width: '25%' }}>Costo Unitario ($)</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', width: '10%' }}>Categoría</th>
+                <th style={{ padding: '10px 16px', width: '60%' }}>Nombre del Producto</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', width: '25%' }}>U/M</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', width: '15%' }}>Categoría</th>
               </tr>
             </thead>
             <tbody>
@@ -307,21 +289,6 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
                   </td>
 
                   <td style={{ padding: '8px 16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: 800, color: '#009C48' }}>$</span>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        min="0"
-                        className="form-control"
-                        style={{ width: '100px', textAlign: 'center', fontWeight: 800, color: '#009C48', padding: '4px 8px' }}
-                        value={p.cost}
-                        onChange={e => handleCostChange(p.id, Number(e.target.value))}
-                      />
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'var(--bg-color)', color: 'var(--text-secondary)' }}>
                       {p.category}
                     </span>
@@ -347,13 +314,13 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
             className="btn btn-ghost text-muted flex items-center gap-1"
             style={{ fontSize: '0.82rem' }}
           >
-            <RotateCcw size={15} /> Restaurar valores por defecto ($1.00)
+            <RotateCcw size={15} /> Restaurar catálogo por defecto
           </button>
 
           <div className="flex gap-3 items-center">
             {savedSuccess && (
               <span className="flex items-center gap-1" style={{ color: '#009C48', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Check size={16} /> ¡Costos guardados!
+                <Check size={16} /> ¡Cambios guardados!
               </span>
             )}
             <button onClick={onClose} className="btn btn-ghost">
@@ -364,7 +331,7 @@ export function ProductCatalogModal({ isOpen, onClose, onSave }: Props) {
               className="btn btn-primary flex items-center gap-2"
               style={{ background: '#009C48', borderColor: '#009C48', padding: '10px 20px', fontWeight: 800 }}
             >
-              <Save size={18} /> Guardar Todos los Costos
+              <Save size={18} /> Guardar Catálogo
             </button>
           </div>
         </div>

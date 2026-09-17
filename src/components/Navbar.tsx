@@ -206,7 +206,7 @@ export function Navbar() {
                 </span>
               </button>
 
-              {/* MODIFICAR COSTOS / CATÁLOGO */}
+              {/* MODIFICAR CATÁLOGO DE PRODUCTOS */}
               <button
                 onClick={() => setShowCatalogModal(true)}
                 className="btn hidden-mobile"
@@ -219,9 +219,9 @@ export function Navbar() {
                   color: '#009C48',
                   border: '1px solid rgba(0, 156, 72, 0.25)'
                 }}
-                title="Editar costos de productos"
+                title="Ver catálogo de productos"
               >
-                <Tag size={15} /> Costos
+                <Tag size={15} /> Catálogo
               </button>
 
               {/* MODO OSCURO / CLARO */}
@@ -386,11 +386,11 @@ export function Navbar() {
               style={{
                 padding: '12px 16px',
                 fontSize: '0.9rem',
-                fontWeight: 800,
-                borderRadius: '12px',
+                fontWeight: 700,
+                borderRadius: '10px',
                 background: 'rgba(0, 156, 72, 0.08)',
                 color: '#009C48',
-                border: '1.5px solid rgba(0, 156, 72, 0.3)',
+                border: '1px solid rgba(0, 156, 72, 0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
@@ -399,7 +399,7 @@ export function Navbar() {
               }}
             >
               <Tag size={20} />
-              <span>🏷️ Modificar Catálogo & Costos</span>
+              <span>🏷️ Catálogo de Productos</span>
             </button>
           </div>
 

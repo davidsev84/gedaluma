@@ -1098,7 +1098,7 @@ export function History() {
               </div>
             </div>
 
-            <h3 className="text-md mb-3" style={{ fontWeight: 800 }}>Desglose de Productos e Impacto ($)</h3>
+            <h3 className="text-md mb-3" style={{ fontWeight: 800 }}>Desglose de Productos Evaluados</h3>
             
             {loadingDetails ? (
               <p className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>Cargando detalle de ítems de inventario...</p>
@@ -1111,8 +1111,6 @@ export function History() {
                       <th style={{ padding: '10px 12px', textAlign: 'center' }}>Sistema</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center' }}>Físico</th>
                       <th style={{ padding: '10px 12px', textAlign: 'center' }}>Diferencia</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>Costo Un.</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>Impacto Total ($)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1120,7 +1118,6 @@ export function History() {
                       const diff = Number(it.diff_qty || (it.physical_qty - it.system_qty) || 0);
                       const isMissing = diff < 0;
                       const isSurplus = diff > 0;
-                      const impact = Number(it.total_cost_impact || (diff * Number(it.cost || 0)));
 
                       return (
                         <tr key={it.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -1131,18 +1128,14 @@ export function History() {
                           <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>{Number(it.system_qty || 0).toFixed(2)}</td>
                           <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800 }}>{Number(it.physical_qty || 0).toFixed(2)}</td>
                           <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: isMissing ? '#ef4444' : isSurplus ? '#f59e0b' : '#009C48' }}>
-                            {diff > 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2)}
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>${Number(it.cost || 0).toFixed(2)}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: isMissing ? '#ef4444' : isSurplus ? '#f59e0b' : '#009C48' }}>
-                            ${Number(impact).toFixed(2)}
+                            {diff > 0 ? `+${diff.toFixed(2)} un.` : diff < 0 ? `${diff.toFixed(2)} un.` : 'Conforme'}
                           </td>
                         </tr>
                       );
                     })}
                     {invItems.length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                           No hay detalle de productos guardado para este conteo de inventario.
                         </td>
                       </tr>
@@ -1411,7 +1404,7 @@ export function History() {
             </div>
 
             {/* CAMPOS KPI DEL INVENTARIO */}
-            <div className="grid grid-cols-4 gap-3 mb-4" style={{ background: 'var(--surface-color)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+            <div className="grid grid-cols-2 gap-3 mb-4" style={{ background: 'var(--surface-color)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
               <div>
                 <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#ef4444' }}>Faltantes (Unid.)</label>
                 <input 
@@ -1425,18 +1418,6 @@ export function History() {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#ef4444' }}>Faltantes Total ($)</label>
-                <input 
-                  type="number"
-                  step="0.01"
-                  className="form-control"
-                  value={editingInv.total_missing_dollars ?? 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_missing_dollars: parseFloat(e.target.value.replace(',', '.')) || 0 })}
-                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
-                />
-              </div>
-
-              <div>
                 <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0284c7' }}>Conformes (Prod.)</label>
                 <input 
                   type="number"
@@ -1444,18 +1425,6 @@ export function History() {
                   className="form-control"
                   value={editingInv.total_match ?? 0}
                   onChange={(e) => setEditingInv({ ...editingInv, total_match: parseFloat(e.target.value.replace(',', '.')) || 0 })}
-                  style={{ fontSize: '0.85rem', fontWeight: 800 }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#f59e0b' }}>Sobrantes ($)</label>
-                <input 
-                  type="number"
-                  step="0.01"
-                  className="form-control"
-                  value={editingInv.total_surplus_dollars ?? 0}
-                  onChange={(e) => setEditingInv({ ...editingInv, total_surplus_dollars: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                   style={{ fontSize: '0.85rem', fontWeight: 800 }}
                 />
               </div>
@@ -1483,7 +1452,6 @@ export function History() {
                         <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Sistema</th>
                         <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Físico</th>
                         <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Diferencia</th>
-                        <th style={{ padding: '8px 10px', width: '95px', whiteSpace: 'nowrap' }}>Costo ($)</th>
                         <th style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>Observación</th>
                       </tr>
                     </thead>
@@ -1525,21 +1493,6 @@ export function History() {
                             </td>
                             <td style={{ padding: '6px 8px', fontWeight: 900, textAlign: 'center', whiteSpace: 'nowrap', color: diff < 0 ? '#ef4444' : diff > 0 ? '#f59e0b' : '#009C48' }}>
                               {diff > 0 ? `+${diff}` : diff}
-                            </td>
-                            <td style={{ padding: '6px 8px' }}>
-                              <input 
-                                type="number"
-                                step="0.01"
-                                className="form-control"
-                                value={item.cost ?? 0}
-                                onChange={(e) => {
-                                  const updated = [...editingInvItems];
-                                  const val = e.target.value.replace(',', '.');
-                                  updated[idx].cost = val === '' ? 0 : parseFloat(val) || 0;
-                                  setEditingInvItems(updated);
-                                }}
-                                style={{ fontSize: '0.8rem', height: '30px' }}
-                              />
                             </td>
                             <td style={{ padding: '6px 8px' }}>
                               <input 

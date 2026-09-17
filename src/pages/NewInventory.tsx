@@ -237,7 +237,7 @@ export function NewInventory() {
             <Package size={28} /> Control de Inventarios de Isla GEDALUMA
           </h1>
           <p className="text-muted" style={{ fontSize: '0.88rem' }}>
-            Comparativa Físico vs Sistema, Faltantes en Unidades (un.) y Dólares ($)
+            Comparativa Físico vs Sistema y Conteo de Existencias en Unidades (un.)
           </p>
         </div>
       </header>
@@ -335,7 +335,7 @@ export function NewInventory() {
                 <div className="text-center" style={{ padding: '6px 14px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 700 }}>Total Faltantes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--danger)', margin: 0 }}>
-                    {totals.totalMissing.toFixed(2)} un. <span style={{ fontSize: '0.9rem' }}>(${totals.totalMissingDollars.toFixed(2)})</span>
+                    {totals.totalMissing.toFixed(2)} un.
                   </p>
                 </div>
 
@@ -349,7 +349,7 @@ export function NewInventory() {
                 <div className="text-center" style={{ padding: '6px 14px', background: 'rgba(2, 132, 199, 0.1)', borderRadius: '10px' }}>
                   <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>Sobrantes</span>
                   <p style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', margin: 0 }}>
-                    +{totals.totalSurplus.toFixed(2)} un. <span style={{ fontSize: '0.9rem' }}>(+${totals.totalSurplusDollars.toFixed(2)})</span>
+                    +{totals.totalSurplus.toFixed(2)} un.
                   </p>
                 </div>
               </div>
@@ -409,22 +409,21 @@ export function NewInventory() {
                 className="btn btn-outline flex items-center gap-1"
                 style={{ padding: '6px 12px', fontSize: '0.85rem', borderColor: '#009C48', color: '#009C48' }}
               >
-                <Tag size={16} /> Modificar Costos
+                <Tag size={16} /> Catálogo de Productos
               </button>
             </div>
           </div>
 
           {/* TABLA DE PRODUCTOS CON CAMPO AMPLIO DE OBSERVACIONES Y MIN-WIDTH RESPONSIVE */}
           <div className="card table-responsive" style={{ padding: 0 }}>
-            <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 14px', width: '22%' }}>Producto</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '6%' }}>U/M</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Costo Unit.</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Sistema</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>Físico</th>
-                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '18%' }}>Diferencia</th>
+                  <th style={{ padding: '12px 14px', width: '25%' }}>Producto</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '8%' }}>U/M</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '10%' }}>Sistema</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '10%' }}>Físico</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center', width: '17%' }}>Diferencia</th>
                   <th style={{ padding: '12px 14px', width: '30%' }}>Observaciones Detalladas</th>
                 </tr>
               </thead>
@@ -434,8 +433,6 @@ export function NewInventory() {
                   const sys = val.system !== '' ? Number(val.system) : 0;
                   const phys = val.physical !== '' ? Number(val.physical) : 0;
                   const diff = phys - sys;
-                  const unitCost = Number(prod.cost) || 1.00;
-                  const dollarImpact = diff * unitCost;
 
                   return (
                     <tr key={prod.id} style={{ 
@@ -450,10 +447,6 @@ export function NewInventory() {
                         <span style={{ background: 'var(--bg-color)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.78rem', fontWeight: 700 }}>
                           {prod.unit}
                         </span>
-                      </td>
-
-                      <td style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 700, color: '#009C48' }}>
-                        ${unitCost.toFixed(2)}
                       </td>
 
                       <td style={{ padding: '8px 4px', textAlign: 'center' }}>
@@ -490,10 +483,10 @@ export function NewInventory() {
                           color: diff < 0 ? 'var(--danger)' : diff === 0 ? '#009C48' : '#0284c7'
                         }}>
                           {diff < 0 
-                            ? `Falta (${diff.toFixed(2)} / -$${Math.abs(dollarImpact).toFixed(2)})` 
+                            ? `Falta (${diff.toFixed(2)} un.)` 
                             : diff === 0 
-                              ? 'Conforme ($0.00)' 
-                              : `Sobrante (+${diff.toFixed(2)} / +$${dollarImpact.toFixed(2)})`}
+                              ? 'Conforme' 
+                              : `Sobrante (+${diff.toFixed(2)} un.)`}
                         </span>
                       </td>
 

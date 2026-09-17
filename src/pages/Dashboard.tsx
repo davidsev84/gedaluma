@@ -1788,7 +1788,7 @@ export function Dashboard() {
                     className="btn btn-outline flex items-center gap-2"
                     style={{ borderColor: '#009C48', color: '#009C48', whiteSpace: 'nowrap' }}
                   >
-                    <Tag size={18} /> 🏷️ Productos (Costos)
+                    <Tag size={18} /> 🏷️ Catálogo de Productos
                   </button>
 
                   <Link 
