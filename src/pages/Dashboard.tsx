@@ -1772,7 +1772,7 @@ export function Dashboard() {
           {/* TAB 5: INVENTARIOS DE LA ISLA */}
           {islaTab === 'inventario' && selectedIslaStats && (
             <div className="card">
-              <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+              <div className="flex justify-between items-center mb-6 flex-wrap gap-4 card-header-responsive">
                 <div>
                   <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#009C48' }}>
                     <Package size={24} style={{ color: '#009C48' }} /> Control de Inventarios de Isla {selectedIsla.name}
@@ -1782,11 +1782,11 @@ export function Dashboard() {
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button 
                     onClick={() => setShowCatalogModal(true)} 
                     className="btn btn-outline flex items-center gap-2"
-                    style={{ borderColor: '#009C48', color: '#009C48' }}
+                    style={{ borderColor: '#009C48', color: '#009C48', whiteSpace: 'nowrap' }}
                   >
                     <Tag size={18} /> 🏷️ Productos (Costos)
                   </button>
@@ -1794,7 +1794,7 @@ export function Dashboard() {
                   <Link 
                     to={`/inventory/new?isla=${selectedIslaId}`}
                     className="btn btn-primary flex items-center gap-2"
-                    style={{ background: '#009C48', borderColor: '#009C48' }}
+                    style={{ background: '#009C48', borderColor: '#009C48', whiteSpace: 'nowrap' }}
                   >
                     <Package size={18} /> Realizar Nuevo Inventario
                   </Link>
@@ -1808,9 +1808,9 @@ export function Dashboard() {
                     <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#009C48', textTransform: 'uppercase' }}>
                       Estado del Inventario Mensual
                     </span>
-                    <h4 className="text-2xl font-bold" style={{ marginTop: '2px' }}>
+                    <h4 className="text-2xl font-bold" style={{ marginTop: '2px', wordBreak: 'break-word' }}>
                       {selectedIslaStats.pendingMissingUnits > 0 
-                        ? `⚠️ Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un.` 
+                        ? `⚠️ Faltantes Pendientes: ${Number(selectedIslaStats.pendingMissingUnits).toFixed(2)} un.` 
                         : '✅ Inventario al Día (0 Faltantes Pendientes)'}
                     </h4>
                     <p className="text-muted" style={{ fontSize: '0.85rem' }}>
@@ -1839,17 +1839,17 @@ export function Dashboard() {
               </h4>
 
               <div className="table-responsive">
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                      <th style={{ padding: '12px 14px' }}>Fecha</th>
-                      <th style={{ padding: '12px 14px' }}>Responsable / Auditor</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Faltantes (-)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Conformes (=)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Sobrantes (+)</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Estado Descuento</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'center' }}>Validez</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Acciones & PDF</th>
+                      <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Fecha</th>
+                      <th style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>Responsable / Auditor</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Faltantes (-)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Conformes (=)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Sobrantes (+)</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Estado Descuento</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Validez</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Acciones & PDF</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1864,11 +1864,11 @@ export function Dashboard() {
                           background: !isValid ? 'rgba(239, 68, 68, 0.06)' : isDiscounted ? 'rgba(0, 156, 72, 0.04)' : 'inherit',
                           opacity: !isValid ? 0.65 : 1
                         }}>
-                          <td style={{ padding: '14px', fontWeight: 700 }}>
+                          <td style={{ padding: '14px', fontWeight: 700, whiteSpace: 'nowrap' }}>
                             {new Date(inv.date || inv.created_at).toLocaleDateString()}
                           </td>
 
-                          <td style={{ padding: '14px' }}>
+                          <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
                             <span style={{ fontWeight: 700, display: 'block' }}>{inv.evaluator_name || 'Auditor Operativo'}</span>
                             {inv.evaluated_employee && (
                               <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block' }}>
@@ -1877,16 +1877,16 @@ export function Dashboard() {
                             )}
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: !isValid ? 'var(--text-secondary)' : missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
-                            {missingUn} un.
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap', color: !isValid ? 'var(--text-secondary)' : missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
+                            {Number(missingUn).toFixed(2)} un.
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: !isValid ? 'var(--text-secondary)' : '#009C48' }}>
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap', color: !isValid ? 'var(--text-secondary)' : '#009C48' }}>
                             {inv.total_match || 0} prod.
                           </td>
 
-                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: !isValid ? 'var(--text-secondary)' : '#0284c7' }}>
-                            +{inv.total_surplus || 0} un.
+                          <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap', color: !isValid ? 'var(--text-secondary)' : '#0284c7' }}>
+                            +{Number(inv.total_surplus || 0).toFixed(2)} un.
                           </td>
 
                           <td style={{ padding: '14px', textAlign: 'center' }}>
