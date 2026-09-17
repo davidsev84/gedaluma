@@ -1229,7 +1229,7 @@ export function Dashboard() {
                 <div style={{ textAlign: 'center', background: 'var(--surface-color)', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
                   <span className="text-muted" style={{ fontSize: '0.74rem', whiteSpace: 'nowrap', display: 'block' }}>Inventario Faltante</span>
                   <div style={{ fontSize: '1.15rem', fontWeight: 800, color: selectedIslaStats.pendingMissingUnits > 0 ? 'var(--danger)' : '#009C48' }}>
-                    {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un. ($${selectedIslaStats.pendingMissingDollars.toFixed(2)})` : 'Al día ($0)'}
+                    {selectedIslaStats.pendingMissingUnits > 0 ? `${selectedIslaStats.pendingMissingUnits} un.` : 'Al día (0 un.)'}
                   </div>
                 </div>
               </div>
@@ -1788,7 +1788,7 @@ export function Dashboard() {
                     </span>
                     <h4 className="text-2xl font-bold" style={{ marginTop: '2px' }}>
                       {selectedIslaStats.pendingMissingUnits > 0 
-                        ? `⚠️ Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un. ($${selectedIslaStats.pendingMissingDollars.toFixed(2)})` 
+                        ? `⚠️ Faltantes Pendientes: ${selectedIslaStats.pendingMissingUnits} un.` 
                         : '✅ Inventario al Día (0 Faltantes Pendientes)'}
                     </h4>
                     <p className="text-muted" style={{ fontSize: '0.85rem' }}>
@@ -1804,7 +1804,7 @@ export function Dashboard() {
                         Cierre / Descuento Mensual:
                       </span>
                       <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>
-                        {selectedIslaStats.pendingMissingUnits === 0 ? 'Resuelto a $0.00' : 'Faltantes activos'}
+                        {selectedIslaStats.pendingMissingUnits === 0 ? 'Resuelto (0 un.)' : 'Faltantes activos'}
                       </p>
                     </div>
                   </div>
@@ -1835,7 +1835,6 @@ export function Dashboard() {
                       const isDiscounted = !!inv.is_discounted;
                       const isValid = inv.is_valid !== false;
                       const missingUn = inv.total_missing || 0;
-                      const missingDol = Number(inv.total_missing_dollars || missingUn * 1.00).toFixed(2);
 
                       return (
                         <tr key={inv.id} style={{ 
@@ -1852,7 +1851,7 @@ export function Dashboard() {
                           </td>
 
                           <td style={{ padding: '14px', textAlign: 'center', fontWeight: 800, color: !isValid ? 'var(--text-secondary)' : missingUn > 0 ? 'var(--danger)' : '#009C48' }}>
-                            {missingUn} un. <span style={{ fontSize: '0.82rem' }}>(${missingDol})</span>
+                            {missingUn} un.
                           </td>
 
                           <td style={{ padding: '14px', textAlign: 'center', fontWeight: 700, color: !isValid ? 'var(--text-secondary)' : '#009C48' }}>
