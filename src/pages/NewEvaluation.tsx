@@ -763,11 +763,11 @@ export function NewEvaluation() {
             {activeCategories.map((cat) => {
 
               return (
-                <div key={cat.id} style={{ padding: '24px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)' }}>
+                <div key={cat.id} className="evaluation-category-box" style={{ padding: '20px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--surface-color)', maxWidth: '100%', overflow: 'hidden' }}>
                   {/* CATEGORY HEADER */}
-                  <h3 className="text-xl font-bold" style={{ marginBottom: '20px', color: '#009C48', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{cat.name}</span>
-                    {!isGhost && <span className="text-muted" style={{ fontSize: '0.95rem', fontWeight: 500 }}>Peso: {cat.weight}%</span>}
+                  <h3 className="text-xl font-bold flex-wrap" style={{ marginBottom: '16px', color: '#009C48', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ maxWidth: '100%', wordBreak: 'normal', overflowWrap: 'break-word' }}>{cat.name}</span>
+                    {!isGhost && <span className="text-muted" style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Peso: {cat.weight}%</span>}
                   </h3>
 
                   {/* PREGUNTAS DE LA CATEGORÍA */}
@@ -775,8 +775,8 @@ export function NewEvaluation() {
                     const questionCode = !isGhost ? `${cat.id}${idx + 1}` : q.code || `P${idx + 1}`;
                     
                     return (
-                      <div key={q.id} className="flex flex-col gap-3" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px dashed var(--border-color)' }}>
-                        <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>
+                      <div key={q.id} className="flex flex-col gap-3 evaluation-question-item" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px dashed var(--border-color)', maxWidth: '100%' }}>
+                        <p style={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1.45, wordBreak: 'normal', overflowWrap: 'break-word' }}>
                           <span style={{ color: '#009C48', fontWeight: 800, marginRight: '6px' }}>{questionCode}.</span>
                           {q.text.startsWith(questionCode) ? q.text.replace(`${questionCode}.`, '').trim() : q.text}
                         </p>
@@ -805,110 +805,90 @@ export function NewEvaluation() {
                             )}
 
                             {/* OPCIONES DE SELECCIÓN ÚNICA CON SUS CRITERIOS OBSERVABLES */}
-                            <div className="grid grid-cols-1 gap-2">
+                            <div className="grid grid-cols-1 gap-2" style={{ width: '100%' }}>
                               {/* 100% */}
                               <button
                                 type="button"
                                 onClick={() => handleAnswer(q.id, 100)}
-                                className={`btn ${responses[q.id]?.value === 100 ? 'btn-primary' : 'btn-ghost'}`}
+                                className={`btn evaluation-option-btn ${responses[q.id]?.value === 100 ? 'btn-primary' : 'btn-ghost'}`}
                                 style={{
-                                  padding: '10px 14px',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '3px',
+                                  padding: '12px 14px',
                                   background: responses[q.id]?.value === 100 ? '#009C48' : 'var(--bg-color)',
                                   borderColor: responses[q.id]?.value === 100 ? '#009C48' : 'var(--border-color)',
                                   color: responses[q.id]?.value === 100 ? '#fff' : 'inherit',
                                   borderRadius: '8px'
                                 }}
                               >
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 100% - Cumple estándar</span>
-                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['100'] || 'Satisface completamente el estándar definido.'}</span>
+                                <span className="option-title">🔘 100% - Cumple estándar</span>
+                                <span className="option-rubric">{q.rubrics?.['100'] || 'Satisface completamente el estándar definido.'}</span>
                               </button>
 
                               {/* 70% */}
                               <button
                                 type="button"
                                 onClick={() => handleAnswer(q.id, 70)}
-                                className={`btn ${responses[q.id]?.value === 70 ? 'btn-primary' : 'btn-ghost'}`}
+                                className={`btn evaluation-option-btn ${responses[q.id]?.value === 70 ? 'btn-primary' : 'btn-ghost'}`}
                                 style={{
-                                  padding: '10px 14px',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '3px',
+                                  padding: '12px 14px',
                                   background: responses[q.id]?.value === 70 ? '#0284c7' : 'var(--bg-color)',
                                   borderColor: responses[q.id]?.value === 70 ? '#0284c7' : 'var(--border-color)',
                                   color: responses[q.id]?.value === 70 ? '#fff' : 'inherit',
                                   borderRadius: '8px'
                                 }}
                               >
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 70% - Cumplimiento alto (Desviación menor)</span>
-                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['70'] || 'Existe una desviación menor, puntual y corregible.'}</span>
+                                <span className="option-title">🔘 70% - Cumplimiento alto (Desviación menor)</span>
+                                <span className="option-rubric">{q.rubrics?.['70'] || 'Existe una desviación menor, puntual y corregible.'}</span>
                               </button>
 
                               {/* 40% */}
                               <button
                                 type="button"
                                 onClick={() => handleAnswer(q.id, 40)}
-                                className={`btn ${responses[q.id]?.value === 40 ? 'btn-primary' : 'btn-ghost'}`}
+                                className={`btn evaluation-option-btn ${responses[q.id]?.value === 40 ? 'btn-primary' : 'btn-ghost'}`}
                                 style={{
-                                  padding: '10px 14px',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '3px',
+                                  padding: '12px 14px',
                                   background: responses[q.id]?.value === 40 ? '#f59e0b' : 'var(--bg-color)',
                                   borderColor: responses[q.id]?.value === 40 ? '#f59e0b' : 'var(--border-color)',
                                   color: responses[q.id]?.value === 40 ? '#fff' : 'inherit',
                                   borderRadius: '8px'
                                 }}
                               >
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 40% - Cumplimiento bajo (Brecha relevante)</span>
-                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['40'] || 'Se observan varias fallas o condición deficiente.'}</span>
+                                <span className="option-title">🔘 40% - Cumplimiento bajo (Brecha relevante)</span>
+                                <span className="option-rubric">{q.rubrics?.['40'] || 'Se observan varias fallas o condición deficiente.'}</span>
                               </button>
 
                               {/* 0% */}
                               <button
                                 type="button"
                                 onClick={() => handleAnswer(q.id, 0)}
-                                className={`btn ${responses[q.id]?.value === 0 ? 'btn-danger' : 'btn-ghost'}`}
+                                className={`btn evaluation-option-btn ${responses[q.id]?.value === 0 ? 'btn-danger' : 'btn-ghost'}`}
                                 style={{
-                                  padding: '10px 14px',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '3px',
+                                  padding: '12px 14px',
                                   background: responses[q.id]?.value === 0 ? '#ef4444' : 'var(--bg-color)',
                                   borderColor: responses[q.id]?.value === 0 ? '#ef4444' : 'var(--border-color)',
                                   color: responses[q.id]?.value === 0 ? '#fff' : 'inherit',
                                   borderRadius: '8px'
                                 }}
                               >
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 0% - No cumple (Condición grave)</span>
-                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['0'] || 'Existe incumplimiento grave o generalizado.'}</span>
+                                <span className="option-title">🔘 0% - No cumple (Condición grave)</span>
+                                <span className="option-rubric">{q.rubrics?.['0'] || 'Existe incumplimiento grave o generalizado.'}</span>
                               </button>
 
                               {/* N/A */}
                               <button
                                 type="button"
                                 onClick={() => handleAnswer(q.id, 'NA')}
-                                className={`btn ${responses[q.id]?.value === 'NA' ? 'btn-outline' : 'btn-ghost'}`}
+                                className={`btn evaluation-option-btn ${responses[q.id]?.value === 'NA' ? 'btn-outline' : 'btn-ghost'}`}
                                 style={{
-                                  padding: '10px 14px',
-                                  textAlign: 'left',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '3px',
+                                  padding: '12px 14px',
                                   background: responses[q.id]?.value === 'NA' ? 'rgba(100, 116, 139, 0.2)' : 'var(--bg-color)',
                                   borderColor: responses[q.id]?.value === 'NA' ? '#64748b' : 'var(--border-color)',
                                   color: responses[q.id]?.value === 'NA' ? '#334155' : 'inherit',
                                   borderRadius: '8px'
                                 }}
                               >
-                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 N/A - No aplica (Excluido del denominador)</span>
-                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['NA'] || 'Solo procede con justificación objetiva.'}</span>
+                                <span className="option-title">🔘 N/A - No aplica (Excluido del denominador)</span>
+                                <span className="option-rubric">{q.rubrics?.['NA'] || 'Solo procede con justificación objetiva.'}</span>
                               </button>
                             </div>
 
