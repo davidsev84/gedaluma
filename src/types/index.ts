@@ -59,6 +59,32 @@ export interface Response {
   photoUrl?: string;
 }
 
+export interface RubricMap {
+  '100': string;
+  '70': string;
+  '40': string;
+  '0': string;
+  NA: string;
+}
+
+export interface QuestionV3 {
+  id: string;
+  code: string;
+  text: string;
+  isCritical: boolean;
+  rubrics: RubricMap;
+  type?: 'kpi_choice' | 'text';
+  pendingConfirmation?: boolean;
+}
+
+export interface CategoryV3 {
+  id: string;
+  code: string;
+  name: string;
+  weight: number;
+  questions: QuestionV3[];
+}
+
 export interface Category {
   id: string;
   name: string;

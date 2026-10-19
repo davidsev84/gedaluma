@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v2.8.23',
-  buildNumber: 303,
-  lastUpdateDate: '17 de Septiembre, 2026',
+  version: 'v3.0.0',
+  buildNumber: 304,
+  lastUpdateDate: '18 de Octubre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Ocultamiento completo de costos y valores en dinero ($) en inventarios (paneles UI, modales, catálogo y reportes PDF).'
+  changelogSummary: 'Lanzamiento de la Matriz Maestra de Evaluación GEDALUMA v3.0: 7 categorías, 56 KPIs con rúbricas objetivas (100/70/40/0/NA), flujo reactivo de fotos/observaciones y nuevo reporte PDF profesional con Alertas Críticas y Anexo Fotográfico.'
 };

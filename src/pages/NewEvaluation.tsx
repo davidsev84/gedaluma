@@ -129,20 +129,41 @@ export function NewEvaluation() {
     }
     
     let totalScore = 0;
-    activeCategories.forEach(cat => {
-      let catScore = 0;
-      let maxCatScore = cat.questions.length; // Each question is worth 1 point max (SÍ = 1, NO = 0)
-      cat.questions.forEach(q => {
+    let totalEffectiveWeight = 0;
+
+    activeCategories.forEach((cat: any) => {
+      let catPointsObtained = 0;
+      let catMaxPoints = 0;
+
+      cat.questions.forEach((q: any) => {
+        if (q.type === 'text' || q.code === 'G10') return; // Non-scoring qualitative item
+
         const val = responses[q.id]?.value;
-        if (val === 'SÍ' || val === 1) {
-          catScore += 1;
+        // Exclude N/A from denominator
+        if (val === 'NA' || val === 'N/A' || val === null || val === undefined) {
+          return;
+        }
+
+        const numVal = Number(val);
+        if (!isNaN(numVal)) {
+          catPointsObtained += numVal;
+          catMaxPoints += 100;
         }
       });
-      if (maxCatScore > 0) {
-        let percentage = (catScore / maxCatScore) * 100;
-        totalScore += (percentage * (cat.weight / 100));
+
+      if (catMaxPoints > 0) {
+        const catPercentage = (catPointsObtained / catMaxPoints) * 100;
+        totalScore += (catPercentage * (cat.weight / 100));
+        totalEffectiveWeight += cat.weight;
       }
     });
+
+    // Normalize if any category was completely N/A (so total equals 100% scale)
+    if (totalEffectiveWeight > 0 && totalEffectiveWeight < 100) {
+      const normalizedScore = (totalScore / totalEffectiveWeight) * 100;
+      return Number(normalizedScore.toFixed(2));
+    }
+
     return Number(totalScore.toFixed(2));
   };
 
@@ -337,17 +358,55 @@ export function NewEvaluation() {
   const handleNextStep = () => {
     for (const cat of activeCategories) {
       for (const q of cat.questions) {
+        if (q.type === 'text' || q.code === 'G10') continue; // Optional / qualitative
+
         const resp = responses[q.id];
         if (!resp || resp.value === undefined || resp.value === '') {
-          alert(`Falta responder la pregunta: "${q.text}".`);
+          alert(`Falta responder el indicador: "${q.text}" (${cat.name}).`);
           return;
         }
 
-        // Mandatory justification for "NO" responses in regular audit
-        if (!isGhost && (resp.value === 'NO' || resp.value === 0)) {
-          if (!resp.observation || resp.observation.trim() === '') {
-            alert(`Para respuestas "NO" (No cumple), debes escribir un comentario justificativo obligatorio.\nFalta en: "${q.text}" (${cat.name}).`);
-            return;
+        if (!isGhost) {
+          const val = resp.value;
+
+          // 70% -> Mandatory Desviación breve
+          if (val === 70 || val === '70') {
+            if (!resp.observation || resp.observation.trim() === '') {
+              alert(`Para la calificación "70% - Cumplimiento alto", es obligatorio registrar la "Desviación breve".\nFalta en: "${q.text}".`);
+              return;
+            }
+          }
+
+          // 40% -> Mandatory Observación y acción correctiva + FOTOGRAFÍA OBLIGATORIA
+          if (val === 40 || val === '40') {
+            if (!resp.observation || resp.observation.trim() === '') {
+              alert(`Para la calificación "40% - Cumplimiento bajo", es obligatorio registrar la "Observación y acción correctiva".\nFalta en: "${q.text}".`);
+              return;
+            }
+            if (!resp.photoData) {
+              alert(`Para la calificación "40% - Cumplimiento bajo", es OBLIGATORIO subir 1 FOTOGRAFÍA de evidencia.\nFalta en: "${q.text}".`);
+              return;
+            }
+          }
+
+          // 0% -> Mandatory Observación y acción correctiva + FOTOGRAFÍA OBLIGATORIA
+          if (val === 0 || val === '0') {
+            if (!resp.observation || resp.observation.trim() === '') {
+              alert(`Para la calificación "0% - No cumple", es obligatorio registrar la "Observación y acción correctiva".\nFalta en: "${q.text}".`);
+              return;
+            }
+            if (!resp.photoData) {
+              alert(`Para la calificación "0% - No cumple", es OBLIGATORIO subir 1 FOTOGRAFÍA de evidencia.\nFalta en: "${q.text}".`);
+              return;
+            }
+          }
+
+          // N/A -> Mandatory Justificación
+          if (val === 'NA' || val === 'N/A') {
+            if (!resp.observation || resp.observation.trim() === '') {
+              alert(`Para la opción "N/A - No aplica", es obligatorio registrar la "Justificación".\nFalta en: "${q.text}".`);
+              return;
+            }
           }
         }
       }
@@ -653,9 +712,9 @@ export function NewEvaluation() {
         <div className="card">
           <div className="flex justify-between items-center mb-6" style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
             <div>
-              <h2 className="text-xl font-bold">{isGhost ? 'Protocolo Cliente Fantasma GEDALUMA' : 'Cuestionario de Auditoría Interna por Categorías'}</h2>
+              <h2 className="text-xl font-bold">{isGhost ? 'Protocolo Cliente Fantasma GEDALUMA' : 'Matriz Maestra de Evaluación GEDALUMA v3.0'}</h2>
               <p className="text-muted" style={{ fontSize: '0.88rem' }}>
-                {isGhost ? 'Responda objetivamente cada ítem. Los marcados como NE o N/A se excluyen del denominador.' : 'Evalúe cada ítem de 1 a 5. Para notas <= 2 es obligatorio justificar y opcionalmente adjuntar foto.'}
+                {isGhost ? 'Responda objetivamente cada ítem. Los marcados como NE o N/A se excluyen del denominador.' : 'Seleccione para cada indicador el criterio observable que coincide con la evidencia (100%, 70%, 40%, 0%, N/A). N/A se excluye del cálculo.'}
               </p>
             </div>
             
@@ -722,132 +781,241 @@ export function NewEvaluation() {
                           {q.text.startsWith(questionCode) ? q.text.replace(`${questionCode}.`, '').trim() : q.text}
                         </p>
 
-                        {/* RATING SÍ / NO PARA AUDITORÍA NORMAL */}
-                        {(!q.type || q.type === 'rating') && (
-                          <div className="flex gap-3 mt-2">
-                            <button 
-                              type="button" 
-                              onClick={() => handleAnswer(q.id, 'SÍ')}
-                              className={`btn ${responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? 'btn-primary' : 'btn-ghost'}`} 
-                              style={{ 
-                                padding: '12px 24px', 
-                                flex: 1, 
+                        {/* EVALUACIÓN AUDITORÍA V3: 5 OPCIONES DE VALORACIÓN CON RÚBRICAS ESPECÍFICAS */}
+                        {!isGhost && q.type !== 'text' && (
+                          <div className="flex flex-col gap-2 mt-2">
+                            {/* ALERTA VISUAL DE INDICADOR CRÍTICO */}
+                            {q.isCritical && (
+                              <div style={{
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid #ef4444',
+                                color: '#b91c1c',
                                 fontWeight: 800,
-                                fontSize: '1rem',
-                                background: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#009C48' : 'var(--bg-color)', 
-                                borderColor: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#009C48' : 'var(--border-color)',
-                                color: responses[q.id]?.value === 'SÍ' || responses[q.id]?.value === 1 ? '#fff' : 'inherit'
-                              }}
-                            >
-                              ✓ SÍ (Cumple)
-                            </button>
-
-                            <button 
-                              type="button" 
-                              onClick={() => handleAnswer(q.id, 'NO')}
-                              className={`btn ${responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'btn-danger' : 'btn-ghost'}`} 
-                              style={{ 
-                                padding: '12px 24px', 
-                                flex: 1, 
-                                fontWeight: 800,
-                                fontSize: '1rem',
-                                background: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'var(--danger)' : 'var(--bg-color)', 
-                                borderColor: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? 'var(--danger)' : 'var(--border-color)',
-                                color: responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0 ? '#fff' : 'inherit'
-                              }}
-                            >
-                              ✕ NO (No cumple)
-                            </button>
-                          </div>
-                        )}
-
-                        {/* OPCIONES DE CLIENTE FANTASMA P1 a P11 */}
-                        {q.type === 'ghost_choice' && q.ghostOptions && (
-                          <div className="grid grid-cols-2 gap-3">
-                            {q.ghostOptions.map((opt: any) => {
-                              const isSelected = responses[q.id]?.value === opt.label;
-                              const isExcluded = opt.points === null;
-                              return (
-                                <button
-                                  key={opt.label}
-                                  type="button"
-                                  onClick={() => handleAnswer(q.id, opt.label)}
-                                  className={`btn ${isSelected ? 'btn-primary' : 'btn-ghost'}`}
-                                  style={{ 
-                                    textAlign: 'left', 
-                                    padding: '12px 14px', 
-                                    justifyContent: 'space-between',
-                                    background: isSelected ? '#009C48' : 'var(--bg-color)',
-                                    borderColor: isSelected ? '#009C48' : 'var(--border-color)',
-                                    color: isSelected ? '#fff' : 'inherit'
-                                  }}
-                                >
-                                  <span>{opt.label}</span>
-                                  <span style={{ 
-                                    fontSize: '0.75rem', 
-                                    padding: '2px 6px', 
-                                    borderRadius: '4px', 
-                                    background: isSelected ? 'rgba(255,255,255,0.2)' : 'var(--border-color)',
-                                    color: isSelected ? '#fff' : 'var(--text-secondary)',
-                                    fontWeight: 700
-                                  }}>
-                                    {isExcluded ? 'Excluido' : `${opt.points} pts`}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* P12 / TEXTO LIBRE */}
-                        {q.type === 'text' && (
-                          <textarea
-                            className="form-control"
-                            rows={3}
-                            placeholder="Describe una conducta concreta que podría mejorar..."
-                            value={(responses[q.id]?.value as string) || ''}
-                            onChange={(e) => handleAnswer(q.id, e.target.value)}
-                            style={{ width: '100%' }}
-                          />
-                        )}
-
-                        {/* COMENTARIO Y FOTO OBLIGATORIA SI LA RESPUESTA ES 'NO' (AUDITORÍA INTERNA) */}
-                        {!isGhost && (responses[q.id]?.value === 'NO' || responses[q.id]?.value === 0) && (
-                          <div style={{ marginTop: '10px', padding: '14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
-                            <p className="text-danger" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 700 }}>
-                              ⚠️ Respuesta "NO" (No cumple). Se requiere comentario justificativo obligatorio:
-                            </p>
-                            
-                            <div className="flex flex-col gap-3">
-                              <textarea
-                                className="form-control"
-                                rows={2}
-                                placeholder="Describe el hallazgo o motivo por el cual no cumple este requisito..."
-                                value={responses[q.id]?.observation || ''}
-                                onChange={(e) => handleObservation(q.id, e.target.value)}
-                                required
-                              />
-                              
-                              <div className="flex items-center gap-4">
-                                <label className="btn btn-ghost" style={{ border: '1px dashed var(--danger)', color: 'var(--danger)', cursor: 'pointer' }}>
-                                  <Camera size={18} /> Subir Evidencia Fotográfica (Opcional)
-                                  <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    capture="environment" 
-                                    style={{ display: 'none' }}
-                                    onChange={(e) => {
-                                      if (e.target.files && e.target.files[0]) {
-                                        handlePhoto(q.id, e.target.files[0]);
-                                      }
-                                    }}
-                                  />
-                                </label>
-                                {responses[q.id]?.photo && (
-                                  <img src={responses[q.id]?.photo} alt="Evidencia de Pregunta" style={{ height: '45px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
-                                )}
+                                fontSize: '0.8rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                alignSelf: 'flex-start',
+                                marginBottom: '4px'
+                              }}>
+                                🚨 INDICADOR CRÍTICO (Requiere acción prioritaria ante desvíos)
                               </div>
+                            )}
+
+                            {/* OPCIONES DE SELECCIÓN ÚNICA CON SUS CRITERIOS OBSERVABLES */}
+                            <div className="grid grid-cols-1 gap-2">
+                              {/* 100% */}
+                              <button
+                                type="button"
+                                onClick={() => handleAnswer(q.id, 100)}
+                                className={`btn ${responses[q.id]?.value === 100 ? 'btn-primary' : 'btn-ghost'}`}
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '3px',
+                                  background: responses[q.id]?.value === 100 ? '#009C48' : 'var(--bg-color)',
+                                  borderColor: responses[q.id]?.value === 100 ? '#009C48' : 'var(--border-color)',
+                                  color: responses[q.id]?.value === 100 ? '#fff' : 'inherit',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 100% - Cumple estándar</span>
+                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['100'] || 'Satisface completamente el estándar definido.'}</span>
+                              </button>
+
+                              {/* 70% */}
+                              <button
+                                type="button"
+                                onClick={() => handleAnswer(q.id, 70)}
+                                className={`btn ${responses[q.id]?.value === 70 ? 'btn-primary' : 'btn-ghost'}`}
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '3px',
+                                  background: responses[q.id]?.value === 70 ? '#0284c7' : 'var(--bg-color)',
+                                  borderColor: responses[q.id]?.value === 70 ? '#0284c7' : 'var(--border-color)',
+                                  color: responses[q.id]?.value === 70 ? '#fff' : 'inherit',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 70% - Cumplimiento alto (Desviación menor)</span>
+                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['70'] || 'Existe una desviación menor, puntual y corregible.'}</span>
+                              </button>
+
+                              {/* 40% */}
+                              <button
+                                type="button"
+                                onClick={() => handleAnswer(q.id, 40)}
+                                className={`btn ${responses[q.id]?.value === 40 ? 'btn-primary' : 'btn-ghost'}`}
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '3px',
+                                  background: responses[q.id]?.value === 40 ? '#f59e0b' : 'var(--bg-color)',
+                                  borderColor: responses[q.id]?.value === 40 ? '#f59e0b' : 'var(--border-color)',
+                                  color: responses[q.id]?.value === 40 ? '#fff' : 'inherit',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 40% - Cumplimiento bajo (Brecha relevante)</span>
+                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['40'] || 'Se observan varias fallas o condición deficiente.'}</span>
+                              </button>
+
+                              {/* 0% */}
+                              <button
+                                type="button"
+                                onClick={() => handleAnswer(q.id, 0)}
+                                className={`btn ${responses[q.id]?.value === 0 ? 'btn-danger' : 'btn-ghost'}`}
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '3px',
+                                  background: responses[q.id]?.value === 0 ? '#ef4444' : 'var(--bg-color)',
+                                  borderColor: responses[q.id]?.value === 0 ? '#ef4444' : 'var(--border-color)',
+                                  color: responses[q.id]?.value === 0 ? '#fff' : 'inherit',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 0% - No cumple (Condición grave)</span>
+                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['0'] || 'Existe incumplimiento grave o generalizado.'}</span>
+                              </button>
+
+                              {/* N/A */}
+                              <button
+                                type="button"
+                                onClick={() => handleAnswer(q.id, 'NA')}
+                                className={`btn ${responses[q.id]?.value === 'NA' ? 'btn-outline' : 'btn-ghost'}`}
+                                style={{
+                                  padding: '10px 14px',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '3px',
+                                  background: responses[q.id]?.value === 'NA' ? 'rgba(100, 116, 139, 0.2)' : 'var(--bg-color)',
+                                  borderColor: responses[q.id]?.value === 'NA' ? '#64748b' : 'var(--border-color)',
+                                  color: responses[q.id]?.value === 'NA' ? '#334155' : 'inherit',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <span style={{ fontWeight: 800, fontSize: '0.88rem' }}>🔘 N/A - No aplica (Excluido del denominador)</span>
+                                <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{q.rubrics?.['NA'] || 'Solo procede con justificación objetiva.'}</span>
+                              </button>
                             </div>
+
+                            {/* CAMPOS CONDICIONALES DINÁMICOS SEGÚN SELECCIÓN */}
+                            {/* 1. Condición 70%: Desviación breve obligatoria */}
+                            {responses[q.id]?.value === 70 && (
+                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid #0284c7', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', marginBottom: '4px' }}>
+                                  📝 Registrar Desviación breve (Obligatorio):
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Describe puntualmente la desviación menor corregible..."
+                                  value={responses[q.id]?.observation || ''}
+                                  onChange={(e) => handleObservation(q.id, e.target.value)}
+                                  required
+                                />
+                              </div>
+                            )}
+
+                            {/* 2. Condición 40% y 0%: Observación/acción correctiva + FOTO OBLIGATORIA */}
+                            {(responses[q.id]?.value === 40 || responses[q.id]?.value === 0) && (
+                              <div style={{
+                                marginTop: '8px',
+                                padding: '14px',
+                                background: responses[q.id]?.value === 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                                border: `1px solid ${responses[q.id]?.value === 0 ? '#ef4444' : '#f59e0b'}`,
+                                borderRadius: '8px'
+                              }}>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 800,
+                                  color: responses[q.id]?.value === 0 ? '#b91c1c' : '#b45309',
+                                  marginBottom: '6px'
+                                }}>
+                                  ⚠️ Observación y Acción Correctiva (Obligatorio) + Evidencia Fotográfica Requerida:
+                                </label>
+
+                                <div className="flex flex-col gap-3">
+                                  <textarea
+                                    className="form-control"
+                                    rows={2}
+                                    placeholder="Detalla el hallazgo observado y la acción correctiva inmediata requerida..."
+                                    value={responses[q.id]?.observation || ''}
+                                    onChange={(e) => handleObservation(q.id, e.target.value)}
+                                    required
+                                  />
+
+                                  <div className="flex items-center gap-4 flex-wrap">
+                                    <label
+                                      className="btn btn-outline"
+                                      style={{
+                                        borderColor: responses[q.id]?.photoData ? '#009C48' : (responses[q.id]?.value === 0 ? '#ef4444' : '#f59e0b'),
+                                        color: responses[q.id]?.photoData ? '#009C48' : (responses[q.id]?.value === 0 ? '#ef4444' : '#f59e0b'),
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontWeight: 700,
+                                        fontSize: '0.85rem'
+                                      }}
+                                    >
+                                      <Camera size={18} />
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Obligatoria)'}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handlePhoto(q.id, e.target.files[0]);
+                                          }
+                                        }}
+                                      />
+                                    </label>
+
+                                    {responses[q.id]?.photo && (
+                                      <img
+                                        src={responses[q.id]?.photo}
+                                        alt="Evidencia"
+                                        style={{ height: '50px', width: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 3. Condición N/A: Justificación obligatoria */}
+                            {responses[q.id]?.value === 'NA' && (
+                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(100, 116, 139, 0.08)', border: '1px solid #94a3b8', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                                  ℹ️ Justificación de N/A (Obligatoria - Se excluye del denominador):
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Explica el motivo por el cual este indicador no aplica a esta isla..."
+                                  value={responses[q.id]?.observation || ''}
+                                  onChange={(e) => handleObservation(q.id, e.target.value)}
+                                  required
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

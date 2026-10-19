@@ -13,42 +13,47 @@ export const generatePDF = (
     // Header Title
     doc.setFontSize(18);
     doc.setTextColor(0, 156, 72); // Coco Express Green
-    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Auditoria - GEDALUMA', 20, 18);
+    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Evaluación - GEDALUMA v3.0', 20, 18);
     
     // Subencabezado destacado con el nombre del empleado evaluado
     const empName = evaluation.evaluated_employee || evaluation.employee_name || 'N/A';
     doc.setFontSize(13);
     doc.setTextColor(2, 132, 199); // Azul destacado
-    doc.text(`EMPLEADO EVALUADO: ${empName.toUpperCase()}`, 20, 27);
+    doc.text(`EMPLEADO / VENDEDORA EVALUADA: ${empName.toUpperCase()}`, 20, 27);
 
     doc.setFontSize(10.5);
     doc.setTextColor(50, 50, 50);
     doc.text(`Isla: ISLA ${evaluation.isla_name || 'Desconocida'}`, 20, 36);
 
+    const finalScore = Number(evaluation.total_score || 0);
+
     if (!isGhost) {
-      doc.text(`Evaluador: ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
-      doc.text(`Fecha: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 50);
-      doc.text(`Puntaje Final: ${Number(evaluation.total_score || 0).toFixed(2)}%`, 20, 57);
-      doc.text(`Estado: ${evaluation.status || 'Completado'}`, 20, 64);
+      doc.text(`Evaluador / Auditor: ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
+      doc.text(`Fecha de Evaluación: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 50);
+      doc.setFontSize(13);
+      doc.setTextColor(0, 156, 72);
+      doc.text(`Puntaje Total Ponderado: ${finalScore.toFixed(2)}%`, 20, 58);
+      doc.setFontSize(10.5);
+      doc.setTextColor(50, 50, 50);
+      doc.text(`Estado / Dictamen: ${evaluation.status || 'Completado'}`, 20, 65);
     } else {
       doc.text(`Evaluador (Cliente Fantasma): ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
       doc.text(`Fecha de la visita: ${evaluation.date || new Date(evaluation.created_at).toLocaleDateString()}`, 20, 50);
       doc.text(`Horario de la visita: ${evaluation.start_time || ''} a ${evaluation.end_time || ''} (${evaluation.time_slot || 'N/A'})`, 20, 57);
       
-      const score = Number(evaluation.total_score || 0);
       let bonoText = 'Califica 100% al bono de calidad';
       let accionText = 'Reconocimiento en acta mensual.';
-      if (score < 75) {
+      if (finalScore < 75) {
         bonoText = 'No califica al bono en el periodo';
         accionText = 'Capacitación obligatoria y auditoría de seguimiento.';
-      } else if (score < 90) {
+      } else if (finalScore < 90) {
         bonoText = 'Califica 50% del bono';
         accionText = 'Plan de refuerzo individual por Richard.';
       }
 
       doc.setFontSize(12);
       doc.setTextColor(0, 156, 72);
-      doc.text(`Calificacion Final: ${score.toFixed(2)}%`, 20, 69);
+      doc.text(`Calificacion Final: ${finalScore.toFixed(2)}%`, 20, 69);
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text(`Formula: (Puntos Obtenidos / Puntos Maximos Evaluables Excluyendo NE/NA) x 100`, 20, 75);
@@ -56,62 +61,248 @@ export const generatePDF = (
       doc.text(`Accion Requerida: ${accionText}`, 20, 87);
     }
 
-    let currentY = isGhost ? 97 : 77;
-    
+    let currentY = isGhost ? 97 : 75;
+
+    // 2. ALERTAS CRÍTICAS (Sección resaltada en rojo si hay KPIs críticos con 40% o 0%)
+    if (!isGhost) {
+      const criticalFindings: any[] = [];
+      categories.forEach((cat: any) => {
+        cat.questions.forEach((q: any) => {
+          if (q.isCritical) {
+            const resp = responses.find(r => r.question_id === q.id || r.id === q.id);
+            const val = resp?.value;
+            if (val === 40 || val === '40' || val === '40%' || val === 0 || val === '0' || val === '0%' || val === 'NO') {
+              criticalFindings.push({
+                category: cat.name,
+                question: q,
+                value: val,
+                observation: resp?.observation || 'Sin observación registrada',
+                photo: resp?.photo_data || resp?.photoData
+              });
+            }
+          }
+        });
+      });
+
+      if (criticalFindings.length > 0) {
+        // Red alert box
+        doc.setFillColor(254, 242, 242);
+        doc.setDrawColor(239, 68, 68);
+        doc.rect(18, currentY, 174, 12 + (criticalFindings.length * 10), 'FD');
+
+        doc.setFontSize(11);
+        doc.setTextColor(185, 28, 28);
+        doc.text(`⚠️ ALERTAS CRÍTICAS DETECTADAS (${criticalFindings.length} Indicador(es) con 40% o 0%):`, 22, currentY + 7);
+
+        let alertItemY = currentY + 13;
+        doc.setFontSize(9);
+        criticalFindings.forEach((cf) => {
+          doc.setTextColor(153, 27, 27);
+          const alertLine = `• [${cf.question.code}] ${cf.question.text} -> Calificación: ${cf.value}% | Acción: ${cf.observation}`;
+          const splitAlert = doc.splitTextToSize(alertLine, 166);
+          doc.text(splitAlert, 24, alertItemY);
+          alertItemY += splitAlert.length * 4.5;
+        });
+
+        currentY = alertItemY + 6;
+      }
+    }
+
+    if (currentY > 260) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    // 3. CUERPO DEL REPORTE: Desglose por categoría (ocultando N/A del cuerpo principal)
     doc.setFontSize(13);
     doc.setTextColor(0, 0, 0);
-    doc.text('Detalle de Cuestionario:', 20, currentY);
+    doc.text(isGhost ? 'Detalle de Cuestionario:' : 'Desglose de Evaluación por Categoría:', 20, currentY);
     currentY += 8;
     
     const activeCategories = isGhost ? ghostCategories : categories;
+    const naFindings: any[] = [];
+    const photoFindings: any[] = [];
 
     activeCategories.forEach((cat: any, catIdx: number) => {
+      // Filtrar preguntas evaluadas (no N/A para auditoría V3)
+      const nonNAQuestions = !isGhost 
+        ? cat.questions.filter((q: any) => {
+            const resp = responses.find(r => r.question_id === q.id || r.id === q.id);
+            const val = resp?.value;
+            if (val === 'NA' || val === 'N/A' || val === null) {
+              if (resp?.observation) {
+                naFindings.push({
+                  category: cat.name,
+                  question: q,
+                  justification: resp.observation
+                });
+              }
+              return false;
+            }
+            return true;
+          })
+        : cat.questions;
+
+      if (nonNAQuestions.length === 0 && !isGhost) return;
+
+      if (currentY > 250) {
+        doc.addPage();
+        currentY = 20;
+      }
+
       doc.setFontSize(11);
       doc.setTextColor(0, 156, 72);
       
       const catCode = cat.id ? `CAT-${cat.id}` : `CAT-${catIdx + 1}`;
-      const catHeader = `Categoría ${catIdx + 1} [${catCode}]: ${cat.name}`;
+      const catHeader = !isGhost
+        ? `Categoría ${cat.name} (Peso: ${cat.weight}%)`
+        : `Categoría ${catIdx + 1} [${catCode}]: ${cat.name}`;
       
       doc.text(catHeader, 20, currentY);
       currentY += 7;
       
-      doc.setFontSize(9.5);
-      cat.questions.forEach((q: any, idx: number) => {
-        const resp = responses.find(r => r.question_id === q.id) || responses.find(r => r.id === q.id); 
-        const answerVal = resp ? (resp.value || 'Sin respuesta') : 'Sin respuesta';
+      doc.setFontSize(9);
+      nonNAQuestions.forEach((q: any, idx: number) => {
+        const resp = responses.find(r => r.question_id === q.id || r.id === q.id); 
+        const answerVal = resp ? (resp.value ?? 'Sin respuesta') : 'Sin respuesta';
         const obsVal = resp ? resp.observation : null;
+        const photoData = resp?.photo_data || resp?.photoData;
+
+        // Collect photos for findings table (40% or 0%)
+        if (!isGhost && (answerVal === 40 || answerVal === '40' || answerVal === '40%' || answerVal === 0 || answerVal === '0' || answerVal === '0%')) {
+          if (photoData) {
+            photoFindings.push({
+              code: q.code,
+              text: q.text,
+              score: answerVal,
+              observation: obsVal || 'Sin observación registrada',
+              photoData
+            });
+          }
+        }
 
         const qCode = q.code ? `[${q.code}] ` : (q.id ? `[${q.id.toUpperCase()}] ` : '');
-        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${qCode}${q.text}`, 170);
-        doc.setTextColor(0, 0, 0);
-        doc.text(splitTitle, 20, currentY);
-        currentY += splitTitle.length * 4.5;
+        const critTag = q.isCritical ? ' 🚨 [CRÍTICO]' : '';
+        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${qCode}${q.text}${critTag}`, 170);
         
-        doc.setTextColor(2, 132, 199);
-        const splitAnswer = doc.splitTextToSize(`Respuesta: ${answerVal}`, 160);
-        doc.text(splitAnswer, 30, currentY);
-        currentY += (splitAnswer.length * 4.5);
+        doc.setTextColor(q.isCritical ? 180 : 0, 0, 0);
+        doc.text(splitTitle, 20, currentY);
+        currentY += splitTitle.length * 4.2;
+        
+        // Formatear respuesta visual
+        doc.setFontSize(8.5);
+        let valFormatted = `${answerVal}`;
+        if (!isGhost && typeof answerVal === 'number') {
+          valFormatted = `${answerVal}%`;
+        }
+        
+        let colorAns = [2, 132, 199];
+        if (answerVal === 100 || answerVal === '100%') colorAns = [0, 156, 72];
+        else if (answerVal === 70 || answerVal === '70%') colorAns = [2, 132, 199];
+        else if (answerVal === 40 || answerVal === '40%') colorAns = [245, 158, 11];
+        else if (answerVal === 0 || answerVal === '0%') colorAns = [239, 68, 68];
+
+        doc.setTextColor(colorAns[0], colorAns[1], colorAns[2]);
+        doc.text(`Calificación: ${valFormatted}`, 26, currentY);
+        currentY += 4.2;
 
         if (obsVal) {
-          doc.setTextColor(120, 120, 120);
-          const splitObs = doc.splitTextToSize(`Observación: ${obsVal}`, 160);
-          doc.text(splitObs, 30, currentY);
-          currentY += (splitObs.length * 4.5);
+          doc.setTextColor(100, 100, 100);
+          const splitObs = doc.splitTextToSize(`Observación / Acción: ${obsVal}`, 164);
+          doc.text(splitObs, 26, currentY);
+          currentY += (splitObs.length * 4.2);
         }
-        currentY += 3;
+        currentY += 2.5;
         
         if (currentY > 270) {
           doc.addPage();
           currentY = 20;
         }
       });
-      currentY += 4;
-      if (currentY > 270) {
+      currentY += 3;
+    });
+
+    // ANEXO: KPIs MARCADOS COMO N/A (Justificación documentada)
+    if (!isGhost && naFindings.length > 0) {
+      if (currentY > 230) {
         doc.addPage();
         currentY = 20;
+      } else {
+        currentY += 6;
       }
-    });
-    
+
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Anexo: Indicadores no aplicables (N/A) con Justificación:', 20, currentY);
+      currentY += 6;
+
+      doc.setFontSize(8.5);
+      naFindings.forEach((na) => {
+        doc.setTextColor(80, 80, 80);
+        const naLine = `• [${na.question.code}] ${na.question.text} -> Justificación: ${na.justification}`;
+        const splitNA = doc.splitTextToSize(naLine, 170);
+        doc.text(splitNA, 24, currentY);
+        currentY += splitNA.length * 4.2;
+
+        if (currentY > 270) {
+          doc.addPage();
+          currentY = 20;
+        }
+      });
+    }
+
+    // 4. ANEXO FOTOGRÁFICO DE HALLAZGOS (Tabla final de fotos de 40% y 0% con acción correctiva)
+    if (!isGhost && photoFindings.length > 0) {
+      doc.addPage();
+      currentY = 20;
+
+      doc.setFontSize(14);
+      doc.setTextColor(0, 156, 72);
+      doc.text('Anexo Fotográfico de Hallazgos (40% y 0%)', 20, currentY);
+      currentY += 10;
+
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text('A continuación se detallan las evidencias fotográficas emparejadas con su respectiva acción correctiva:', 20, currentY);
+      currentY += 8;
+
+      photoFindings.forEach((pf, pIdx) => {
+        if (currentY > 210) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(18, currentY, 174, 55, 'FD');
+
+        // Draw thumbnail image
+        try {
+          doc.addImage(pf.photoData, 'JPEG', 22, currentY + 5, 55, 45);
+        } catch (e) {
+          console.warn('Error embedding photo in PDF:', e);
+        }
+
+        // Details next to image
+        doc.setFontSize(9.5);
+        doc.setTextColor(pf.score === 0 || pf.score === '0' ? 239 : 245, pf.score === 0 || pf.score === '0' ? 68 : 158, pf.score === 0 || pf.score === '0' ? 68 : 11);
+        doc.text(`Hallazgo #${pIdx + 1}: [${pf.code}] (${pf.score}%)`, 82, currentY + 10);
+
+        doc.setFontSize(8.5);
+        doc.setTextColor(30, 41, 59);
+        const splitTitle = doc.splitTextToSize(pf.text, 106);
+        doc.text(splitTitle, 82, currentY + 16);
+
+        const actionY = currentY + 16 + (splitTitle.length * 4.2) + 2;
+        doc.setFontSize(8.5);
+        doc.setTextColor(71, 85, 105);
+        const splitObs = doc.splitTextToSize(`Acción Correctiva: ${pf.observation}`, 106);
+        doc.text(splitObs, 82, actionY);
+
+        currentY += 60;
+      });
+    }
+
     // Firmas
     if (evaluatorSignature) {
       if (currentY > 220) {
@@ -128,7 +319,7 @@ export const generatePDF = (
     }
 
     const islaNameSafe = (evaluation.isla_name || 'Isla').replace(/ /g, '_');
-    const docPrefix = isGhost ? 'cliente_fantasma' : 'auditoria';
+    const docPrefix = isGhost ? 'cliente_fantasma' : 'evaluacion_v3';
     doc.save(`${docPrefix}_${islaNameSafe}_${new Date().getTime()}.pdf`);
     
     return true;
