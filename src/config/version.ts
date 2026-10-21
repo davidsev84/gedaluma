@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v3.0.2',
-  buildNumber: 306,
+  version: 'v3.0.3',
+  buildNumber: 307,
   lastUpdateDate: '21 de Octubre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Habilitación de carga fotográfica opcional en calificaciones 70% y N/A dentro del cuestionario de evaluación e incorporación en el anexo de evidencias fotográficas del PDF.'
+  changelogSummary: 'Observación y fotografía obligatorias en todas las calificaciones (100%, 70%, 40%, 0%) y solo foto opcional en N/A. En el PDF las fotos se ubican directamente bajo cada pregunta con tipografía uniforme Helvetica sin desbordamiento de texto ni corrupción de caracteres.'
 };

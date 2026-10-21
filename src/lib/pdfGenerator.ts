@@ -11,17 +11,20 @@ export const generatePDF = (
     const isGhost = evaluation.evaluator_role === 'ghost';
     
     // Header Title
-    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
     doc.setTextColor(0, 156, 72); // Coco Express Green
-    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Evaluación - GEDALUMA v3.0', 20, 18);
+    doc.text(isGhost ? 'Reporte Cliente Fantasma - GEDALUMA' : 'Reporte de Evaluacion - GEDALUMA v3.0', 20, 18);
     
     // Subencabezado destacado con el nombre del empleado evaluado
     const empName = evaluation.evaluated_employee || evaluation.employee_name || 'N/A';
-    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
     doc.setTextColor(2, 132, 199); // Azul destacado
     doc.text(`EMPLEADO / VENDEDORA EVALUADA: ${empName.toUpperCase()}`, 20, 27);
 
-    doc.setFontSize(10.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.setTextColor(50, 50, 50);
     doc.text(`Isla: ISLA ${evaluation.isla_name || 'Desconocida'}`, 20, 36);
 
@@ -29,11 +32,13 @@ export const generatePDF = (
 
     if (!isGhost) {
       doc.text(`Evaluador / Auditor: ${evaluation.evaluator_name || 'N/A'}`, 20, 43);
-      doc.text(`Fecha de Evaluación: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 50);
-      doc.setFontSize(13);
+      doc.text(`Fecha de Evaluacion: ${new Date(evaluation.date || evaluation.created_at || Date.now()).toLocaleDateString()}`, 20, 50);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
       doc.setTextColor(0, 156, 72);
       doc.text(`Puntaje Total Ponderado: ${finalScore.toFixed(2)}%`, 20, 58);
-      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
       doc.setTextColor(50, 50, 50);
       doc.text(`Estado / Dictamen: ${evaluation.status || 'Completado'}`, 20, 65);
     } else {
@@ -61,9 +66,10 @@ export const generatePDF = (
       doc.text(`Accion Requerida: ${accionText}`, 20, 87);
     }
 
+    doc.setFont('helvetica', 'normal');
     let currentY = isGhost ? 97 : 75;
 
-    // 2. ALERTAS CRÍTICAS (Sección resaltada en rojo si hay KPIs críticos con 40% o 0%)
+    // 2. ALERTAS CRÍTICAS (Sección resaltada si hay KPIs críticos con 40% o 0%)
     if (!isGhost) {
       const criticalFindings: any[] = [];
       categories.forEach((cat: any) => {
@@ -76,7 +82,7 @@ export const generatePDF = (
                 category: cat.name,
                 question: q,
                 value: val,
-                observation: resp?.observation || 'Sin observación registrada',
+                observation: resp?.observation || 'Sin observacion registrada',
                 photo: resp?.photo_data || resp?.photoData
               });
             }
@@ -85,23 +91,24 @@ export const generatePDF = (
       });
 
       if (criticalFindings.length > 0) {
-        // Red alert box
         doc.setFillColor(254, 242, 242);
         doc.setDrawColor(239, 68, 68);
         doc.rect(18, currentY, 174, 12 + (criticalFindings.length * 10), 'FD');
 
-        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
         doc.setTextColor(185, 28, 28);
-        doc.text(`⚠️ ALERTAS CRÍTICAS DETECTADAS (${criticalFindings.length} Indicador(es) con 40% o 0%):`, 22, currentY + 7);
+        doc.text(`[ALERTA CRITICA] Indicadores con calificacion deficiente (40% o 0%):`, 22, currentY + 7);
 
         let alertItemY = currentY + 13;
-        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
         criticalFindings.forEach((cf) => {
           doc.setTextColor(153, 27, 27);
-          const alertLine = `• [${cf.question.code}] ${cf.question.text} -> Calificación: ${cf.value}% | Acción: ${cf.observation}`;
-          const splitAlert = doc.splitTextToSize(alertLine, 166);
+          const alertLine = `- [${cf.question.code || 'KPI'}] ${cf.question.text} -> Calificacion: ${cf.value}% | Accion: ${cf.observation}`;
+          const splitAlert = doc.splitTextToSize(alertLine, 164);
           doc.text(splitAlert, 24, alertItemY);
-          alertItemY += splitAlert.length * 4.5;
+          alertItemY += splitAlert.length * 4.2;
         });
 
         currentY = alertItemY + 6;
@@ -113,232 +120,178 @@ export const generatePDF = (
       currentY = 20;
     }
 
-    // 3. CUERPO DEL REPORTE: Desglose por categoría (ocultando N/A del cuerpo principal)
-    doc.setFontSize(13);
+    // 3. CUERPO DEL REPORTE: Desglose por categoría con evidencias fotográficas bajo cada pregunta
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12.5);
     doc.setTextColor(0, 0, 0);
-    doc.text(isGhost ? 'Detalle de Cuestionario:' : 'Desglose de Evaluación por Categoría:', 20, currentY);
+    doc.text(isGhost ? 'Detalle de Cuestionario y Evidencias:' : 'Desglose de Evaluacion por Categoria y Evidencias:', 20, currentY);
     currentY += 8;
     
     const activeCategories = isGhost ? ghostCategories : categories;
-    const naFindings: any[] = [];
-    const photoFindings: any[] = [];
 
     activeCategories.forEach((cat: any, catIdx: number) => {
-      // Filtrar preguntas evaluadas (no N/A para auditoría V3)
-      const nonNAQuestions = !isGhost 
-        ? cat.questions.filter((q: any) => {
-            const resp = responses.find(r => r.question_id === q.id || r.id === q.id);
-            const val = resp?.value;
-            if (val === 'NA' || val === 'N/A' || val === null) {
-              if (resp?.observation) {
-                naFindings.push({
-                  category: cat.name,
-                  question: q,
-                  justification: resp.observation
-                });
-              }
-              const photoData = resp?.photo_data || resp?.photoData;
-              if (photoData) {
-                photoFindings.push({
-                  code: q.code || q.id,
-                  text: q.text,
-                  score: 'N/A',
-                  observation: resp?.observation || 'Sin justificación registrada',
-                  photoData
-                });
-              }
-              return false;
-            }
-            return true;
-          })
-        : cat.questions;
-
-      if (nonNAQuestions.length === 0 && !isGhost) return;
-
       if (currentY > 250) {
         doc.addPage();
         currentY = 20;
       }
 
-      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
       doc.setTextColor(0, 156, 72);
       
       const catCode = cat.id ? `CAT-${cat.id}` : `CAT-${catIdx + 1}`;
       const catHeader = !isGhost
-        ? `Categoría ${cat.name} (Peso: ${cat.weight}%)`
-        : `Categoría ${catIdx + 1} [${catCode}]: ${cat.name}`;
+        ? `Categoria: ${cat.name} (Peso: ${cat.weight}%)`
+        : `Categoria ${catIdx + 1} [${catCode}]: ${cat.name}`;
       
       doc.text(catHeader, 20, currentY);
       currentY += 7;
       
-      doc.setFontSize(9);
-      nonNAQuestions.forEach((q: any, idx: number) => {
+      cat.questions.forEach((q: any, idx: number) => {
         const resp = responses.find(r => r.question_id === q.id || r.id === q.id); 
         const answerVal = resp ? (resp.value ?? 'Sin respuesta') : 'Sin respuesta';
-        const obsVal = resp ? resp.observation : null;
+        const obsVal = resp?.observation;
         const photoData = resp?.photo_data || resp?.photoData;
 
-        // Collect photos for findings table (40%, 0%, 70%, or any evaluated score if photo uploaded)
-        if (!isGhost && photoData) {
-          photoFindings.push({
-            code: q.code || q.id,
-            text: q.text,
-            score: answerVal,
-            observation: obsVal || 'Sin observación registrada',
-            photoData
-          });
-        }
+        const isNA = answerVal === 'NA' || answerVal === 'N/A' || answerVal === null;
+        const is100 = answerVal === 100 || answerVal === '100' || answerVal === '100%';
+        const is70 = answerVal === 70 || answerVal === '70' || answerVal === '70%';
+        const is40 = answerVal === 40 || answerVal === '40' || answerVal === '40%';
+        const is0 = answerVal === 0 || answerVal === '0' || answerVal === '0%';
 
         const qCode = q.code ? `[${q.code}] ` : (q.id ? `[${q.id.toUpperCase()}] ` : '');
-        const critTag = q.isCritical ? ' 🚨 [CRÍTICO]' : '';
-        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${qCode}${q.text}${critTag}`, 170);
-        
-        doc.setTextColor(q.isCritical ? 180 : 0, 0, 0);
+        const critTag = q.isCritical ? ' [CRITICO]' : '';
+        const splitTitle = doc.splitTextToSize(`${idx + 1}. ${qCode}${q.text}${critTag}`, 168);
+
+        // Estimar espacio antes de imprimir la pregunta para evitar saltos rotos
+        const baseHeight = (splitTitle.length * 4.2) + 6 + (obsVal ? 10 : 0);
+        if (currentY + baseHeight > 275) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        // Título de la pregunta
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(q.isCritical ? 180 : 30, q.isCritical ? 0 : 41, q.isCritical ? 0 : 59);
         doc.text(splitTitle, 20, currentY);
         currentY += splitTitle.length * 4.2;
-        
-        // Formatear respuesta visual
-        doc.setFontSize(8.5);
-        let valFormatted = `${answerVal}`;
-        if (!isGhost && typeof answerVal === 'number') {
-          valFormatted = `${answerVal}%`;
-        }
-        
-        let colorAns = [2, 132, 199];
-        if (answerVal === 100 || answerVal === '100%') colorAns = [0, 156, 72];
-        else if (answerVal === 70 || answerVal === '70%') colorAns = [2, 132, 199];
-        else if (answerVal === 40 || answerVal === '40%') colorAns = [245, 158, 11];
-        else if (answerVal === 0 || answerVal === '0%') colorAns = [239, 68, 68];
 
-        doc.setTextColor(colorAns[0], colorAns[1], colorAns[2]);
-        doc.text(`Calificación: ${valFormatted}`, 26, currentY);
+        // Calificación visual
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        let scoreText = `${answerVal}`;
+        let scoreColor = [2, 132, 199];
+
+        if (is100) {
+          scoreText = '100% - Cumple totalmente';
+          scoreColor = [0, 156, 72];
+        } else if (is70) {
+          scoreText = '70% - Cumplimiento alto (Desviacion menor)';
+          scoreColor = [2, 132, 199];
+        } else if (is40) {
+          scoreText = '40% - Cumplimiento bajo';
+          scoreColor = [245, 158, 11];
+        } else if (is0) {
+          scoreText = '0% - No cumple';
+          scoreColor = [239, 68, 68];
+        } else if (isNA) {
+          scoreText = 'N/A - No aplica (Excluido de ponderacion)';
+          scoreColor = [100, 116, 139];
+        }
+
+        doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+        doc.text(`Calificacion: ${scoreText}`, 24, currentY);
         currentY += 4.2;
 
+        // Observación o Justificación
         if (obsVal) {
-          doc.setTextColor(100, 100, 100);
-          const splitObs = doc.splitTextToSize(`Observación / Acción: ${obsVal}`, 164);
-          doc.text(splitObs, 26, currentY);
-          currentY += (splitObs.length * 4.2);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(71, 85, 105);
+          const prefix = isNA ? 'Justificacion: ' : (is70 ? 'Desviacion breve: ' : (is100 ? 'Observacion: ' : 'Accion Correctiva: '));
+          const splitObs = doc.splitTextToSize(`${prefix}${obsVal}`, 164);
+          doc.text(splitObs, 24, currentY);
+          currentY += splitObs.length * 3.8;
         }
-        currentY += 2.5;
-        
-        if (currentY > 270) {
-          doc.addPage();
-          currentY = 20;
+
+        // Fotografía incrustada directamente bajo la pregunta
+        if (photoData) {
+          currentY += 1.5;
+          if (currentY + 48 > 275) {
+            doc.addPage();
+            currentY = 20;
+          }
+          try {
+            doc.setFillColor(248, 250, 252);
+            doc.setDrawColor(203, 213, 225);
+            doc.rect(24, currentY, 62, 44, 'FD');
+            doc.addImage(photoData, 'JPEG', 25, currentY + 1, 60, 42);
+            currentY += 46;
+          } catch (e) {
+            console.warn('Error incrustando foto en pregunta del PDF:', e);
+          }
         }
+
+        currentY += 3;
       });
-      currentY += 3;
-    });
 
-    // ANEXO: KPIs MARCADOS COMO N/A (Justificación documentada)
-    if (!isGhost && naFindings.length > 0) {
-      if (currentY > 230) {
-        doc.addPage();
-        currentY = 20;
-      } else {
-        currentY += 6;
-      }
+      // Evidencia / Comentario general de la categoría (si se registró)
+      const catResp = responses.find(r => r.question_id === cat.id || r.id === cat.id);
+      const catObs = catResp?.observation;
+      const catPhoto = catResp?.photo_data || catResp?.photoData;
 
-      doc.setFontSize(11);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Anexo: Indicadores no aplicables (N/A) con Justificación:', 20, currentY);
-      currentY += 6;
-
-      doc.setFontSize(8.5);
-      naFindings.forEach((na) => {
-        doc.setTextColor(80, 80, 80);
-        const naLine = `• [${na.question.code}] ${na.question.text} -> Justificación: ${na.justification}`;
-        const splitNA = doc.splitTextToSize(naLine, 170);
-        doc.text(splitNA, 24, currentY);
-        currentY += splitNA.length * 4.2;
-
-        if (currentY > 270) {
+      if (catObs || catPhoto) {
+        if (currentY + 25 > 275) {
           doc.addPage();
           currentY = 20;
         }
-      });
-    }
-
-    // 4. ANEXO FOTOGRÁFICO DE EVIDENCIAS Y HALLAZGOS
-    if (!isGhost && photoFindings.length > 0) {
-      doc.addPage();
-      currentY = 20;
-
-      doc.setFontSize(14);
-      doc.setTextColor(0, 156, 72);
-      doc.text('Anexo Fotográfico de Evidencias', 20, currentY);
-      currentY += 10;
-
-      doc.setFontSize(9);
-      doc.setTextColor(80, 80, 80);
-      doc.text('A continuación se detallan las evidencias fotográficas registradas en la evaluación con su respectiva observación o justificación:', 20, currentY);
-      currentY += 8;
-
-      photoFindings.forEach((pf, pIdx) => {
-        if (currentY > 210) {
-          doc.addPage();
-          currentY = 20;
-        }
-
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.rect(18, currentY, 174, 55, 'FD');
-
-        // Draw thumbnail image
-        try {
-          doc.addImage(pf.photoData, 'JPEG', 22, currentY + 5, 55, 45);
-        } catch (e) {
-          console.warn('Error embedding photo in PDF:', e);
-        }
-
-        // Details next to image
-        doc.setFontSize(9.5);
-        const isZero = pf.score === 0 || pf.score === '0' || pf.score === '0%';
-        const isForty = pf.score === 40 || pf.score === '40' || pf.score === '40%';
-        const isSeventy = pf.score === 70 || pf.score === '70' || pf.score === '70%';
-        const isNA = pf.score === 'NA' || pf.score === 'N/A';
-
-        if (isZero) {
-          doc.setTextColor(239, 68, 68); // Red
-        } else if (isForty) {
-          doc.setTextColor(245, 158, 11); // Amber
-        } else if (isSeventy) {
-          doc.setTextColor(2, 132, 199); // Blue
-        } else {
-          doc.setTextColor(100, 116, 139); // Gray
-        }
-
-        const scoreDisplay = isNA ? 'N/A' : (typeof pf.score === 'number' ? `${pf.score}%` : (String(pf.score).includes('%') ? pf.score : `${pf.score}%`));
-        doc.text(`Evidencia #${pIdx + 1}: [${pf.code}] (${scoreDisplay})`, 82, currentY + 10);
-
-        doc.setFontSize(8.5);
-        doc.setTextColor(30, 41, 59);
-        const splitTitle = doc.splitTextToSize(pf.text, 106);
-        doc.text(splitTitle, 82, currentY + 16);
-
-        const actionY = currentY + 16 + (splitTitle.length * 4.2) + 2;
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.5);
         doc.setTextColor(71, 85, 105);
-        const prefix = isNA ? 'Justificación: ' : (isSeventy ? 'Desviación breve: ' : 'Acción Correctiva: ');
-        const splitObs = doc.splitTextToSize(`${prefix}${pf.observation}`, 106);
-        doc.text(splitObs, 82, actionY);
+        doc.text(`[Evidencia General] ${cat.name}:`, 24, currentY);
+        currentY += 4;
 
-        currentY += 60;
-      });
-    }
+        if (catObs) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const splitCatObs = doc.splitTextToSize(`Comentario: ${catObs}`, 164);
+          doc.text(splitCatObs, 24, currentY);
+          currentY += splitCatObs.length * 3.8;
+        }
+
+        if (catPhoto) {
+          if (currentY + 48 > 275) {
+            doc.addPage();
+            currentY = 20;
+          }
+          try {
+            doc.setFillColor(248, 250, 252);
+            doc.setDrawColor(203, 213, 225);
+            doc.rect(24, currentY, 62, 44, 'FD');
+            doc.addImage(catPhoto, 'JPEG', 25, currentY + 1, 60, 42);
+            currentY += 46;
+          } catch (e) {}
+        }
+        currentY += 3;
+      }
+
+      currentY += 2;
+    });
 
     // Firmas
     if (evaluatorSignature) {
-      if (currentY > 220) {
+      if (currentY > 230) {
         doc.addPage();
-        currentY = 30;
+        currentY = 25;
       } else {
-        currentY += 10;
+        currentY += 8;
       }
-      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
       doc.setTextColor(0, 0, 0);
       doc.text('Firma de Conformidad del Evaluador:', 20, currentY);
-      currentY += 10;
+      currentY += 6;
       doc.addImage(evaluatorSignature, 'PNG', 20, currentY, 60, 20);
     }
 
