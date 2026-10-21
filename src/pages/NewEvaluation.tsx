@@ -893,20 +893,60 @@ export function NewEvaluation() {
                             </div>
 
                             {/* CAMPOS CONDICIONALES DINÁMICOS SEGÚN SELECCIÓN */}
-                            {/* 1. Condición 70%: Desviación breve obligatoria */}
+                            {/* 1. Condición 70%: Desviación breve obligatoria + Foto opcional */}
                             {responses[q.id]?.value === 70 && (
-                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid #0284c7', borderRadius: '8px' }}>
-                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', marginBottom: '4px' }}>
-                                  📝 Registrar Desviación breve (Obligatorio):
+                              <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid #0284c7', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', marginBottom: '6px' }}>
+                                  📝 Registrar Desviación breve (Obligatorio) + Evidencia Fotográfica (Opcional):
                                 </label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Describe puntualmente la desviación menor corregible..."
-                                  value={responses[q.id]?.observation || ''}
-                                  onChange={(e) => handleObservation(q.id, e.target.value)}
-                                  required
-                                />
+                                <div className="flex flex-col gap-3">
+                                  <textarea
+                                    className="form-control"
+                                    rows={2}
+                                    placeholder="Describe puntualmente la desviación menor corregible..."
+                                    value={responses[q.id]?.observation || ''}
+                                    onChange={(e) => handleObservation(q.id, e.target.value)}
+                                    required
+                                  />
+
+                                  <div className="flex items-center gap-4 flex-wrap">
+                                    <label
+                                      className="btn btn-outline"
+                                      style={{
+                                        borderColor: responses[q.id]?.photoData ? '#009C48' : '#0284c7',
+                                        color: responses[q.id]?.photoData ? '#009C48' : '#0284c7',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontWeight: 700,
+                                        fontSize: '0.85rem'
+                                      }}
+                                    >
+                                      <Camera size={18} />
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Opcional)'}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handlePhoto(q.id, e.target.files[0]);
+                                          }
+                                        }}
+                                      />
+                                    </label>
+
+                                    {responses[q.id]?.photo && (
+                                      <img
+                                        src={responses[q.id]?.photo}
+                                        alt="Evidencia"
+                                        style={{ height: '50px', width: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             )}
 
@@ -980,20 +1020,60 @@ export function NewEvaluation() {
                               </div>
                             )}
 
-                            {/* 3. Condición N/A: Justificación obligatoria */}
+                            {/* 3. Condición N/A: Justificación obligatoria + Foto opcional */}
                             {responses[q.id]?.value === 'NA' && (
-                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(100, 116, 139, 0.08)', border: '1px solid #94a3b8', borderRadius: '8px' }}>
-                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                                  ℹ️ Justificación de N/A (Obligatoria - Se excluye del denominador):
+                              <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(100, 116, 139, 0.08)', border: '1px solid #94a3b8', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                                  ℹ️ Justificación de N/A (Obligatoria - Se excluye del denominador) + Evidencia Fotográfica (Opcional):
                                 </label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Explica el motivo por el cual este indicador no aplica a esta isla..."
-                                  value={responses[q.id]?.observation || ''}
-                                  onChange={(e) => handleObservation(q.id, e.target.value)}
-                                  required
-                                />
+                                <div className="flex flex-col gap-3">
+                                  <textarea
+                                    className="form-control"
+                                    rows={2}
+                                    placeholder="Explica el motivo por el cual este indicador no aplica a esta isla..."
+                                    value={responses[q.id]?.observation || ''}
+                                    onChange={(e) => handleObservation(q.id, e.target.value)}
+                                    required
+                                  />
+
+                                  <div className="flex items-center gap-4 flex-wrap">
+                                    <label
+                                      className="btn btn-outline"
+                                      style={{
+                                        borderColor: responses[q.id]?.photoData ? '#009C48' : '#64748b',
+                                        color: responses[q.id]?.photoData ? '#009C48' : '#475569',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontWeight: 700,
+                                        fontSize: '0.85rem'
+                                      }}
+                                    >
+                                      <Camera size={18} />
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Opcional)'}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files[0]) {
+                                            handlePhoto(q.id, e.target.files[0]);
+                                          }
+                                        }}
+                                      />
+                                    </label>
+
+                                    {responses[q.id]?.photo && (
+                                      <img
+                                        src={responses[q.id]?.photo}
+                                        alt="Evidencia"
+                                        style={{ height: '50px', width: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>

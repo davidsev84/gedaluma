@@ -137,6 +137,16 @@ export const generatePDF = (
                   justification: resp.observation
                 });
               }
+              const photoData = resp?.photo_data || resp?.photoData;
+              if (photoData) {
+                photoFindings.push({
+                  code: q.code || q.id,
+                  text: q.text,
+                  score: 'N/A',
+                  observation: resp?.observation || 'Sin justificación registrada',
+                  photoData
+                });
+              }
               return false;
             }
             return true;
@@ -168,17 +178,15 @@ export const generatePDF = (
         const obsVal = resp ? resp.observation : null;
         const photoData = resp?.photo_data || resp?.photoData;
 
-        // Collect photos for findings table (40% or 0%)
-        if (!isGhost && (answerVal === 40 || answerVal === '40' || answerVal === '40%' || answerVal === 0 || answerVal === '0' || answerVal === '0%')) {
-          if (photoData) {
-            photoFindings.push({
-              code: q.code,
-              text: q.text,
-              score: answerVal,
-              observation: obsVal || 'Sin observación registrada',
-              photoData
-            });
-          }
+        // Collect photos for findings table (40%, 0%, 70%, or any evaluated score if photo uploaded)
+        if (!isGhost && photoData) {
+          photoFindings.push({
+            code: q.code || q.id,
+            text: q.text,
+            score: answerVal,
+            observation: obsVal || 'Sin observación registrada',
+            photoData
+          });
         }
 
         const qCode = q.code ? `[${q.code}] ` : (q.id ? `[${q.id.toUpperCase()}] ` : '');
@@ -251,19 +259,19 @@ export const generatePDF = (
       });
     }
 
-    // 4. ANEXO FOTOGRÁFICO DE HALLAZGOS (Tabla final de fotos de 40% y 0% con acción correctiva)
+    // 4. ANEXO FOTOGRÁFICO DE EVIDENCIAS Y HALLAZGOS
     if (!isGhost && photoFindings.length > 0) {
       doc.addPage();
       currentY = 20;
 
       doc.setFontSize(14);
       doc.setTextColor(0, 156, 72);
-      doc.text('Anexo Fotográfico de Hallazgos (40% y 0%)', 20, currentY);
+      doc.text('Anexo Fotográfico de Evidencias', 20, currentY);
       currentY += 10;
 
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
-      doc.text('A continuación se detallan las evidencias fotográficas emparejadas con su respectiva acción correctiva:', 20, currentY);
+      doc.text('A continuación se detallan las evidencias fotográficas registradas en la evaluación con su respectiva observación o justificación:', 20, currentY);
       currentY += 8;
 
       photoFindings.forEach((pf, pIdx) => {
@@ -285,8 +293,23 @@ export const generatePDF = (
 
         // Details next to image
         doc.setFontSize(9.5);
-        doc.setTextColor(pf.score === 0 || pf.score === '0' ? 239 : 245, pf.score === 0 || pf.score === '0' ? 68 : 158, pf.score === 0 || pf.score === '0' ? 68 : 11);
-        doc.text(`Hallazgo #${pIdx + 1}: [${pf.code}] (${pf.score}%)`, 82, currentY + 10);
+        const isZero = pf.score === 0 || pf.score === '0' || pf.score === '0%';
+        const isForty = pf.score === 40 || pf.score === '40' || pf.score === '40%';
+        const isSeventy = pf.score === 70 || pf.score === '70' || pf.score === '70%';
+        const isNA = pf.score === 'NA' || pf.score === 'N/A';
+
+        if (isZero) {
+          doc.setTextColor(239, 68, 68); // Red
+        } else if (isForty) {
+          doc.setTextColor(245, 158, 11); // Amber
+        } else if (isSeventy) {
+          doc.setTextColor(2, 132, 199); // Blue
+        } else {
+          doc.setTextColor(100, 116, 139); // Gray
+        }
+
+        const scoreDisplay = isNA ? 'N/A' : (typeof pf.score === 'number' ? `${pf.score}%` : (String(pf.score).includes('%') ? pf.score : `${pf.score}%`));
+        doc.text(`Evidencia #${pIdx + 1}: [${pf.code}] (${scoreDisplay})`, 82, currentY + 10);
 
         doc.setFontSize(8.5);
         doc.setTextColor(30, 41, 59);
@@ -296,7 +319,8 @@ export const generatePDF = (
         const actionY = currentY + 16 + (splitTitle.length * 4.2) + 2;
         doc.setFontSize(8.5);
         doc.setTextColor(71, 85, 105);
-        const splitObs = doc.splitTextToSize(`Acción Correctiva: ${pf.observation}`, 106);
+        const prefix = isNA ? 'Justificación: ' : (isSeventy ? 'Desviación breve: ' : 'Acción Correctiva: ');
+        const splitObs = doc.splitTextToSize(`${prefix}${pf.observation}`, 106);
         doc.text(splitObs, 82, actionY);
 
         currentY += 60;
