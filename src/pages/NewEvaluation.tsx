@@ -384,7 +384,10 @@ export function NewEvaluation() {
           }
 
           // Fotografía obligatoria para todas las respuestas (100%, 70%, 40%, 0%) excepto N/A que es opcional
-          if (val !== 'NA' && val !== 'N/A') {
+          // EXCEPCIÓN: Toda la categoría G y E queda exonerada de fotografía obligatoria en todas las calificaciones (es opcional)
+          const isCategoryExemptFromPhoto = cat.id === 'G' || (cat as any).code === 'G' || cat.id === 'E' || (cat as any).code === 'E' ||
+                                            q.code?.startsWith('G') || q.code?.startsWith('E');
+          if (val !== 'NA' && val !== 'N/A' && !isCategoryExemptFromPhoto) {
             if (!resp.photoData) {
               const valLabel = typeof val === 'number' ? `${val}%` : val;
               alert(`Para la calificación "${valLabel}", es OBLIGATORIO subir 1 FOTOGRAFÍA de evidencia.\nFalta en: "${q.text}".`);
@@ -756,6 +759,9 @@ export function NewEvaluation() {
                   {/* PREGUNTAS DE LA CATEGORÍA */}
                   {cat.questions.map((q: any, idx: number) => {
                     const questionCode = !isGhost ? `${cat.id}${idx + 1}` : q.code || `P${idx + 1}`;
+                    const isPhotoExempt = cat.id === 'G' || (cat as any).code === 'G' || cat.id === 'E' || (cat as any).code === 'E' ||
+                                          q.code?.startsWith('G') || q.code?.startsWith('E') ||
+                                          questionCode.startsWith('G') || questionCode.startsWith('E');
                     
                     return (
                       <div key={q.id} className="flex flex-col gap-3 evaluation-question-item" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px dashed var(--border-color)', maxWidth: '100%' }}>
@@ -876,11 +882,11 @@ export function NewEvaluation() {
                             </div>
 
                             {/* CAMPOS CONDICIONALES DINÁMICOS SEGÚN SELECCIÓN */}
-                            {/* 1. Condición 100%: Observación Obligatoria + Foto Obligatoria */}
+                            {/* 1. Condición 100%: Observación Obligatoria + Foto */}
                             {responses[q.id]?.value === 100 && (
                               <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(0, 156, 72, 0.08)', border: '1px solid #009C48', borderRadius: '8px' }}>
                                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#007a38', marginBottom: '6px' }}>
-                                  ✓ Observación (Obligatorio) + Evidencia Fotográfica (Obligatorio):
+                                  ✓ Observación (Obligatorio) + Evidencia Fotográfica {isPhotoExempt ? '(Opcional)' : '(Obligatorio)'}:
                                 </label>
                                 <div className="flex flex-col gap-3">
                                   <textarea
@@ -907,7 +913,7 @@ export function NewEvaluation() {
                                       }}
                                     >
                                       <Camera size={18} />
-                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Obligatoria)'}
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : (isPhotoExempt ? '📷 Subir Fotografía de Evidencia (Opcional)' : '📷 Subir Fotografía de Evidencia (Obligatoria)')}
                                       <input
                                         type="file"
                                         accept="image/*"
@@ -933,11 +939,11 @@ export function NewEvaluation() {
                               </div>
                             )}
 
-                            {/* 2. Condición 70%: Desviación breve obligatoria + Foto OBLIGATORIA */}
+                            {/* 2. Condición 70%: Desviación breve obligatoria + Foto */}
                             {responses[q.id]?.value === 70 && (
                               <div style={{ marginTop: '8px', padding: '14px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid #0284c7', borderRadius: '8px' }}>
                                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', marginBottom: '6px' }}>
-                                  📝 Desviación breve / Observación (Obligatorio) + Evidencia Fotográfica (Obligatorio):
+                                  📝 Desviación breve / Observación (Obligatorio) + Evidencia Fotográfica {isPhotoExempt ? '(Opcional)' : '(Obligatorio)'}:
                                 </label>
                                 <div className="flex flex-col gap-3">
                                   <textarea
@@ -964,7 +970,7 @@ export function NewEvaluation() {
                                       }}
                                     >
                                       <Camera size={18} />
-                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Obligatoria)'}
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : (isPhotoExempt ? '📷 Subir Fotografía de Evidencia (Opcional)' : '📷 Subir Fotografía de Evidencia (Obligatoria)')}
                                       <input
                                         type="file"
                                         accept="image/*"
@@ -990,7 +996,7 @@ export function NewEvaluation() {
                               </div>
                             )}
 
-                            {/* 3. Condición 40% y 0%: Observación/acción correctiva + FOTO OBLIGATORIA */}
+                            {/* 3. Condición 40% y 0%: Observación/acción correctiva + Foto */}
                             {(responses[q.id]?.value === 40 || responses[q.id]?.value === 0) && (
                               <div style={{
                                 marginTop: '8px',
@@ -1006,7 +1012,7 @@ export function NewEvaluation() {
                                   color: responses[q.id]?.value === 0 ? '#b91c1c' : '#b45309',
                                   marginBottom: '6px'
                                 }}>
-                                  ⚠️ Observación y Acción Correctiva (Obligatorio) + Evidencia Fotográfica Requerida:
+                                  ⚠️ Observación y Acción Correctiva (Obligatorio) + Evidencia Fotográfica {isPhotoExempt ? '(Opcional)' : 'Requerida'}:
                                 </label>
 
                                 <div className="flex flex-col gap-3">
@@ -1034,7 +1040,7 @@ export function NewEvaluation() {
                                       }}
                                     >
                                       <Camera size={18} />
-                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : '📷 Subir Fotografía de Evidencia (Obligatoria)'}
+                                      {responses[q.id]?.photoData ? '✓ Fotografía Cargada (Cambiar)' : (isPhotoExempt ? '📷 Subir Fotografía de Evidencia (Opcional)' : '📷 Subir Fotografía de Evidencia (Obligatoria)')}
                                       <input
                                         type="file"
                                         accept="image/*"
