@@ -1,9 +1,10 @@
 import type { User, Isla, CategoryV3 } from '../types';
 
 export const mockUsers: User[] = [
-  { id: '1', name: 'Admin', role: 'admin', pin: '1234' },
-  { id: '2', name: 'Supervisor Richard', role: 'evaluator', pin: '5678' },
-  { id: '3', name: 'Cliente Fantasma', role: 'ghost', pin: '0000' },
+  { id: '1', name: 'Fernando Brito', role: 'admin', pin: 'FB2547', username: 'fbrito', email: 'fbritonetica@gmail.com' },
+  { id: '2', name: 'Marcia Quintana', role: 'admin', pin: 'MQ5478', username: 'mquintana', email: 'azabachemarcia@hotmail.com' },
+  { id: '3', name: 'Supervisor Richard', role: 'evaluator', pin: '5678', username: 'richard', email: 'richard@gedaluma.com' },
+  { id: '4', name: 'Cliente Fantasma', role: 'ghost', pin: '0000', username: 'ghost', email: 'ghost@gedaluma.com' },
 ];
 
 export const initialMockIslas: Isla[] = [

@@ -1,7 +1,7 @@
 export const SYSTEM_VERSION = {
-  version: 'v3.0.4',
-  buildNumber: 308,
-  lastUpdateDate: '28 de Octubre, 2026',
+  version: 'v3.0.5',
+  buildNumber: 309,
+  lastUpdateDate: '25 de Noviembre, 2026',
   status: '🟢 Sistema Actualizado',
-  changelogSummary: 'Subida de fotografía opcional para todas las calificaciones en las preguntas de las categorías G y E, manteniendo la obligatoriedad fotográfica únicamente para las categorías A, B, C, D y F.'
+  changelogSummary: 'Creación de usuarios con correo (fbrito: Fernando Brito, mquintana: Marcia Quintana), soporte de inicio de sesión por usuario o correo y recuperación de contraseña mediante enlace al correo.'
 };

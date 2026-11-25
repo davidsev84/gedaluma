@@ -28,6 +28,8 @@ export interface User {
   name: string;
   role: Role;
   pin: string;
+  username?: string;
+  email?: string;
 }
 
 export interface Isla {

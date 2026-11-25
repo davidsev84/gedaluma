@@ -197,6 +197,7 @@ export function NewEvaluation() {
       const auditorName = isGhost ? (user?.name || 'Cliente Fantasma') : 
                           (auditorType === 'supervisor' ? 'Supervisor Richard' : 
                           auditorType === 'fernando' ? 'Fernando Brito' : 
+                          auditorType === 'marcia' ? 'Marcia Quintana' : 
                           customAuditorName);
                           
       // 1. Guardar en Supabase con fallback local
@@ -613,6 +614,7 @@ export function NewEvaluation() {
                   <option value="" disabled>Seleccione el evaluador...</option>
                   <option value="supervisor">Supervisor (Richard)</option>
                   <option value="fernando">Fernando Brito</option>
+                  <option value="marcia">Marcia Quintana</option>
                   <option value="otro">Otra persona (Ingresar nombre)</option>
                 </select>
               </div>

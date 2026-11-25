@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { NewEvaluation } from './pages/NewEvaluation';
@@ -48,6 +49,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* App routing decider */}
           <Route path="/app" element={<DefaultRoute />} />
