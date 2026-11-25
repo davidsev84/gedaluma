@@ -13,7 +13,7 @@ export interface SystemUserConfig {
 
 export const INITIAL_SYSTEM_USERS: SystemUserConfig[] = [
   {
-    id: '1',
+    id: 'a0000001-0000-0000-0000-000000000001',
     name: 'Fernando Brito',
     username: 'fbrito',
     email: 'fbritonetica@gmail.com',
@@ -21,7 +21,7 @@ export const INITIAL_SYSTEM_USERS: SystemUserConfig[] = [
     role: 'admin'
   },
   {
-    id: '2',
+    id: 'a0000002-0000-0000-0000-000000000002',
     name: 'Marcia Quintana',
     username: 'mquintana',
     email: 'azabachemarcia@hotmail.com',
@@ -29,7 +29,7 @@ export const INITIAL_SYSTEM_USERS: SystemUserConfig[] = [
     role: 'admin'
   },
   {
-    id: '3',
+    id: 'a0000003-0000-0000-0000-000000000003',
     name: 'Supervisor Richard',
     username: 'richard',
     email: 'richard@gedaluma.com',
@@ -37,7 +37,7 @@ export const INITIAL_SYSTEM_USERS: SystemUserConfig[] = [
     role: 'evaluator'
   },
   {
-    id: '4',
+    id: 'a0000004-0000-0000-0000-000000000004',
     name: 'Cliente Fantasma',
     username: 'ghost',
     email: 'ghost@gedaluma.com',

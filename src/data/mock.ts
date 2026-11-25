@@ -1,10 +1,10 @@
 import type { User, Isla, CategoryV3 } from '../types';
 
 export const mockUsers: User[] = [
-  { id: '1', name: 'Fernando Brito', role: 'admin', pin: 'FB2547', username: 'fbrito', email: 'fbritonetica@gmail.com' },
-  { id: '2', name: 'Marcia Quintana', role: 'admin', pin: 'MQ5478', username: 'mquintana', email: 'azabachemarcia@hotmail.com' },
-  { id: '3', name: 'Supervisor Richard', role: 'evaluator', pin: '5678', username: 'richard', email: 'richard@gedaluma.com' },
-  { id: '4', name: 'Cliente Fantasma', role: 'ghost', pin: '0000', username: 'ghost', email: 'ghost@gedaluma.com' },
+  { id: 'a0000001-0000-0000-0000-000000000001', name: 'Fernando Brito', role: 'admin', pin: 'FB2547', username: 'fbrito', email: 'fbritonetica@gmail.com' },
+  { id: 'a0000002-0000-0000-0000-000000000002', name: 'Marcia Quintana', role: 'admin', pin: 'MQ5478', username: 'mquintana', email: 'azabachemarcia@hotmail.com' },
+  { id: 'a0000003-0000-0000-0000-000000000003', name: 'Supervisor Richard', role: 'evaluator', pin: '5678', username: 'richard', email: 'richard@gedaluma.com' },
+  { id: 'a0000004-0000-0000-0000-000000000004', name: 'Cliente Fantasma', role: 'ghost', pin: '0000', username: 'ghost', email: 'ghost@gedaluma.com' },
 ];
 
 export const initialMockIslas: Isla[] = [
